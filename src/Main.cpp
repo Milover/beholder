@@ -13,7 +13,7 @@ License
 #include <string>
 
 #include <tesseract/baseapi.h>
-#include <allheaders.h>
+#include <opencv2/opencv.hpp>
 
 #include "Main.h"
 
@@ -44,16 +44,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	};
 	auto api = std::unique_ptr<tAPI, decltype(tAPIDel)>(new tAPI{}, tAPIDel);
 
-	// Initialize tesseract-ocr with English, without specifying tessdata path
-	if (api->Init(ocr::trainedDataDir, "eng")) {
+	// Initialize tesseract-ocr
+	if (api->Init(ocr::trainedDataDir, "eng", tesseract::OEM_LSTM_ONLY)) {
 		std::cerr << "Could not initialize tesseract.\n";
 		return 1;
 	}
+	api->SetPageSegMode(tesseract::PSM_AUTO);
 
-	// Open input image with leptonica library
-	auto pixDel = [](Pix* p) { pixDestroy(&p); };
-	auto image = std::shared_ptr<Pix>(pixRead(ocr::testPhoto), pixDel);
-	api->SetImage(image.get());
+	// Open input image with OpenCV
+	cv::Mat im = cv::imread(ocr::testPhoto, cv::IMREAD_GRAYSCALE);
+	api->SetImage(im.data, im.cols, im.rows, 1, im.step);
 
 	// Get OCR result
 	std::string outText = std::string(api->GetUTF8Text());

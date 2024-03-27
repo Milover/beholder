@@ -55,13 +55,13 @@ pkg_check_modules(tesseract REQUIRED IMPORTED_TARGET tesseract)
 list(APPEND OCR_LIBRARIES "PkgConfig::tesseract")
 
 # Leptonica
-pkg_check_modules(leptonica REQUIRED IMPORTED_TARGET lept)
-list(APPEND OCR_LIBRARIES "PkgConfig::leptonica")
-#find_package(Leptonica REQUIRED)
-#list(APPEND OCR_INCLUDE_DIRS ${Leptonica_INCLUDE_DIRS})
-#list(APPEND OCR_LIBRARIES ${Leptonica_LIBRARIES})
+#pkg_check_modules(leptonica REQUIRED IMPORTED_TARGET lept)
+#list(APPEND OCR_LIBRARIES "PkgConfig::leptonica")
 
 # OpenCV
+find_package(OpenCV REQUIRED)
+list(APPEND OCR_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
+list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
 
 # Threads
 #find_package(Threads REQUIRED)
