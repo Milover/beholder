@@ -1,0 +1,25 @@
+# Mac OS X files
+.DS_Store
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Temporary files
+*.swp
+*~
+
+# Dependency directories
+vendor/
+
+# Environment files
+.env
+
+# Project build files
+bin/
+build/
+lib/
+doc/
