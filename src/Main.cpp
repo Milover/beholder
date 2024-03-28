@@ -38,29 +38,28 @@ using tAPI = tesseract::TessBaseAPI;
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
+	// tesseract setup
 	auto tAPIDel = [](tAPI* p) {
 		p->End();
 		delete p;
 	};
 	auto api = std::unique_ptr<tAPI, decltype(tAPIDel)>(new tAPI{}, tAPIDel);
-
-	// Initialize tesseract-ocr
 	if (api->Init(ocr::trainedDataDir, "eng", tesseract::OEM_LSTM_ONLY)) {
 		std::cerr << "Could not initialize tesseract.\n";
 		return 1;
 	}
+	// FIXME: should get it to single line/word or something similar
 	api->SetPageSegMode(tesseract::PSM_AUTO);
 
-	// Open input image with OpenCV
+	// preprocess image
 	cv::Mat im = cv::imread(ocr::testPhoto, cv::IMREAD_GRAYSCALE);
 	api->SetImage(im.data, im.cols, im.rows, 1, im.step);
 
-	// Get OCR result
+	// run ocr
 	std::string outText = std::string(api->GetUTF8Text());
 	std::cout << "OCR output:\n" << outText;
 
 	return 0;
 }
-
 
 // ************************************************************************* //
