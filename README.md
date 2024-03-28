@@ -45,6 +45,11 @@ to be an optimal capital letter size of about 30px
 
 We should also determine the optimal order of preprocessing steps
 
+Text detection notes:
+- ResNet-50 (HxW: 736x1280)
+- ResNet-18 (HxW: 736x1280)
+- [EAST][east-td]
+
 Helpful links:
 - [How to use OpenCV With Tesseract for Real-Time Text Detection][encord]
     - this one is not that useful, since they use OpenCV just for the video feed
@@ -79,3 +84,4 @@ Helpful links:
 [av-ocr]: https://docs.adaptive-vision.com/current/studio/machine_vision_guide/OpticalCharacterRecognition.html
 [git-ocr-gen]: https://github.com/Belval/TextRecognitionDataGenerator?tab=readme-ov-file
 [pretius]: https://pretius.com/blog/ocr-tesseract-training-data/
+[east-td]: https://github.com/argman/EAST
