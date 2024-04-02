@@ -23,3 +23,6 @@ bin/
 build/
 lib/
 doc/
+
+# Raw test images
+test/testdata/
