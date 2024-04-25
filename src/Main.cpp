@@ -10,6 +10,7 @@ License
 
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -17,6 +18,32 @@ License
 #include <opencv2/opencv.hpp>
 
 #include "Main.h"
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+namespace ocr {
+
+class Config
+{
+	public:
+		std::vector<std::string> configPaths;
+		std::string modelPath;
+		std::string model;
+
+		cv::Scalar textBoxColor {0, 0, 0};
+		int textBoxThickness {3};
+};
+
+struct  TBADeleter
+{
+	void operator()(tesseract::TessBaseAPI* p)
+	{
+		p->End();
+		delete p;
+	}
+};
+
+}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -50,8 +77,16 @@ namespace ocr {
 		"/Users/philipp/Documents/c++/projects/ocr/test/testdata/dot_matrix.7.bmp"
 		//"/Users/philipp/Documents/c++/projects/ocr/test/testdata/random.jpg"
 	};
+
+	//"5x5_Dots_FT_500",
+	//"dotOCRDData1",		// <- this one
+	//"Orario_FT_500",
+	//"Transit_FT_500",
+	//"Dotrice_FT_500",
+	//"LCDDot_FT_500",
 }
 
+// Normalize brightness and contrast
 void normalize(cv::Mat& im, float clipPct = 0.5)
 {
 	// compute histogram
@@ -76,6 +111,7 @@ void normalize(cv::Mat& im, float clipPct = 0.5)
 	clipPct *= max / 100.0;	// ?
 	clipPct /= 2.0;			// ?
 
+	// FIXME: this is looks kinda dumb
 	// locate left cut
 	int min_gray {0};
 	while (acc[min_gray] < clipPct)
@@ -95,97 +131,97 @@ void normalize(cv::Mat& im, float clipPct = 0.5)
 	cv::convertScaleAbs(im, im, alpha, beta);
 }
 
-cv::Mat preprocess(const cv::Mat& img)
+// Prepare an image for OCR
+void preprocess(cv::Mat& im)
 {
-	cv::Mat im = img.clone();
+	// XXX:  should also crop here
+	cv::resize(im, im, cv::Size(860, 430));
+
+//	cv::Mat im = img.clone();
 //	cv::bitwise_not(im, im);
-//	cv::imshow("Orig", im);
-//	cv::waitKey();
 
 	normalize(im);
-	cv::imshow("Norm", im);
-	cv::waitKey();
 
 //	cv::Sobel(im, im, CV_8U, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
-//	cv::imshow("Sobel", im);
-//	cv::waitKey();
 
 	cv::medianBlur(im, im, 3);
 	//cv::GaussianBlur(im, im, cv::Size(3, 3), 0);
-	cv::imshow("Median", im);
-	cv::waitKey();
 
 	cv::threshold(im, im, 0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU);
 	//cv::threshold(im, im, 100, 255, cv::THRESH_BINARY);
-	cv::imshow("Threshold", im);
-	cv::waitKey();
 
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 	cv::morphologyEx(im, im, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
-	cv::imshow("Close", im);
-	cv::waitKey();
-
-	return im;
 }
 
-using tAPI = tesseract::TessBaseAPI;
-
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
+std::unique_ptr<char*[]>
+vectorStrings2UniqueCharPtr(const std::vector<std::string>& v)
 {
-	// tesseract setup
-	char* configs[] = {const_cast<char*>(ocr::patternConfig)};
-	int configSize {1};
-	auto tAPIDel = [](tAPI* p)
+	std::unique_ptr<char*[]> result {new char*[v.size() + 1]};
+
+	for (auto i {0ul}; i < v.size(); ++i)
 	{
-		p->End();
-		delete p;
-	};
-	auto api = std::unique_ptr<tAPI, decltype(tAPIDel)>(new tAPI{}, tAPIDel);
+		result[i] = new char[v[i].length() + 1];
+		std::strcpy(result[i], v[i].c_str());
+	}
+	result[v.size()] = nullptr;
+
+	return result;
+}
+
+// Setup Tesseract
+std::unique_ptr<tesseract::TessBaseAPI, ocr::TBADeleter>
+initialize(const ocr::Config& cfg)
+{
+	using tba = tesseract::TessBaseAPI;
+	auto api = std::unique_ptr<tba, ocr::TBADeleter>(new tba{}, ocr::TBADeleter{});
+
+	auto configs {vectorStrings2UniqueCharPtr(cfg.configPaths)};
+	for (auto i {0ul}; i < cfg.configPaths.size(); ++i)
+	{
+		configs[i] = const_cast<char*>(cfg.configPaths[i].c_str());
+	}
 	if (
 		api->Init(
-			ocr::tessdataDir,
-			//"5x5_Dots_FT_500",
-			"dotOCRDData1",
-			//"Orario_FT_500",
-			//"Transit_FT_500",
-			//"Dotrice_FT_500",
-			//"LCDDot_FT_500",
+			cfg.modelPath.c_str(),
+			cfg.model.c_str(),
 			tesseract::OEM_LSTM_ONLY,
-			configs,
-			configSize,
+			configs.get(),
+			cfg.configPaths.size(),
 			nullptr,
 			nullptr,
 			false
 		)
 	)
 	{
-		std::cerr << "Could not initialize tesseract.\n";
-		return 1;
+		api.reset();
+		return api;
 	}
-	// FIXME: should get it to single line/word or something similar
+	// NOTE: would be nice if we could get it to a single line/word
 	api->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
 	api->SetVariable("load_system_dawg", "0");
 	api->SetVariable("load_freq_dawg", "0");
 //	api->SetVariable("classify_bln_numeric_mode", "1");
 //	api->SetVariable("tessedit_char_whitelist", ".,:;0123456789");
 
-	// preprocess image
-	cv::Mat img = cv::imread(ocr::testPhoto, cv::IMREAD_GRAYSCALE);
-	cv::resize(img, img, cv::Size(860, 430));
-	cv::Mat im = preprocess(img);
-	api->SetImage(im.data, im.cols, im.rows, 1, im.step);
+	return api;
+}
 
-	// detect text
-	tesseract::PageIterator* iter {api->AnalyseLayout()};
-	tesseract::PageIteratorLevel level {tesseract::RIL_TEXTLINE};
+// Detect text and generate text boxes
+std::optional<std::vector<cv::Rect>> detectText(
+	const std::unique_ptr<tesseract::TessBaseAPI, ocr::TBADeleter>& api
+)
+{
+	std::unique_ptr<tesseract::PageIterator> iter {api->AnalyseLayout()};
 	if (!iter)
 	{
-		std::cerr << "Could not analyse layout.\n";
-		return 1;
+		return std::nullopt;
 	}
+	tesseract::PageIteratorLevel level {tesseract::RIL_TEXTLINE};
 
-	// draw contours
+	// construct text boxes
 	std::vector<cv::Rect> rects;
+	rects.reserve(5);		// guesstimate
 	do
 	{
 		int left, top, right, bottom;
@@ -197,17 +233,55 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		}
 	} while(iter->Next(level));
 
-	// FIXME: unnecessary, move into loop above
+	return rects;
+}
+
+// Draw text boxes onto an image
+void drawTextBoxes(
+	cv::Mat& im,
+	const std::vector<cv::Rect>& rects,
+	const ocr::Config& cfg
+)
+{
 	for (const auto& r : rects)
 	{
-		cv::rectangle(im, r, cv::Scalar(0, 0, 0), 3);
+		cv::rectangle(im, r, cfg.textBoxColor, cfg.textBoxThickness);
 	}
-	cv::imshow("tesseract result", im);
+}
+
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
+{
+	ocr::Config cfg {};
+	cfg.configPaths.emplace_back(ocr::patternConfig);
+	cfg.modelPath = ocr::tessdataDir;
+	cfg.model = "dotOCRDData1";
+
+	auto api {initialize(cfg)};
+	if (!api)
+	{
+		std::cerr << "Could not initialize tesseract.\n";
+		return 1;
+	}
+
+	// preprocess image
+	cv::Mat im = cv::imread(ocr::testPhoto, cv::IMREAD_GRAYSCALE);
+	preprocess(im);
+	api->SetImage(im.data, im.cols, im.rows, 1, im.step);
+
+	// detect text and draw text boxes
+	auto rects {detectText(api)};
+	if (!rects)
+	{
+		std::cerr << "Could not analyze text.\n";
+		return 1;
+	}
+	drawTextBoxes(im, *rects, cfg);
+	cv::imshow("result", im);
 	cv::waitKey();
 
 	// run ocr
-	std::string outText = std::string(api->GetUTF8Text());
-	std::cout << "OCR output:\n" << outText;
+	std::unique_ptr<char[]> text {api->GetUTF8Text()};
+	std::cout << "OCR output:\n" << text.get();
 
 	return 0;
 }
