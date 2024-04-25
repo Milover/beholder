@@ -7,6 +7,9 @@
 
 # add sources
 set(SRC
+	Ocr.cpp
+	Preprocess.cpp
+	Utility.cpp
 	)
 
 # append to sources
