@@ -8,7 +8,9 @@
 # add sources
 set(SRC
 	Ocr.cpp
+	Postprocess.cpp
 	Preprocess.cpp
+	Timer.cpp
 	Utility.cpp
 	)
 

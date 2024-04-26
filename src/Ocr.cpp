@@ -15,7 +15,7 @@ License
 #include <vector>
 
 #include <tesseract/baseapi.h>
-#include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>	// TODO: break this out, we don't need all of it
 
 #include "Config.h"
 #include "Ocr.h"
@@ -28,7 +28,6 @@ namespace ocr
 
 // * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
 
-// Setup Tesseract
 std::unique_ptr<tesseract::TessBaseAPI, detail::TBADeleter>
 initialize(const Config& cfg)
 {
@@ -69,7 +68,6 @@ initialize(const Config& cfg)
 	return api;
 }
 
-// Detect text and generate text boxes
 std::optional<std::vector<cv::Rect>> detectText
 (
 	const std::unique_ptr<tesseract::TessBaseAPI, detail::TBADeleter>& api
@@ -99,19 +97,6 @@ std::optional<std::vector<cv::Rect>> detectText
 	return rects;
 }
 
-// Draw text boxes onto an image
-void drawTextBoxes
-(
-	cv::Mat& im,
-	const std::vector<cv::Rect>& rects,
-	const Config& cfg
-)
-{
-	for (const auto& r : rects)
-	{
-		cv::rectangle(im, r, cfg.textBoxColor, cfg.textBoxThickness);
-	}
-}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

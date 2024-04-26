@@ -1,36 +1,38 @@
 /*---------------------------------------------------------------------------*\
 
-	ocr - Copyright (C) 2024 P. Milovic
+	turbo - Copyright (C) 2019 P. Milovic
 
 -------------------------------------------------------------------------------
 License
 	See the LICENSE file for license information.
 
 Description
-	Common utility functions.
-
-SourceFiles
-	Preprocess.cpp
+	General use alias templates
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_UTILITY_H
-#define OCR_UTILITY_H
+#ifndef OCR_GENERAL_H
+#define OCR_GENERAL_H
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <type_traits>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace ocr
 {
 
-// * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Typedefs  * * * * * * * * * * * * * * * * * //
 
-//- Convert a vector of strings into an array of char*.
-std::unique_ptr<char*[]>
-vectorStrings2UniqueCharPtr(const std::vector<std::string>& v);
+
+// * * * * * * * * * * * * * * * Type Traits * * * * * * * * * * * * * * * * //
+
+//- Remove const, volatile and reference from a type
+template<typename T>
+using removeCVRef_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+
+// * * * * * * * * * * * * * * * * Flags * * * * * * * * * * * * * * * * * * //
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

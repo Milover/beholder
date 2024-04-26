@@ -7,21 +7,18 @@ License
 	See the LICENSE file for license information.
 
 Description
-	Text detection and recognition functions.
+	Postprocessing functions
 
 SourceFiles
-	Ocr.cpp
+	Postprocess.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_OCR_H
-#define OCR_OCR_H
+#ifndef OCR_POSTPROCESS_H
+#define OCR_POSTPROCESS_H
 
-#include <memory>
-#include <optional>
 #include <vector>
 
-#include <tesseract/baseapi.h>
 #include <opencv2/opencv.hpp>	// TODO: break this out, we don't need all of it
 
 #include "Config.h"
@@ -31,33 +28,14 @@ SourceFiles
 namespace ocr
 {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace detail
-{
-
-//- RAII helper class for the tesseract::TessBaseAPI
-struct  TBADeleter
-{
-	void operator()(tesseract::TessBaseAPI* p)
-	{
-		p->End();
-		delete p;
-	}
-};
-
-} // End namespace detail
-
 // * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
 
-//- Setup Tesseract
-std::unique_ptr<tesseract::TessBaseAPI, detail::TBADeleter>
-initialize(const Config& cfg);
-
-//- Detect text and generate text boxes
-std::optional<std::vector<cv::Rect>> detectText
+//- Draw boxes onto an image
+void drawBoxes
 (
-	const std::unique_ptr<tesseract::TessBaseAPI, detail::TBADeleter>& api
+	cv::Mat& im,
+	const std::vector<cv::Rect>& boxes,
+	const Config& cfg
 );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

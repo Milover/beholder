@@ -8,11 +8,12 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include <memory>
-#include <string>
 #include <vector>
 
-#include "Utility.h"
+#include <opencv2/opencv.hpp>	// TODO: break this out, we don't need all of it
+
+#include "Config.h"
+#include "Postprocess.h"
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -21,19 +22,17 @@ namespace ocr
 
 // * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
 
-std::unique_ptr<char*[]>
-vectorStrings2UniqueCharPtr(const std::vector<std::string>& v)
+void drawBoxes
+(
+	cv::Mat& im,
+	const std::vector<cv::Rect>& boxes,
+	const Config& cfg
+)
 {
-	std::unique_ptr<char*[]> result {new char*[v.size() + 1]};
-
-	for (auto i {0ul}; i < v.size(); ++i)
+	for (const auto& b : boxes)
 	{
-		result[i] = new char[v[i].length() + 1];
-		std::strcpy(result[i], v[i].c_str());
+		cv::rectangle(im, b, cfg.textBoxColor, cfg.textBoxThickness);
 	}
-	result[v.size()] = nullptr;
-
-	return result;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

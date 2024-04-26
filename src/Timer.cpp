@@ -6,38 +6,57 @@
 License
 	See the LICENSE file for license information.
 
-Description
-	Common utility functions.
-
-SourceFiles
-	Preprocess.cpp
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_UTILITY_H
-#define OCR_UTILITY_H
-
-#include <memory>
-#include <string>
-#include <vector>
+#include "Timer.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace ocr
 {
 
-// * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-//- Convert a vector of strings into an array of char*.
-std::unique_ptr<char*[]>
-vectorStrings2UniqueCharPtr(const std::vector<std::string>& v);
+bool Timer::isRunning() const
+{
+	return running_;
+}
+
+
+Timer::TimePoint Timer::now() const
+{
+	return Clock::now();
+}
+
+
+void Timer::reset()
+{
+	start_ = TimePoint {};
+	end_ = TimePoint {};
+	running_ = false;;
+}
+
+
+Timer::TimePoint Timer::start()
+{
+	start_ = now();
+	running_ = true;
+
+	return start_;
+}
+
+
+Timer::TimePoint Timer::stop()
+{
+	end_ = now();
+	running_ = false;
+
+	return end_;
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace ocr
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
 
 // ************************************************************************* //
