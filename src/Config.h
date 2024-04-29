@@ -20,7 +20,7 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include <opencv2/opencv.hpp>	// TODO: break this out, we don't need all of it
+#include <opencv2/core/types.hpp>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -8,20 +8,51 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <string>
 #include <vector>
 
-#include <opencv2/opencv.hpp>	// TODO: break this out, we don't need all of it
+#include <opencv2/core.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
-#include "Preprocess.h"
+#include "Config.h"
+#include "Utility.h"
+
+#include "ImageProcessor.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace ocr
 {
 
-// * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
-void normalize(cv::Mat& im, float clipPct)
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+void ImageProcessor::drawRectangles
+(
+	cv::Mat& im,
+	const std::vector<cv::Rect>& rects,
+	const Config& cfg
+)
+{
+	for (const auto& r : rects)
+	{
+		cv::rectangle(im, r, cfg.textBoxColor, cfg.textBoxThickness);
+	}
+}
+
+
+void ImageProcessor::normalize(cv::Mat& im, float clipPct)
 {
 	// compute histogram
 	std::vector<cv::Mat> input {im};
@@ -53,6 +84,7 @@ void normalize(cv::Mat& im, float clipPct)
 		++min_gray;
 	}
 
+	// locate right cut
 	int max_gray {histSize[0] - 1};
 	while (acc[max_gray] >= (max - clipPct))
 	{
@@ -65,7 +97,8 @@ void normalize(cv::Mat& im, float clipPct)
 	cv::convertScaleAbs(im, im, alpha, beta);
 }
 
-void preprocess(cv::Mat& im)
+
+void ImageProcessor::preprocess(cv::Mat& im)
 {
 	// XXX:  should also crop here
 	cv::resize(im, im, cv::Size(860, 430));
@@ -85,6 +118,18 @@ void preprocess(cv::Mat& im)
 
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 	cv::morphologyEx(im, im, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
+}
+
+cv::Mat ImageProcessor::readImage(const std::string& path, int flags)
+{
+	return cv::imread(path, flags);
+}
+
+
+void ImageProcessor::showImage(const cv::Mat& im, const std::string& title)
+{
+	cv::imshow("result", im);
+	cv::waitKey();
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

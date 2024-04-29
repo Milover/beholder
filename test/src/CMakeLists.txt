@@ -36,8 +36,8 @@ foreach(TESTFILE ${TEST_SRC})
 		COMMAND ${FILENAME}
 		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/test/bin"
 	)
-	set_tests_properties(${FILENAME}
-		PROPERTIES
-		PASS_REGULAR_EXPRESSION "0"
-	)
+#	set_tests_properties(${FILENAME}
+#		PROPERTIES
+#		PASS_REGULAR_EXPRESSION "0"
+#	)
 endforeach()
