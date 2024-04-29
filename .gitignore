@@ -23,6 +23,7 @@ vagrant/
 bin/
 build/
 lib/
+include/
 doc/
 
 # Raw test images
