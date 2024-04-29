@@ -7,15 +7,12 @@ License
 	See the LICENSE file for license information.
 
 Description
-	Global variables for the main loop of the program
-
-SourceFiles
-	Main.cpp
+	Global variables for the tests.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef OCR_TEST_H
+#define OCR_TEST_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -24,18 +21,6 @@ namespace ocr
 
 
 // * * * * * * * * * * * * * Global Variables  * * * * * * * * * * * * * * * //
-
-static const char* const HEADER
-{
-	"\nocr - Copyright (C) 2024 P. Milovic\n\n"
-};
-
-
-static const char* const USAGE
-{
-	"Usage:\n\tunimplemented\n\n"
-	"Description:\n\tunimplemented\n\n"
-};
 
 // FIXME: hardcoded traineddata dir
 static constexpr char const* tessdataDir

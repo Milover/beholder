@@ -1,7 +1,9 @@
+#
 # ocr - Copyright (C) 2024 P. Milovic
 #
 # See the LICENSE file for license information
 
+# cmake options
 cmake_minimum_required(VERSION 3.26)
 
 # project name
@@ -40,6 +42,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 
 # search paths
 list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/src")
+list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/lib")
 list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/include")
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/tools/cmake")
 
@@ -70,38 +73,37 @@ list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
 # random linker stuff
 #list(APPEND OCR_LIBRARIES "stdc++fs")
 
-# add sources macro
-macro(append_ocr_src DIRNAME FILES)
-	foreach(FILE ${FILES})
-		list(APPEND LIST ${DIRNAME}/${FILE})
-	endforeach()
-	set(OCR_SRC ${OCR_SRC};${LIST} PARENT_SCOPE)
-	set(OCR_INCLUDE_DIRS ${OCR_INCLUDE_DIRS};${DIRNAME} PARENT_SCOPE)
-endmacro()
+# add sources and headers
+file(
+	GLOB
+	OCR_SRC
+	CONFIGURE_DEPENDS
+	src/*.cpp)
+
+file(
+	GLOB
+	OCR_HDR
+	CONFIGURE_DEPENDS
+	src/*.h)
+
+# main library target
+add_library (ocr SHARED)
+target_include_directories(ocr PUBLIC ${OCR_INCLUDE_DIRS})
+target_link_libraries(ocr ${OCR_LIBRARIES})
+target_sources(ocr PRIVATE ${OCR_SRC})
+target_sources(ocr PUBLIC FILE_SET HEADERS FILES ${OCR_HDR})
+
+# install targets
+#install(TARGETS ocr DESTINATION "${PROJECT_SOURCE_DIR}/bin")
+install(TARGETS ocr DESTINATION "${PROJECT_SOURCE_DIR}/lib")
+install(FILES ${OCR_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include")
 
 # enable testing
 include(CTest)
 
-# subdirectories
-add_subdirectory(src)
-
-#if(CMAKE_BUILD_TYPE MATCHES Debug)
-#	add_subdirectory(test/src)
-#endif()
-
-# binary target
-add_executable (ocr "${PROJECT_SOURCE_DIR}/src/Main.cpp" ${OCR_SRC})
-target_include_directories(ocr PRIVATE ${OCR_INCLUDE_DIRS})
-target_link_libraries(ocr PRIVATE ${OCR_LIBRARIES})
-
-# main library target (for tests)
-#add_library (libocr SHARED ${OCR_SRC})
-#set_target_properties (libocr PROPERTIES PREFIX "")
-#target_include_directories(libocr PUBLIC ${OCR_INCLUDE_DIRS})
-#target_link_libraries(libocr ${OCR_LIBRARIES})
-
-# install targets
-install(TARGETS ocr DESTINATION "${PROJECT_SOURCE_DIR}/bin")
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+	add_subdirectory(test/src)
+endif()
 
 # documentation targets
 #if(CMAKE_BUILD_TYPE MATCHES "Release")

@@ -8,6 +8,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <cctype>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,6 +35,43 @@ vectorStrings2UniqueCharPtr(const std::vector<std::string>& v)
 	result[v.size()] = nullptr;
 
 	return result;
+}
+
+
+void trimWhiteL(std::string& s)
+{
+	s.erase
+	(
+		s.begin(),
+		std::find_if
+		(
+			s.begin(),
+			s.end(),
+			[](int ch) { return !std::isspace(ch); }
+		)
+	);
+}
+
+
+void trimWhiteR(std::string& s)
+{
+	s.erase
+	(
+		std::find_if
+		(
+			s.rbegin(),
+			s.rend(),
+			[](int ch) { return !std::isspace(ch); }
+		).base(),
+		s.end()
+	);
+}
+
+
+void trimWhiteLR(std::string& s)
+{
+	trimWhiteL(s);
+	trimWhiteR(s);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

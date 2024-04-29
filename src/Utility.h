@@ -32,6 +32,15 @@ namespace ocr
 std::unique_ptr<char*[]>
 vectorStrings2UniqueCharPtr(const std::vector<std::string>& v);
 
+//- Trim leading whitespace (left trim)
+void trimWhiteL(std::string& s);
+
+//- Trim trailing whitespace (right trim)
+void trimWhiteR(std::string& s);
+
+//- Trim leading and trailing whitespace (left-right trim)
+void trimWhiteLR(std::string& s);
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace ocr
