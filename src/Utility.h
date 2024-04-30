@@ -17,9 +17,12 @@ SourceFiles
 #ifndef OCR_UTILITY_H
 #define OCR_UTILITY_H
 
+#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <opencv2/core/types.hpp>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -27,6 +30,13 @@ namespace ocr
 {
 
 // * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
+
+//- Convert an array of double into a cv::Scalar
+cv::Scalar arr2CvScalar(const double (*a)[4]);
+
+//- Helper function for setting ch to raw.
+//	If ch != nullptr, calls delete[] on ch.
+void chPtrFromLiteral(char*& ch, const char* lit);
 
 //- Convert a vector of strings into an array of char*.
 std::unique_ptr<char*[]>

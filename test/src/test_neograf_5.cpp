@@ -53,9 +53,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
 	// setup the config
 	ocr::Config cfg {};
-	cfg.configPaths.emplace_back(ocr::patternConfig);
-	cfg.modelPath = ocr::tessdataDir;
-	cfg.model = ocr::modelName;
+	cfg.nConfigPaths = 1;
+	cfg.configPaths = new char*[cfg.nConfigPaths];
+	ocr::chPtrFromLiteral(cfg.configPaths[0], ocr::patternConfig);
+	ocr::chPtrFromLiteral(cfg.modelPath, ocr::tessdataDir);
+	ocr::chPtrFromLiteral(cfg.model, ocr::modelName);
 
 	// setup tesseract
 	ocr::Tesseract t {};
@@ -91,6 +93,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// postprocess
 	ip.drawRectangles(rects, cfg);
+
+	// clean up config
+	ConfigDelete(&cfg);
 
 	// show results
 	std::string expectedStr {ocr::expected};

@@ -86,21 +86,16 @@ std::vector<cv::Rect> Tesseract::detectText()
 
 bool Tesseract::init(const Config& cfg)
 {
-	auto configs {vectorStrings2UniqueCharPtr(cfg.configPaths)};
-	for (auto i {0ul}; i < cfg.configPaths.size(); ++i)
-	{
-		configs[i] = const_cast<char*>(cfg.configPaths[i].c_str());
-	}
 	bool success
 	{
 		static_cast<bool>
 		(
 			p_->Init(
-				cfg.modelPath.c_str(),
-				cfg.model.c_str(),
+				cfg.modelPath,
+				cfg.model,
 				tesseract::OEM_LSTM_ONLY,
-				configs.get(),
-				cfg.configPaths.size(),
+				cfg.configPaths,
+				cfg.nConfigPaths,
 				nullptr,
 				nullptr,
 				false

@@ -13,6 +13,8 @@ License
 #include <string>
 #include <vector>
 
+#include <opencv2/core/types.hpp>
+
 #include "Utility.h"
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -21,6 +23,22 @@ namespace ocr
 {
 
 // * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
+
+cv::Scalar arr2CvScalar(const double (*a)[4])
+{
+	return cv::Scalar {*a[0], *a[1], *a[2], *a[3]};
+}
+
+void chPtrFromLiteral(char*& ch, const char* lit)
+{
+	if (ch)
+	{
+		delete[] (ch);
+	}
+	ch = new char[std::strlen(lit) + 1];
+	std::strcpy(ch, lit);
+}
+
 
 std::unique_ptr<char*[]>
 vectorStrings2UniqueCharPtr(const std::vector<std::string>& v)

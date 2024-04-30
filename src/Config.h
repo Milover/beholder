@@ -7,44 +7,56 @@ License
 	See the LICENSE file for license information.
 
 Description
-	A class for holding configuration data.
-
-SourceFiles
-	Config.cpp
+	A C-compatible struct for holding configuration data
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef OCR_CONFIG_H
 #define OCR_CONFIG_H
 
-#include <string>
-#include <vector>
-
-#include <opencv2/core/types.hpp>
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+#ifdef __cplusplus
 namespace ocr
 {
-
-/*---------------------------------------------------------------------------*\
-                          Class Config Declaration
-\*---------------------------------------------------------------------------*/
-
-class Config
+extern "C"
 {
-public:
-	std::vector<std::string> configPaths;
-	std::string modelPath;
-	std::string model;
+#endif
 
-	cv::Scalar textBoxColor {0, 0, 0};
-	int textBoxThickness {3};
+// * * * * * * * * * * * * Struct Config Definition  * * * * * * * * * * * * //
+
+struct Config
+{
+	char** configPaths;
+	int nConfigPaths;
+
+	char* modelPath;
+	char* model;
+
+	double textBoxColor[4];
+	int textBoxThickness;
 };
+
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+inline void ConfigDelete(struct Config* cc)
+{
+	for (auto i {0}; i < cc->nConfigPaths; ++i)
+	{
+		delete[] cc->configPaths[i];
+	}
+	delete cc->configPaths;
+	cc->configPaths = nullptr;
+	delete cc->modelPath;
+	cc->modelPath = nullptr;
+	delete cc->model;
+	cc->model = nullptr;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace ocr
+#ifdef __cplusplus
+} // end extern "C"
+} // end namespace ocr
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

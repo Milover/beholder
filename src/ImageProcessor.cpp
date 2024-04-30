@@ -46,7 +46,12 @@ void ImageProcessor::drawRectangles
 {
 	for (const auto& r : rects)
 	{
-		cv::rectangle(img_, r, cfg.textBoxColor, cfg.textBoxThickness);
+		cv::rectangle(
+			img_,
+			r,
+			arr2CvScalar(&cfg.textBoxColor),
+			cfg.textBoxThickness
+		);
 	}
 }
 
