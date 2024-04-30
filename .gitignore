@@ -26,5 +26,8 @@ lib/
 include/
 doc/
 
+# CMake generated files
+src/libocr.h
+
 # Raw test images
 test/testdata/

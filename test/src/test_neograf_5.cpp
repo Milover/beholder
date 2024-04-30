@@ -13,10 +13,7 @@ License
 
 #include <opencv2/core/mat.hpp>
 
-#include "Config.h"
-#include "ImageProcessor.h"
-#include "Tesseract.h"
-#include "Utility.h"
+#include "libocr.h"
 
 #include "Test.h"
 

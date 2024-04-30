@@ -78,13 +78,28 @@ file(
 	GLOB
 	OCR_SRC
 	CONFIGURE_DEPENDS
-	src/*.cpp)
+	"${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 file(
 	GLOB
 	OCR_HDR
 	CONFIGURE_DEPENDS
-	src/*.h)
+	"${PROJECT_SOURCE_DIR}/src/*.h")
+
+# header generation setup
+set(TEMPLATE_HDR "${PROJECT_SOURCE_DIR}/src/libocr.h.in")
+set(GENERATED_HDR "${PROJECT_SOURCE_DIR}/src/libocr.h")
+
+# Create a CMake script to generate the new header file
+set(HDR_INCLUDES "")
+foreach(header ${OCR_HDR})
+    # Extract the relative path for each header file
+	file(RELATIVE_PATH REL_HDR "${PROJECT_SOURCE_DIR}/src" ${header})
+    # Append an include directive for each header file into the generated header file
+	set(HDR_INCLUDES "${HDR_INCLUDES}#include \"${REL_HDR}\"\n")
+endforeach()
+configure_file(${TEMPLATE_HDR} ${GENERATED_HDR})
+list(APPEND ${OCR_HEADER} ${GENERATED_HDR})
 
 # main library target
 add_library (ocr SHARED)
