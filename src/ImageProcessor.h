@@ -38,6 +38,9 @@ private:
 
 	// Private data
 
+		//- An image
+		cv::Mat img_;
+
 	// Private Member functions
 
 public:
@@ -51,28 +54,30 @@ public:
 		//- Draw rectangles onto an image
 		void drawRectangles
 		(
-			cv::Mat& im,
 			const std::vector<cv::Rect>& rects,
 			const Config& cfg
 		);
 
+		//- Get the stored image
+		const cv::Mat& getImage() const;
+
 		//- Normalize brightness and contrast
 		//	TODO: this needs to be refactored
-		void normalize(cv::Mat& im, float clipPct = 0.5);
+		void normalize(float clipPct = 0.5);
 
 		//- Prepare an image for OCR
 		//	TODO: this needs to be able to adjust execution based on a Config
-		void preprocess(cv::Mat& im);
+		void preprocess();
 
 		//- Read an image from disc
-		cv::Mat readImage
+		void readImage
 		(
 			const std::string& path,
 			int flags = cv::IMREAD_GRAYSCALE
 		);
 
 		//- Show an image and wait for a keypress
-		void showImage(const cv::Mat& im, const std::string& title = "image");
+		void showImage(const std::string& title = "image") const;
 
 	// Member operators
 

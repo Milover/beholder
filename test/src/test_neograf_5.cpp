@@ -69,11 +69,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ocr::ImageProcessor ip {};
 
 	// read/load an image
-	cv::Mat im {ip.readImage(ocr::testImage)};
+	ip.readImage(ocr::testImage);
 
 	// preprocess the image
-	ip.preprocess(im);
-	t.setImage(im);
+	ip.preprocess();
+	t.setImage(ip.getImage());
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// detect text (get text boxes)
@@ -90,7 +90,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ocr::trimWhiteLR(text);
 
 	// postprocess
-	ip.drawRectangles(im, rects, cfg);
+	ip.drawRectangles(rects, cfg);
 
 	// show results
 	std::string expectedStr {ocr::expected};

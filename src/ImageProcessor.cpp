@@ -40,22 +40,27 @@ namespace ocr
 
 void ImageProcessor::drawRectangles
 (
-	cv::Mat& im,
 	const std::vector<cv::Rect>& rects,
 	const Config& cfg
 )
 {
 	for (const auto& r : rects)
 	{
-		cv::rectangle(im, r, cfg.textBoxColor, cfg.textBoxThickness);
+		cv::rectangle(img_, r, cfg.textBoxColor, cfg.textBoxThickness);
 	}
 }
 
 
-void ImageProcessor::normalize(cv::Mat& im, float clipPct)
+const cv::Mat& ImageProcessor::getImage() const
+{
+	return img_;
+}
+
+
+void ImageProcessor::normalize(float clipPct)
 {
 	// compute histogram
-	std::vector<cv::Mat> input {im};
+	std::vector<cv::Mat> input {img_};
 	std::vector<int> channels {0};
 	std::vector<int> histSize {255};
 	cv::Mat hist;
@@ -94,41 +99,41 @@ void ImageProcessor::normalize(cv::Mat& im, float clipPct)
 	float alpha {255.0f / static_cast<float>((max_gray - min_gray))};
 	float beta {-min_gray * alpha};
 
-	cv::convertScaleAbs(im, im, alpha, beta);
+	cv::convertScaleAbs(img_, img_, alpha, beta);
 }
 
 
-void ImageProcessor::preprocess(cv::Mat& im)
+void ImageProcessor::preprocess()
 {
 	// XXX:  should also crop here
-	cv::resize(im, im, cv::Size(860, 430));
+	cv::resize(img_, img_, cv::Size(860, 430));
 
 //	cv::Mat im = img.clone();
 //	cv::bitwise_not(im, im);
 
-	normalize(im);
+	normalize();
 
-//	cv::Sobel(im, im, CV_8U, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
+//	cv::Sobel(img_, img_, CV_8U, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
 
-	cv::medianBlur(im, im, 3);
-	//cv::GaussianBlur(im, im, cv::Size(3, 3), 0);
+	cv::medianBlur(img_, img_, 3);
+	//cv::GaussianBlur(img_, img_, cv::Size(3, 3), 0);
 
-	cv::threshold(im, im, 0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU);
-	//cv::threshold(im, im, 100, 255, cv::THRESH_BINARY);
+	cv::threshold(img_, img_, 0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU);
+	//cv::threshold(img_, img_, 100, 255, cv::THRESH_BINARY);
 
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-	cv::morphologyEx(im, im, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
+	cv::morphologyEx(img_, img_, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
 }
 
-cv::Mat ImageProcessor::readImage(const std::string& path, int flags)
+void ImageProcessor::readImage(const std::string& path, int flags)
 {
-	return cv::imread(path, flags);
+	img_ = cv::imread(path, flags);
 }
 
 
-void ImageProcessor::showImage(const cv::Mat& im, const std::string& title)
+void ImageProcessor::showImage(const std::string& title) const
 {
-	cv::imshow("result", im);
+	cv::imshow(title, img_);
 	cv::waitKey();
 }
 
