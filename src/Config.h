@@ -22,8 +22,6 @@ SourceFiles
 #include <utility>
 #include <vector>
 
-#include <nlohmann/json.hpp>
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace ocr
@@ -60,40 +58,17 @@ public:
 
 	// Member functions
 
+		//- Parse data from a JSON char*
+		bool parse(const char* s);
+
 		//- Parse data from a JSON string
-		//
-		//	For details see: https://json.nlohmann.me/api/basic_json/parse/
-		template<typename T>
-		bool parse(T&& t);
+		bool parse(const std::string& s);
 
 	// Member operators
 
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-//- Allow marshalling to JSON
-void to_json(nlohmann::json& j, const Config& c);
-
-//- Allow unmarshalling from JSON
-void from_json(const nlohmann::json& j, Config& c);
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-template<typename T>
-bool Config::parse(T&& t)
-{
-	try
-	{
-		auto j = nlohmann::json::parse(std::forward<T>(t));
-		*this = j.template get<Config>();
-	}
-	catch(...)
-	{
-		return false;
-	}
-	return true;
-}
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -21,6 +21,10 @@ License
 namespace ocr
 {
 
+// Forward declarations
+void to_json(nlohmann::json& j, const Config& c);
+void from_json(const nlohmann::json& j, Config& c);
+
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -30,6 +34,35 @@ namespace ocr
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+bool Config::parse(const char* s)
+{
+	try
+	{
+		auto j = nlohmann::json::parse(s);
+		*this = j.template get<Config>();
+	}
+	catch(...)
+	{
+		return false;
+	}
+	return true;
+}
+
+
+bool Config::parse(const std::string& s)
+{
+	try
+	{
+		auto j = nlohmann::json::parse(s);
+		*this = j.template get<Config>();
+	}
+	catch(...)
+	{
+		return false;
+	}
+	return true;
+}
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
