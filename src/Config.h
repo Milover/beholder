@@ -66,9 +66,6 @@ public:
 		template<typename T>
 		bool parse(T&& t);
 
-		//- Parse data from a JSON char*
-		bool parse(const char* s);
-
 	// Member operators
 
 };
