@@ -71,8 +71,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ip.readImage(ocr::testImage);
 
 	// preprocess the image
-	ip.preprocess();
-	t.setImage(ip.getImage());
+	ip.preprocess(cfg);
+	t.setImage(ip);
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// detect text (get text boxes)

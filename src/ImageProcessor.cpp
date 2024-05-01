@@ -108,7 +108,7 @@ void ImageProcessor::normalize(float clipPct)
 }
 
 
-void ImageProcessor::preprocess()
+bool ImageProcessor::preprocess(const Config& cfg)
 {
 	// XXX:  should also crop here
 	cv::resize(img_, img_, cv::Size(860, 430));
@@ -128,11 +128,15 @@ void ImageProcessor::preprocess()
 
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 	cv::morphologyEx(img_, img_, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
+
+	return true;
 }
 
-void ImageProcessor::readImage(const std::string& path, int flags)
+
+bool ImageProcessor::readImage(const std::string& path, int flags)
 {
 	img_ = cv::imread(path, flags);
+	return img_.data != NULL;
 }
 
 

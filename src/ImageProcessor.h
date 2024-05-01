@@ -67,10 +67,10 @@ public:
 
 		//- Prepare an image for OCR
 		//	TODO: this needs to be able to adjust execution based on a Config
-		void preprocess();
+		bool preprocess(const Config& cfg);
 
 		//- Read an image from disc
-		void readImage
+		bool readImage
 		(
 			const std::string& path,
 			int flags = cv::IMREAD_GRAYSCALE

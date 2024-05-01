@@ -20,9 +20,10 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <tesseract/baseapi.h>
+
+#include "ImageProcessor.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -80,7 +81,7 @@ public:
 		std::string recognizeTextStr();
 
 		//- Set image for recognition
-		void setImage(const cv::Mat& im, int bytesPerPixel = 1);
+		void setImage(const ImageProcessor& ip, int bytesPerPixel = 1);
 
 
 	// Member operators

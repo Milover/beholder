@@ -18,6 +18,7 @@ License
 #include "Config.h"
 #include "Utility.h"
 
+#include "ImageProcessor.h"
 #include "Tesseract.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -133,8 +134,9 @@ std::string Tesseract::recognizeTextStr()
 }
 
 
-void Tesseract::setImage(const cv::Mat& im, int bytesPerPixel)
+void Tesseract::setImage(const ImageProcessor& ip, int bytesPerPixel)
 {
+	const cv::Mat& im {ip.getImage()};
 	p_->SetImage(im.data, im.cols, im.rows, bytesPerPixel, im.step);
 }
 
