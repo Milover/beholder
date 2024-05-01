@@ -87,16 +87,17 @@ std::vector<cv::Rect> Tesseract::detectText()
 
 bool Tesseract::init(const Config& cfg)
 {
+	auto p {vecStr2ChPtrArr(cfg.configPaths)};
 	bool success
 	{
 		static_cast<bool>
 		(
 			p_->Init(
-				cfg.modelPath,
-				cfg.model,
+				cfg.modelPath.c_str(),
+				cfg.model.c_str(),
 				tesseract::OEM_LSTM_ONLY,
-				cfg.configPaths,
-				cfg.nConfigPaths,
+				p.get(),
+				cfg.configPaths.size(),
 				nullptr,
 				nullptr,
 				false

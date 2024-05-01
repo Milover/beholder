@@ -22,8 +22,6 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include <opencv2/core/types.hpp>
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace ocr
@@ -31,16 +29,13 @@ namespace ocr
 
 // * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
 
-//- Convert an array of double into a cv::Scalar
-cv::Scalar arr2CvScalar(const double (*a)[4]);
-
 //- Helper function for setting ch to raw.
 //	If ch != nullptr, calls delete[] on ch.
 void chPtrFromLiteral(char*& ch, const char* lit);
 
 //- Convert a vector of strings into an array of char*.
 std::unique_ptr<char*[]>
-vectorStrings2UniqueCharPtr(const std::vector<std::string>& v);
+vecStr2ChPtrArr(const std::vector<std::string>& v);
 
 //- Trim leading whitespace (left trim)
 void trimWhiteL(std::string& s);

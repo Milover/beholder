@@ -11,8 +11,6 @@ License
 #include <iostream>
 #include <string>
 
-#include <opencv2/core/mat.hpp>
-
 #include "libocr.h"
 
 #include "Test.h"
@@ -22,22 +20,22 @@ License
 namespace ocr
 {
 
-static constexpr char const* patternConfig
+const std::string config
+{R"(
 {
-	"/Users/philipp/Documents/c++/projects/libocr/test/testdata/configs/test_neograf_5.patterns.config"
+	"config_paths": ["../testdata/configs/test_neograf_5.patterns.config"],
+	"model_path": "../../assets/tessdata/dotmatrix",
+	"model": "dotOCRDData1"
+}
+)"};
+
+
+const std::string testImage
+{
+	"../testdata/neograf/imagefile_5.bmp"
 };
 
-static constexpr char const* testImage
-{
-	"/Users/philipp/Documents/c++/projects/libocr/test/testdata/neograf/imagefile_5.bmp"
-};
-
-static constexpr char const* modelName
-{
-	"dotOCRDData1"
-};
-
-static constexpr char const* expected
+const std::string expected
 {
 	"V20000229"
 };
@@ -50,11 +48,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
 	// setup the config
 	ocr::Config cfg {};
-	cfg.nConfigPaths = 1;
-	cfg.configPaths = new char*[cfg.nConfigPaths];
-	ocr::chPtrFromLiteral(cfg.configPaths[0], ocr::patternConfig);
-	ocr::chPtrFromLiteral(cfg.modelPath, ocr::tessdataDir);
-	ocr::chPtrFromLiteral(cfg.model, ocr::modelName);
+	if (!cfg.parse(ocr::config))
+	{
+		std::cerr << "Could not parse JSON.\n";
+		return 1;
+	}
 
 	// setup tesseract
 	ocr::Tesseract t {};
@@ -90,9 +88,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// postprocess
 	ip.drawRectangles(rects, cfg);
-
-	// clean up config
-	ConfigDelete(&cfg);
 
 	// show results
 	std::string expectedStr {ocr::expected};

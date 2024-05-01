@@ -50,6 +50,9 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/tools/cmake")
 set(OCR_INCLUDE_DIRS "")
 set(OCR_LIBRARIES "")
 
+# FetchContent
+include(FetchContent)
+
 # PkgConfig
 find_package(PkgConfig REQUIRED)
 
@@ -65,6 +68,13 @@ list(APPEND OCR_LIBRARIES "PkgConfig::tesseract")
 find_package(OpenCV REQUIRED)
 list(APPEND OCR_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
+
+# JSON
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(JSON_Install OFF CACHE INTERNAL "")
+list(APPEND OCR_LIBRARIES nlohmann_json::nlohmann_json)
 
 # Threads
 #find_package(Threads REQUIRED)

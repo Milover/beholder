@@ -19,7 +19,6 @@ License
 #include <opencv2/imgproc.hpp>
 
 #include "Config.h"
-#include "Utility.h"
 
 #include "ImageProcessor.h"
 
@@ -44,14 +43,11 @@ void ImageProcessor::drawRectangles
 	const Config& cfg
 )
 {
+	const auto& a {cfg.textBoxColor};
+	cv::Scalar color {a[0], a[1], a[2], a[3]};
 	for (const auto& r : rects)
 	{
-		cv::rectangle(
-			img_,
-			r,
-			arr2CvScalar(&cfg.textBoxColor),
-			cfg.textBoxThickness
-		);
+		cv::rectangle(img_, r, color, cfg.textBoxThickness);
 	}
 }
 

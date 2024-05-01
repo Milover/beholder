@@ -7,56 +7,101 @@ License
 	See the LICENSE file for license information.
 
 Description
-	A C-compatible struct for holding configuration data
+	A configuration data class.
+
+SourceFiles
+	Config.cpp
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef OCR_CONFIG_H
 #define OCR_CONFIG_H
 
-#ifdef __cplusplus
+#include <array>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <nlohmann/json.hpp>
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 namespace ocr
 {
-extern "C"
+
+/*---------------------------------------------------------------------------*\
+                          Class Config Declaration
+\*---------------------------------------------------------------------------*/
+
+class Config
 {
-#endif
+private:
 
-// * * * * * * * * * * * * Struct Config Definition  * * * * * * * * * * * * //
+	// Private data
 
-struct Config
-{
-	char** configPaths;
-	int nConfigPaths;
+public:
 
-	char* modelPath;
-	char* model;
+	// Public data
 
-	double textBoxColor[4];
-	int textBoxThickness;
+		//- Paths of Tesseract configuration files
+		std::vector<std::string> configPaths;
+		//- Path to Tesseract model file directory
+		std::string modelPath;
+		//- Name of the Tesseract model
+		std::string model;
+		//- The RGBA color of the text box drawn during text detection
+		std::array<double, 4> textBoxColor;
+		//- The line thickness of the text box drawn during text detection
+		int textBoxThickness;
+
+	// Constructors
+
+	//- Destructor
+
+	// Member functions
+
+		//- Parse data from a JSON string
+		//
+		//	For details see: https://json.nlohmann.me/api/basic_json/parse/
+		template<typename T>
+		bool parse(T&& t);
+
+		//- Parse data from a JSON char*
+		bool parse(const char* s);
+
+	// Member operators
+
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
-inline void ConfigDelete(struct Config* cc)
+//- Allow marshalling to JSON
+void to_json(nlohmann::json& j, const Config& c);
+
+//- Allow unmarshalling from JSON
+void from_json(const nlohmann::json& j, Config& c);
+
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+template<typename T>
+bool Config::parse(T&& t)
 {
-	for (auto i {0}; i < cc->nConfigPaths; ++i)
+	try
 	{
-		delete[] cc->configPaths[i];
+		auto j = nlohmann::json::parse(std::forward<T>(t));
+		*this = j.template get<Config>();
 	}
-	delete cc->configPaths;
-	cc->configPaths = nullptr;
-	delete cc->modelPath;
-	cc->modelPath = nullptr;
-	delete cc->model;
-	cc->model = nullptr;
+	catch(...)
+	{
+		return false;
+	}
+	return true;
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#ifdef __cplusplus
-} // end extern "C"
-} // end namespace ocr
-#endif
+} // End namespace ocr
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
