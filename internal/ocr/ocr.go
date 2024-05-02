@@ -25,12 +25,20 @@ func NewConfig(json string) *Config {
 	return &cfg
 }
 
+func (cfg Config) Delete() {
+	C.Cfg_Delete(cfg.p)
+}
+
 type ImageProcessor struct {
 	p C.Proc
 }
 
 func NewImageProcessor() *ImageProcessor {
 	return &ImageProcessor{p: C.Proc_New()}
+}
+
+func (ip ImageProcessor) Delete() {
+	C.Proc_Delete(ip.p)
 }
 
 func (ip ImageProcessor) Preprocess(c Config) error {
@@ -65,6 +73,10 @@ func NewTesseract(cfg Config) *Tesseract {
 		return nil
 	}
 	return &t
+}
+
+func (t Tesseract) Delete() {
+	C.Tess_Delete(t.p)
 }
 
 func (t Tesseract) Clear() {

@@ -24,17 +24,20 @@ func main() {
 	start := time.Now()
 
 	cfg := ocr.NewConfig(json)
+	defer cfg.Delete()
 	if cfg == nil {
 		log.Fatal("Could not parse config")
 	}
 	t := ocr.NewTesseract(*cfg)
+	defer t.Delete()
 	if t == nil {
 		log.Fatal("Could not initialize tesseract")
 	}
+	ip := ocr.NewImageProcessor()
+	defer ip.Delete()
 
 	init := time.Now()
 
-	ip := ocr.NewImageProcessor()
 	if err := ip.ReadImage(testImg, 0); err != nil {
 		log.Fatal(err)
 	}

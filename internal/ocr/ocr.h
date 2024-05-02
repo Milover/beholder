@@ -18,13 +18,16 @@ typedef void* Proc;
 typedef void* Tess;
 #endif
 
+void Cfg_Delete(Cfg cfg);
 Cfg Cfg_New(const char* json);
 
+void Proc_Delete(Proc p);
 Proc Proc_New();
 bool Proc_Preprocess(Proc p, Cfg cfg);
 bool Proc_ReadImage(Proc p, const char* filename, int flags);
 void Proc_ShowImage(Proc p, const char* title);
 
+void Tess_Delete(Tess t);
 void Tess_Clear(Tess t);
 bool Tess_DetectText(Tess t, Proc p, Cfg cfg);
 Tess Tess_New(Cfg cfg);

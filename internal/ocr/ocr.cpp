@@ -4,6 +4,13 @@
 #include "ocr.h"
 
 
+void Cfg_Delete(Cfg cfg) {
+	if (cfg) {
+		delete cfg;
+		cfg = nullptr;
+	}
+}
+
 Cfg Cfg_New(const char* json) {
 	Cfg c {new ocr::Config {}};
 	if (!c->parse(json)) {
@@ -11,6 +18,13 @@ Cfg Cfg_New(const char* json) {
 		c = nullptr;
 	}
 	return c;
+}
+
+void Proc_Delete(Proc p) {
+	if (p) {
+		delete p;
+		p = nullptr;
+	}
 }
 
 Proc Proc_New() {
@@ -38,6 +52,13 @@ void Proc_ShowImage(Proc p, const char* title) {
 	}
 	std::string s {title};
 	p->showImage(s);
+}
+
+void Tess_Delete(Tess t) {
+	if (t) {
+		delete t;
+		t = nullptr;
+	}
 }
 
 void Tess_Clear(Tess t) {
