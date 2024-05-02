@@ -40,8 +40,5 @@ internal/ocr/libocr/doc/
 internal/ocr/libocr/vagrant/
 internal/ocr/libocr/test/bin/
 
-# CMake generated files
-internal/ocr/libocr/src/libocr.h
-
 # Raw test images
 internal/ocr/libocr/test/testdata/

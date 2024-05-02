@@ -36,15 +36,9 @@ add_compile_options(
 )
 
 # output paths
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
-
-# search paths
-list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/src")
-list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/lib")
-list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/include")
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/tools/cmake")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # define dependency vars
 set(OCR_INCLUDE_DIRS "")
@@ -96,21 +90,6 @@ file(
 	CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/src/*.h")
 
-# header generation setup
-set(TEMPLATE_HDR "${PROJECT_SOURCE_DIR}/src/libocr.h.in")
-set(GENERATED_HDR "${PROJECT_SOURCE_DIR}/src/libocr.h")
-
-# Create a CMake script to generate the new header file
-set(HDR_INCLUDES "")
-foreach(header ${OCR_HDR})
-    # Extract the relative path for each header file
-	file(RELATIVE_PATH REL_HDR "${PROJECT_SOURCE_DIR}/src" ${header})
-    # Append an include directive for each header file into the generated header file
-	set(HDR_INCLUDES "${HDR_INCLUDES}#include \"${REL_HDR}\"\n")
-endforeach()
-configure_file(${TEMPLATE_HDR} ${GENERATED_HDR})
-list(APPEND ${OCR_HEADER} ${GENERATED_HDR})
-
 # main library target
 add_library (ocr SHARED)
 target_include_directories(ocr PUBLIC ${OCR_INCLUDE_DIRS})
@@ -119,7 +98,6 @@ target_sources(ocr PRIVATE ${OCR_SRC})
 target_sources(ocr PUBLIC FILE_SET HEADERS FILES ${OCR_HDR})
 
 # install targets
-#install(TARGETS ocr DESTINATION "${PROJECT_SOURCE_DIR}/bin")
 install(TARGETS ocr DESTINATION "${PROJECT_SOURCE_DIR}/lib")
 install(FILES ${OCR_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include")
 
