@@ -12,22 +12,33 @@
 *.swp
 *~
 
+# Test binary, build with `go test -c`
+*.test
+
 # Dependency directories
 vendor/
-vagrant/
 
 # Environment files
 .env
 
+# Raw test images
+internal/ocr/testdata/images
+
+#
+# libocr stuff
+#
+
 # Project build files
-bin/
-build/
-lib/
-include/
-doc/
+internal/ocr/libocr/bin/
+internal/ocr/libocr/build/
+internal/ocr/libocr/lib/
+internal/ocr/libocr/include/
+internal/ocr/libocr/doc/
+internal/ocr/libocr/vagrant/
+internal/ocr/libocr/test/bin/
 
 # CMake generated files
-src/libocr.h
+internal/ocr/libocr/src/libocr.h
 
 # Raw test images
-test/testdata/
+internal/ocr/libocr/test/testdata/
