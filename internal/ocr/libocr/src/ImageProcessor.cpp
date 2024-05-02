@@ -21,6 +21,7 @@ License
 #include "Config.h"
 
 #include "ImageProcessor.h"
+#include "Rectangle.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -33,35 +34,50 @@ namespace ocr
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
+ImageProcessor::ImageProcessor()
+:
+	img_ {new cv::Mat{}}
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+ImageProcessor::~ImageProcessor()
+{
+	delete img_;
+}
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 void ImageProcessor::drawRectangles
 (
-	const std::vector<cv::Rect>& rects,
+	const std::vector<Rectangle>& rects,
 	const Config& cfg
 )
 {
 	const auto& a {cfg.textBoxColor};
 	cv::Scalar color {a[0], a[1], a[2], a[3]};
+	cv::Rect rect{};
 	for (const auto& r : rects)
 	{
-		cv::rectangle(img_, r, color, cfg.textBoxThickness);
+		rect.x = r.left;
+		rect.y = r.top;
+		rect.width = r.right - r.left;
+		rect.height = r.top - r.bottom;
+		cv::rectangle(*img_, rect, color, cfg.textBoxThickness);
 	}
 }
 
 
 const cv::Mat& ImageProcessor::getImage() const
 {
-	return img_;
+	return *img_;
 }
 
 
 void ImageProcessor::normalize(float clipPct)
 {
 	// compute histogram
-	std::vector<cv::Mat> input {img_};
+	std::vector<cv::Mat> input {*img_};
 	std::vector<int> channels {0};
 	std::vector<int> histSize {255};
 	cv::Mat hist;
@@ -100,30 +116,30 @@ void ImageProcessor::normalize(float clipPct)
 	float alpha {255.0f / static_cast<float>((max_gray - min_gray))};
 	float beta {-min_gray * alpha};
 
-	cv::convertScaleAbs(img_, img_, alpha, beta);
+	cv::convertScaleAbs(*img_, *img_, alpha, beta);
 }
 
 
 bool ImageProcessor::preprocess(const Config& cfg)
 {
 	// XXX:  should also crop here
-	cv::resize(img_, img_, cv::Size(860, 430));
+	cv::resize(*img_, *img_, cv::Size(860, 430));
 
 //	cv::Mat im = img.clone();
 //	cv::bitwise_not(im, im);
 
 	normalize();
 
-//	cv::Sobel(img_, img_, CV_8U, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
+//	cv::Sobel(*img_, *img_, CV_8U, 1, 0, 3, 1, 0, cv::BORDER_DEFAULT);
 
-	cv::medianBlur(img_, img_, 3);
-	//cv::GaussianBlur(img_, img_, cv::Size(3, 3), 0);
+	cv::medianBlur(*img_, *img_, 3);
+	//cv::GaussianBlur(*img_, *img_, cv::Size(3, 3), 0);
 
-	cv::threshold(img_, img_, 0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU);
-	//cv::threshold(img_, img_, 100, 255, cv::THRESH_BINARY);
+	cv::threshold(*img_, *img_, 0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU);
+	//cv::threshold(*img_, *img_, 100, 255, cv::THRESH_BINARY);
 
 	cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-	cv::morphologyEx(img_, img_, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
+	cv::morphologyEx(*img_, *img_, cv::MORPH_OPEN, element, cv::Point{-1, -1}, 5);
 
 	return true;
 }
@@ -131,14 +147,14 @@ bool ImageProcessor::preprocess(const Config& cfg)
 
 bool ImageProcessor::readImage(const std::string& path, int flags)
 {
-	img_ = cv::imread(path, flags);
-	return img_.data != NULL;
+	*img_ = cv::imread(path, flags);
+	return img_->data != NULL;
 }
 
 
 void ImageProcessor::showImage(const std::string& title) const
 {
-	cv::imshow(title, img_);
+	cv::imshow(title, *img_);
 	cv::waitKey();
 }
 

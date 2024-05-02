@@ -10,15 +10,18 @@ License
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
+#include <tesseract/baseapi.h>
 
 #include "Config.h"
 #include "Utility.h"
 
 #include "ImageProcessor.h"
+#include "Rectangle.h"
 #include "Tesseract.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -34,19 +37,15 @@ namespace ocr
 
 Tesseract::Tesseract()
 :
-	p_ {new Tesseract::TBA{}}
+	p_ {new tesseract::TessBaseAPI{}}
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Tesseract::~Tesseract()
 {
-	if (p_)
-	{
-		p_->End();
-		delete p_;
-		p_ = nullptr;
-	}
+	p_->End();
+	delete p_;
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
@@ -57,9 +56,9 @@ void Tesseract::clear()
 }
 
 
-std::vector<cv::Rect> Tesseract::detectText()
+std::vector<Rectangle> Tesseract::detectText()
 {
-	std::vector<cv::Rect> rects;
+	std::vector<Rectangle> rects;
 
 	std::unique_ptr<tesseract::PageIterator> iter {p_->AnalyseLayout()};
 	if (!iter)
@@ -72,12 +71,10 @@ std::vector<cv::Rect> Tesseract::detectText()
 	rects.reserve(5);		// FIXME: guesstimate
 	do
 	{
-		int left, top, right, bottom;
-		if (iter->BoundingBox(level, &left, &top, &right, &bottom))
+		Rectangle r;
+		if (iter->BoundingBox(level, &r.left, &r.top, &r.right, &r.bottom))
 		{
-			rects.emplace_back(
-				cv::Point{left, top}, cv::Point{right, bottom}
-			);
+			rects.emplace_back(std::move(r));
 		}
 	} while(iter->Next(level));
 

@@ -7,20 +7,34 @@ License
 	See the LICENSE file for license information.
 
 Description
-	Global variables for the tests.
+	A simple class for holding rectangle data.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_TEST_H
-#define OCR_TEST_H
+#ifndef OCR_RECTANGLE_H
+#define OCR_RECTANGLE_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace ocr
 {
 
+/*---------------------------------------------------------------------------*\
+                         Class Rectangle Declaration
+\*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * Global Variables  * * * * * * * * * * * * * * * //
+class Rectangle
+{
+public:
+
+	// Public data
+
+		int left;
+		int top;
+		int right;
+		int bottom;
+
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -11,6 +11,8 @@ License
 #include <iostream>
 #include <string>
 
+#include <opencv2/imgcodecs.hpp>
+
 #include "libocr.h"
 
 #include "Test.h"
@@ -24,7 +26,7 @@ const std::string config
 {R"(
 {
 	"config_paths": ["../testdata/configs/test_neograf_5.patterns.config"],
-	"model_path": "../../assets/tessdata/dotmatrix",
+	"model_path": "../../../models/dotmatrix",
 	"model": "dotOCRDData1"
 }
 )"};
@@ -32,7 +34,7 @@ const std::string config
 
 const std::string testImage
 {
-	"../testdata/neograf/imagefile_5.bmp"
+	"../../../testdata/images/neograf/imagefile_5.bmp"
 };
 
 const std::string expected
@@ -66,7 +68,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ocr::ImageProcessor ip {};
 
 	// read/load an image
-	ip.readImage(ocr::testImage);
+	ip.readImage(ocr::testImage, cv::IMREAD_GRAYSCALE);
 
 	// preprocess the image
 	ip.preprocess(cfg);

@@ -17,11 +17,18 @@ SourceFiles
 #ifndef OCR_IMAGE_PROCESSOR_H
 #define OCR_IMAGE_PROCESSOR_H
 
+#include <vector>
 #include <string>
 #include <vector>
 
-#include <opencv2/core/mat.hpp>
-#include <opencv2/imgcodecs.hpp>
+#include "Rectangle.h"
+
+// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
+
+namespace cv
+{
+	class Mat;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,7 +46,8 @@ private:
 	// Private data
 
 		//- An image
-		cv::Mat img_;
+		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
+		cv::Mat* img_;
 
 	// Private Member functions
 
@@ -47,14 +55,24 @@ public:
 
 	// Constructors
 
+		//- Default constructor
+		ImageProcessor();
+
+		//- Disable copy constructor
+		ImageProcessor(const ImageProcessor&) = delete;
+
+		//- Disable move constructor
+		ImageProcessor(ImageProcessor&&) = delete;
+
 	//- Destructor
+	~ImageProcessor();
 
 	// Member functions
 
 		//- Draw rectangles onto an image
 		void drawRectangles
 		(
-			const std::vector<cv::Rect>& rects,
+			const std::vector<Rectangle>& rects,
 			const Config& cfg
 		);
 
@@ -70,16 +88,18 @@ public:
 		bool preprocess(const Config& cfg);
 
 		//- Read an image from disc
-		bool readImage
-		(
-			const std::string& path,
-			int flags = cv::IMREAD_GRAYSCALE
-		);
+		bool readImage(const std::string& path, int flags);
 
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
 
 	// Member operators
+
+		//- Disable copy assignment
+		ImageProcessor& operator=(const ImageProcessor&) = delete;
+
+		//- Disable move assignment
+		ImageProcessor& operator=(ImageProcessor&&) = delete;
 
 };
 

@@ -20,10 +20,15 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include <opencv2/core/types.hpp>
-#include <tesseract/baseapi.h>
-
 #include "ImageProcessor.h"
+#include "Rectangle.h"
+
+// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
+
+namespace tesseract
+{
+	class TessBaseAPI;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -37,13 +42,12 @@ namespace ocr
 class Tesseract
 {
 private:
-	using TBA = tesseract::TessBaseAPI;
 
 	// Private data
 
 		//- A pointer to the tesseract api
-		TBA* p_;
-
+		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
+		tesseract::TessBaseAPI* p_;
 
 public:
 
@@ -68,7 +72,7 @@ public:
 		void clear();
 
 		//- Detect text
-		std::vector<cv::Rect> detectText();
+		std::vector<Rectangle> detectText();
 
 		//- Initialize Tesseract
 		bool init(const Config& cfg);

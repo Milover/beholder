@@ -12,14 +12,17 @@
 *.swp
 *~
 
+# Environment files
+.env
+
 # Test binary, build with `go test -c`
 *.test
 
 # Dependency directories
 vendor/
 
-# Environment files
-.env
+# Project binaries
+bin/
 
 # Raw test images
 internal/ocr/testdata/images
