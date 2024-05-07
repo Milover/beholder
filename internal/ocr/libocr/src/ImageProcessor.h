@@ -21,7 +21,8 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include "Rectangle.h"
+#include "OcrResults.h"
+#include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -49,9 +50,18 @@ private:
 		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
 		cv::Mat* img_;
 
-	// Private Member functions
+	// Private Member functions 
 
 public:
+
+	using OpList = std::vector<ProcessingOp::OpPtr>;
+
+	//- Public data
+
+		//- A list of preprocessing operations
+		OpList preprocessing;
+		//- A list of postprocessing operations
+		OpList postprocessing;
 
 	// Constructors
 
@@ -69,29 +79,21 @@ public:
 
 	// Member functions
 
-		//- Draw rectangles onto an image
-		void drawRectangles
-		(
-			const std::vector<Rectangle>& rects,
-			const Config& cfg
-		);
-
 		//- Get the stored image
 		const cv::Mat& getImage() const;
 
-		//- Normalize brightness and contrast
-		//	TODO: this needs to be refactored
-		void normalize(float clipPct = 0.5);
+		//- Run pre-OCR image processing
+		bool preprocess();
 
-		//- Prepare an image for OCR
-		//	TODO: this needs to be able to adjust execution based on a Config
-		bool preprocess(const Config& cfg);
+		//- Run post-OCR image processing
+		bool postprocess(const OcrResults& res);
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
 
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
+
 
 	// Member operators
 
@@ -103,8 +105,7 @@ public:
 
 };
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

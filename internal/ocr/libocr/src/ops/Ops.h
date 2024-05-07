@@ -11,16 +11,20 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_LIBOCR_H
-#define OCR_LIBOCR_H
+#ifndef OCR_OPS_H
+#define OCR_OPS_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "ImageProcessor.h"
-#include "OcrResults.h"
-#include "Ops.h"
-#include "Tesseract.h"
-#include "Utility.h"
+#include "DrawTextBoxes.h"
+#include "GaussianBlur.h"
+#include "Invert.h"
+#include "MedianBlur.h"
+#include "Morphology.h"
+#include "NormalizeBrightnessContrast.h"
+#include "ProcessingOp.h"
+#include "Resize.h"
+#include "Threshold.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

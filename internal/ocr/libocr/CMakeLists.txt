@@ -64,11 +64,11 @@ list(APPEND OCR_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
 
 # JSON
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
-FetchContent_MakeAvailable(json)
-set(JSON_BuildTests OFF CACHE INTERNAL "")
-set(JSON_Install OFF CACHE INTERNAL "")
-list(APPEND OCR_LIBRARIES nlohmann_json::nlohmann_json)
+#FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+#FetchContent_MakeAvailable(json)
+#set(JSON_BuildTests OFF CACHE INTERNAL "")
+#set(JSON_Install OFF CACHE INTERNAL "")
+#list(APPEND OCR_LIBRARIES nlohmann_json::nlohmann_json)
 
 # Threads
 #find_package(Threads REQUIRED)
@@ -82,13 +82,21 @@ file(
 	GLOB
 	OCR_SRC
 	CONFIGURE_DEPENDS
-	"${PROJECT_SOURCE_DIR}/src/*.cpp")
+	"${PROJECT_SOURCE_DIR}/src/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/ops/*.cpp")
 
 file(
 	GLOB
 	OCR_HDR
 	CONFIGURE_DEPENDS
-	"${PROJECT_SOURCE_DIR}/src/*.h")
+	"${PROJECT_SOURCE_DIR}/src/*.h"
+	"${PROJECT_SOURCE_DIR}/src/ops/*.h")
+
+list(
+	APPEND
+	OCR_INCLUDE_DIRS 
+	"${PROJECT_SOURCE_DIR}/src"
+	"${PROJECT_SOURCE_DIR}/src/ops")
 
 # main library target
 add_library (ocr SHARED)
