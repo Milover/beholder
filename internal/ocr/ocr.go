@@ -20,7 +20,7 @@ import (
 // NOTE: think whether we should restrict access to the APIs altogether,
 // and just use OCR as the API interface, since Tesseract and ImageProcessor
 // are almost exclusively used in tandem, for example: when reading
-// a new image, Tesseract should be Clear()-ed; when preprocessing and image,
+// a new image, Tesseract should be Clear()-ed; when preprocessing an image,
 // Tesseract should SetImage(); postprocessing an image should only happen
 // after running DetectAndRecognize().
 // So while this would be somewhat more restrictive, it would probably make
