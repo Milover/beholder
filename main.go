@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -9,11 +10,58 @@ import (
 )
 
 const (
-	json string = `
+	config string = `
 {
-	"config_paths": ["internal/ocr/testdata/configs/test_neograf_5.patterns.config"],
-	"model_path": "internal/ocr/models/dotmatrix",
-	"model": "dotOCRDData1"
+	"ocr": {
+		"config_paths": [
+			"internal/ocr/testdata/configs/test_neograf_5.patterns.config"
+		],
+		"model_dir_path": "internal/ocr/models/dotmatrix",
+		"model": "dotOCRDData1"
+	},
+	"image_processing": {
+		"preprocessing": [
+			{
+				"resize": {
+					"width": 860,
+					"height": 430
+				}
+			},
+			{
+				"normalize_brightness_contrast": {
+					"clip_pct": 0.5
+				}
+			},
+			{
+				"median_blur": {
+					"kernel_size": 3
+				}
+			},
+			{
+				"threshold": {
+					"value": 0.0,
+					"max_value": 255.0,
+					"type": [ "binary", "otsu" ]
+				}
+			},
+			{
+				"morphology": {
+					"kernel_type": "rectangle",
+					"kernel_width": 3,
+					"kernel_height": 3,
+					"type": "open",
+					"iterations": 5
+				}
+			}
+		],
+		"postprocessing": [
+			{
+				"draw_text_boxes": {
+				"thickness": 3
+				}
+			}
+		]
+	}
 }
 `
 	testImg  string = "internal/ocr/testdata/images/neograf/imagefile_5.bmp"
@@ -23,40 +71,39 @@ const (
 func main() {
 	start := time.Now()
 
-	cfg := ocr.NewConfig(json)
-	defer cfg.Delete()
-	if cfg == nil {
-		log.Fatal("Could not parse config")
+	o := ocr.NewOCR()
+	defer o.Delete()
+	if err := json.Unmarshal([]byte(config), &o); err != nil {
+		log.Fatal(err)
 	}
-	t := ocr.NewTesseract(*cfg)
-	defer t.Delete()
-	if t == nil {
-		log.Fatal("Could not initialize tesseract")
+	if err := o.Init(); err != nil {
+		log.Fatal(err)
 	}
-	ip := ocr.NewImageProcessor()
-	defer ip.Delete()
-
 	init := time.Now()
 
-	if err := ip.ReadImage(testImg, 0); err != nil {
+	if err := o.P.ReadImage(testImg, 0); err != nil {
 		log.Fatal(err)
 	}
-
 	readimg := time.Now()
 
-	if err := ip.Preprocess(*cfg); err != nil {
+	if err := o.P.Preprocess(); err != nil {
 		log.Fatal(err)
 	}
-	t.SetImage(*ip, 1)
-
+	o.T.SetImage(*o.P, 1)
 	preproc := time.Now()
 
-	if err := t.DetectText(*ip, *cfg); err != nil {
+	text, err := o.T.DetectAndRecognize()
+	if err != nil {
 		log.Fatal(err)
 	}
-	text := t.RecognizeText()
+	recog := time.Now()
 
+	if err := o.P.Postprocess(*o.T); err != nil {
+		log.Fatal(err)
+	}
 	end := time.Now()
+
+	o.P.ShowImage("result")
 
 	if text != expected {
 		log.Fatalf("FAIL: got '%v', expected '%v'", text, expected)
@@ -65,6 +112,7 @@ func main() {
 	fmt.Printf("initialize     : %vms\n", init.Sub(start).Milliseconds())
 	fmt.Printf("read image     : %vms\n", readimg.Sub(init).Milliseconds())
 	fmt.Printf("preprocess     : %vms\n", preproc.Sub(readimg).Milliseconds())
-	fmt.Printf("ocr            : %vms\n", end.Sub(preproc).Milliseconds())
+	fmt.Printf("ocr            : %vms\n", recog.Sub(preproc).Milliseconds())
+	fmt.Printf("postprocess    : %vms\n", end.Sub(recog).Milliseconds())
 	fmt.Printf("total          : %vms\n", end.Sub(start).Milliseconds())
 }
