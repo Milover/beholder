@@ -22,6 +22,19 @@ const (
 	"image_processing": {
 		"preprocessing": [
 			{
+				"crop": {
+					"left": -10,
+					"right": 2000,
+					"top": -10,
+					"bottom": 1000
+				}
+			},
+			{
+				"rotate": {
+					"angle": 360
+				}
+			},
+			{
 				"resize": {
 					"width": 860,
 					"height": 430

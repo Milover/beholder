@@ -20,6 +20,7 @@ type opFactory func(json.RawMessage) (unsafe.Pointer, error)
 // opFactoryMap maps the names of image processing operations to their
 // factory functions.
 var opFactoryMap = map[string]opFactory{
+	"crop":                          NewCrop,
 	"draw_text_boxes":               NewDrawTextBoxes,
 	"gaussian_blur":                 NewGaussianBlur,
 	"invert":                        NewInvert,
@@ -27,6 +28,7 @@ var opFactoryMap = map[string]opFactory{
 	"morphology":                    NewMorphology,
 	"normalize_brightness_contrast": NewNormBC,
 	"resize":                        NewResize,
+	"rotate":                        NewRotate,
 	"threshold":                     NewThreshold,
 }
 
@@ -37,6 +39,32 @@ type drawTextBoxes struct {
 	Color [4]float32 `json:"color"`
 	// Text box line thickness.
 	Thickness int `json:"thickness"`
+}
+
+// crop represents an image cropping operation.
+type crop struct {
+	Left   int `json:"left"`
+	Right  int `json:"right"`
+	Top    int `json:"top"`
+	Bottom int `json:"bottom"`
+}
+
+// NewCrop creates a cropping operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewCrop(m json.RawMessage) (unsafe.Pointer, error) {
+	op := crop{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	return unsafe.Pointer(C.Crp_New(
+		C.int(op.Left),
+		C.int(op.Right),
+		C.int(op.Top),
+		C.int(op.Bottom),
+	)), nil
 }
 
 // NewDrawTextBoxes creates a drawTextBoxes operation with default values,
@@ -310,6 +338,26 @@ func NewResize(m json.RawMessage) (unsafe.Pointer, error) {
 	return unsafe.Pointer(C.Rsz_New(
 		C.int(op.Width),
 		C.int(op.Height),
+	)), nil
+}
+
+// rotate represents an image rotation operation.
+type rotate struct {
+	Angle float32 `json:"angle"`
+}
+
+// NewRotate creates a rotation operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewRotate(m json.RawMessage) (unsafe.Pointer, error) {
+	op := rotate{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	return unsafe.Pointer(C.Rot_New(
+		C.float(op.Angle),
 	)), nil
 }
 

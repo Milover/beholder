@@ -16,6 +16,7 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "Crop.h"
 #include "DrawTextBoxes.h"
 #include "GaussianBlur.h"
 #include "Invert.h"
@@ -24,6 +25,7 @@ Description
 #include "NormalizeBrightnessContrast.h"
 #include "ProcessingOp.h"
 #include "Resize.h"
+#include "Rotate.h"
 #include "Threshold.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

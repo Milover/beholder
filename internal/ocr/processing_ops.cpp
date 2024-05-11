@@ -2,6 +2,10 @@
 
 #include "processing_ops.h"
 
+Crp Crp_New(int left, int right, int top, int bottom) {
+	return new ocr::Crop {left, right, top, bottom};
+}
+
 DrawTB DrawTB_New(float color[4], int thickness) {
 	std::array<float, 4> c {color[0], color[1], color[2], color[3]};
 	return new ocr::DrawTextBoxes {c, thickness};
@@ -25,6 +29,10 @@ Morph Morph_New(int kTyp, int kW, int kH, int typ, int iter) {
 
 NormBC NormBC_New(float clipPct) {
 	return new ocr::NormalizeBrightnessContrast {clipPct};
+}
+
+Rot Rot_New(float angle) {
+	return new ocr::Rotate {angle};
 }
 
 Rsz Rsz_New(int width, int height) {
