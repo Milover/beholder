@@ -56,6 +56,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// setup image processor
 	ocr::ImageProcessor ip {};
 	// preprocessin
+	ip.preprocessing.emplace_back(new ocr::Crop {-10, 2000, -10, 900});	// a nop crop
+	ip.preprocessing.emplace_back(new ocr::Rotate {360});				// a nop rotate
 	ip.preprocessing.emplace_back(new ocr::Resize {860, 430});
 	ip.preprocessing.emplace_back(new ocr::NormalizeBrightnessContrast {0.5});
 	ip.preprocessing.emplace_back(new ocr::MedianBlur {3});
@@ -70,6 +72,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// preprocess the image
 	ip.preprocess();
 	t.setImage(ip);
+	//ip.showImage();
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// run ocr
