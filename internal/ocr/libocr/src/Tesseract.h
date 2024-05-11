@@ -21,7 +21,7 @@ SourceFiles
 #include <vector>
 
 #include "ImageProcessor.h"
-#include "Rectangle.h"
+#include "OcrResults.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -49,7 +49,19 @@ private:
 		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
 		tesseract::TessBaseAPI* p_;
 
+		//- OCR results
+		OcrResults res_;
+
 public:
+
+	// Public data
+
+		//- Configuration file paths
+		std::vector<std::string> configPaths;
+		//- Directory path of the model (trained data) file
+		std::string modelPath;
+		//- Model (trained data) name
+		std::string model;
 
 	// Constructors
 
@@ -68,21 +80,23 @@ public:
 
 	// Member functions
 
-		//- Reset Tesseract
+		//- Reset Tesseract and OCR results
 		void clear();
 
-		//- Detect text
-		std::vector<Rectangle> detectText();
+		//- Run text detection and store the results
+		bool detectText();
+
+		//- Get a const reference to the OCR results
+		const OcrResults& getResults() const;
 
 		//- Initialize Tesseract
-		bool init(const Config& cfg);
+		bool init();
 
-		//- Run OCR and get result as UTF8 char*.
-		//	The reciever takes ownership and must call delete[].
-		char* recognizeText();
+		//- Run text recognition and store the results
+		bool recognizeText();
 
-		//- Run OCR and get result as UTF8 string
-		std::string recognizeTextStr();
+		//- Run text detection and recognition and store the results
+		bool detectAndRecognize();
 
 		//- Set image for recognition
 		void setImage(const ImageProcessor& ip, int bytesPerPixel = 1);
@@ -98,8 +112,7 @@ public:
 
 };
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -12,8 +12,12 @@ License
 #include <string>
 
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 
-#include "libocr.h"
+#include "ImageProcessor.h"
+#include "Ops.h"
+#include "Tesseract.h"
+#include "Utility.h"
 
 #include "Test.h"
 
@@ -21,16 +25,6 @@ License
 
 namespace ocr
 {
-
-const std::string config
-{R"(
-{
-	"config_paths": ["../testdata/configs/test_neograf_5.patterns.config"],
-	"model_path": "../../../models/dotmatrix",
-	"model": "dotOCRDData1"
-}
-)"};
-
 
 const std::string testImage
 {
@@ -48,17 +42,12 @@ const std::string expected
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-	// setup the config
-	ocr::Config cfg {};
-	if (!cfg.parse(ocr::config))
-	{
-		std::cerr << "Could not parse JSON.\n";
-		return 1;
-	}
-
 	// setup tesseract
 	ocr::Tesseract t {};
-	if (!t.init(cfg))
+	t.configPaths = std::vector<std::string>{"../testdata/configs/test_neograf_5.patterns.config"};
+	t.modelPath = "../../../models/dotmatrix";
+	t.model = "dotOCRDData1";
+	if (!t.init())
 	{
 		std::cerr << "Could not initialize tesseract.\n";
 		return 1;
@@ -66,38 +55,42 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// setup image processor
 	ocr::ImageProcessor ip {};
+	// preprocessin
+	ip.preprocessing.emplace_back(new ocr::Resize {860, 430});
+	ip.preprocessing.emplace_back(new ocr::NormalizeBrightnessContrast {0.5});
+	ip.preprocessing.emplace_back(new ocr::MedianBlur {3});
+	ip.preprocessing.emplace_back(new ocr::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});
+	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 3, 3, cv::MORPH_OPEN, 5});
+	// postprocessing
+	ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0.0, 0.0, 0.0, 0.0}, 3});
 
 	// read/load an image
 	ip.readImage(ocr::testImage, cv::IMREAD_GRAYSCALE);
 
 	// preprocess the image
-	ip.preprocess(cfg);
+	ip.preprocess();
 	t.setImage(ip);
 
 	// NOTE: the analysis (seemingly) isn't being re-run
-	// detect text (get text boxes)
-	auto rects {t.detectText()};
-	if (rects.empty())
+	// run ocr
+	if (!t.detectAndRecognize())
 	{
-		// If text detection fails, text recognition will also fail, so it's
-		// fine to exit right away.
-		std::cerr << "Could not analyze text.\n";
+		std::cerr << "Could not detect/recognize text.\n";
 		return 1;
 	}
-	// run ocr
-	std::string text {t.recognizeTextStr()};
-	ocr::trimWhiteLR(text);
+	std::string txt {t.getResults().text};
+	ocr::trimWhiteLR(txt);
 
 	// postprocess
-	ip.drawRectangles(rects, cfg);
+	ip.postprocess(t.getResults());
 
 	// show results
 	std::string expectedStr {ocr::expected};
 	std::cout << "Expected output:  " << expectedStr << '\n';
-	std::cout << "OCR output:       " << text << '\n';
-	//ip.showImage(im);
+	std::cout << "OCR output:       " << txt  << '\n';
+	//ip.showImage();
 
-	if (expectedStr != text)
+	if (expectedStr != txt)
 	{
 		return 1;
 	}

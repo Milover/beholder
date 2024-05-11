@@ -17,12 +17,11 @@ License
 #include <opencv2/core/types.hpp>
 #include <tesseract/baseapi.h>
 
-#include "Config.h"
-#include "Utility.h"
-
 #include "ImageProcessor.h"
+#include "OcrResults.h"
 #include "Rectangle.h"
 #include "Tesseract.h"
+#include "Utility.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,51 +49,61 @@ Tesseract::~Tesseract()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+// FIXME: should clear results
 void Tesseract::clear()
 {
 	p_->Clear();
+	res_.text.clear();
+	res_.textBoxes.clear();
 }
 
 
-std::vector<Rectangle> Tesseract::detectText()
+// FIXME: should also grab other result data (eg. certanties)
+bool Tesseract::detectText()
 {
-	std::vector<Rectangle> rects;
+	res_.textBoxes.clear();
 
 	std::unique_ptr<tesseract::PageIterator> iter {p_->AnalyseLayout()};
 	if (!iter)
 	{
-		return rects;
+		return false;
 	}
 	tesseract::PageIteratorLevel level {tesseract::RIL_TEXTLINE};
 
 	// construct text boxes
-	rects.reserve(5);		// FIXME: guesstimate
+	res_.textBoxes.reserve(5);		// FIXME: guesstimate
 	do
 	{
 		Rectangle r;
 		if (iter->BoundingBox(level, &r.left, &r.top, &r.right, &r.bottom))
 		{
-			rects.emplace_back(std::move(r));
+			res_.textBoxes.emplace_back(std::move(r));
 		}
 	} while(iter->Next(level));
-
-	return rects;
+	
+	return !res_.textBoxes.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
 }
 
 
-bool Tesseract::init(const Config& cfg)
+const OcrResults& Tesseract::getResults() const
 {
-	auto p {vecStr2ChPtrArr(cfg.configPaths)};
+	return res_;
+}
+
+
+bool Tesseract::init()
+{
+	auto p {vecStr2ChPtrArr(configPaths)};
 	bool success
 	{
 		static_cast<bool>
 		(
 			p_->Init(
-				cfg.modelPath.c_str(),
-				cfg.model.c_str(),
+				modelPath.c_str(),
+				model.c_str(),
 				tesseract::OEM_LSTM_ONLY,
 				p.get(),
-				cfg.configPaths.size(),
+				configPaths.size(),
 				nullptr,
 				nullptr,
 				false
@@ -117,18 +126,19 @@ bool Tesseract::init(const Config& cfg)
 }
 
 
-char* Tesseract::recognizeText()
+bool Tesseract::recognizeText()
 {
-	return p_->GetUTF8Text();
+	char* c {p_->GetUTF8Text()};
+	res_.text = c;
+	delete[] c;
+
+	return !res_.text.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
 }
 
 
-std::string Tesseract::recognizeTextStr()
+bool Tesseract::detectAndRecognize()
 {
-	char* c {p_->GetUTF8Text()};
-	std::string s {c};
-	delete[] c;
-	return s;
+	return detectText() && recognizeText();
 }
 
 
@@ -137,6 +147,8 @@ void Tesseract::setImage(const ImageProcessor& ip, int bytesPerPixel)
 	const cv::Mat& im {ip.getImage()};
 	p_->SetImage(im.data, im.cols, im.rows, bytesPerPixel, im.step);
 }
+
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

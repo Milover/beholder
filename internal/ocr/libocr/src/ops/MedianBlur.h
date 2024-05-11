@@ -7,20 +7,24 @@ License
 	See the LICENSE file for license information.
 
 Description
-	A configuration data class.
+	An image brightness and contrast normalization operation.
 
 SourceFiles
-	Config.cpp
+	MedianBlur.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_CONFIG_H
-#define OCR_CONFIG_H
+#ifndef OCR_MEDIAN_BLUR_OP_H
+#define OCR_MEDIAN_BLUR_OP_H
 
-#include <array>
-#include <string>
-#include <utility>
-#include <vector>
+#include "ProcessingOp.h"
+
+// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
+
+namespace cv
+{
+	class Mat;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -28,48 +32,52 @@ namespace ocr
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class Config Declaration
+                        Class MedianBlur Declaration
 \*---------------------------------------------------------------------------*/
 
-class Config
+class MedianBlur
+:
+	public ProcessingOp
 {
-private:
+protected:
 
-	// Private data
+	// Protected member functions
+
+		//- Execute the processing operation
+		bool execute(const cv::Mat& in, cv::Mat& out) const override;
+
+		//- Execute the processing operation
+		bool execute
+		(
+			const cv::Mat& in,
+			cv::Mat& out,
+			const OcrResults&
+		) const override;
 
 public:
 
-	// Public data
+	//- Public data
 
-		//- Paths of Tesseract configuration files
-		std::vector<std::string> configPaths;
-		//- Path to Tesseract model file directory
-		std::string modelPath;
-		//- Name of the Tesseract model
-		std::string model;
-		//- The RGBA color of the text box drawn during text detection
-		std::array<double, 4> textBoxColor;
-		//- The line thickness of the text box drawn during text detection
-		int textBoxThickness;
+		//- Kernel size
+		int kernelSize {3};
 
-	// Constructors
+	//- Constructors
 
-	//- Destructor
+		//- Default constructor
+		MedianBlur() = default;
 
-	// Member functions
+		//- Default constructor
+		MedianBlur(int ksize)
+		:
+			ProcessingOp(),
+			kernelSize {ksize}
+		{}
 
-		//- Parse data from a JSON char*
-		bool parse(const char* s);
-
-		//- Parse data from a JSON string
-		bool parse(const std::string& s);
-
-	// Member operators
+	//- Member functions
 
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
