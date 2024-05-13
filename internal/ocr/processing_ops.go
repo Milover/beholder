@@ -7,6 +7,7 @@ package ocr
 import "C"
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"unsafe"
 )
@@ -50,6 +51,7 @@ func NewCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	// C does bound-snapping; all values accepted, no input validation required
 	return unsafe.Pointer(C.Crp_New(
 		C.int(op.Left),
 		C.int(op.Right),
@@ -80,6 +82,7 @@ func NewDrawTextBoxes(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	// all values accepted, no input validation required
 	return unsafe.Pointer(C.DrawTB_New(
 		(*C.float)(&op.Color[0]),
 		C.int(op.Thickness),
@@ -111,6 +114,13 @@ func NewGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	if op.KernelWidth <= 0 || op.KernelWidth%2 != 1 {
+		return nil, errors.New("ocr.NewGaussianBlur: bad kernel width")
+	}
+	if op.KernelHeight <= 0 || op.KernelHeight%2 != 1 {
+		return nil, errors.New("ocr.NewGaussianBlur: bad kernel height")
+	}
+	// SigmaX and SigmaY accept all values
 	return unsafe.Pointer(C.GaussBlur_New(
 		C.int(op.KernelWidth),
 		C.int(op.KernelHeight),
@@ -132,6 +142,7 @@ func NewInvert(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	// no input validation required
 	return unsafe.Pointer(C.Inv_New()), nil
 }
 
@@ -154,8 +165,8 @@ func NewMedianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
-	if op.KernelSize%2 == 0 {
-		return nil, fmt.Errorf("medianBlur: kernel size not an odd number: %v", op.KernelSize)
+	if op.KernelSize%2 != 1 {
+		return nil, errors.New("ocr.NewMedianBlur: bad kernel size")
 	}
 	return unsafe.Pointer(C.MedBlur_New(C.int(op.KernelSize))), nil
 }
@@ -289,6 +300,13 @@ func NewMorphology(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	if op.KernelWidth <= 0 {
+		return nil, errors.New("ocr.NewMorphology: bad kernel width")
+	}
+	if op.KernelHeight <= 0 {
+		return nil, errors.New("ocr.NewMorphology: bad kernel height")
+	}
+	// Iterations accepts all values; types are valid if parsed
 	return unsafe.Pointer(C.Morph_New(
 		C.int(op.KernelType),
 		C.int(op.KernelWidth),
@@ -316,7 +334,10 @@ func NewNormBC(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
-	return unsafe.Pointer(C.NormBC_New(C.float(op.ClipPct))), nil
+	// all values accepted, no input validation required
+	return unsafe.Pointer(C.NormBC_New(
+		C.float(op.ClipPct),
+	)), nil
 }
 
 // resize represents an image resizing operation.
@@ -334,6 +355,12 @@ func NewResize(m json.RawMessage) (unsafe.Pointer, error) {
 	op := resize{}
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
+	}
+	if op.Width <= 0 {
+		return nil, errors.New("ocr.NewResize: bad width")
+	}
+	if op.Height <= 0 {
+		return nil, errors.New("ocr.NewResize: bad height")
 	}
 	return unsafe.Pointer(C.Rsz_New(
 		C.int(op.Width),
@@ -356,6 +383,7 @@ func NewRotate(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	// all values accepted, no input validation required
 	return unsafe.Pointer(C.Rot_New(
 		C.float(op.Angle),
 	)), nil
@@ -445,6 +473,14 @@ func NewThreshold(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	// if 2 types are specified, 1 must be either ThreshOtsu or ThreshTriangle
+	typ := op.Type[0] + op.Type[1]
+	if !(typ >= ThreshBinary && typ <= ThreshToZeroInv) ||
+		!(typ >= ThreshOtsu && typ <= ThreshOtsu+ThreshToZeroInv) ||
+		!(typ >= ThreshTriangle && typ <= ThreshTriangle+ThreshToZeroInv) {
+		return nil, errors.New("ocr.NewThreshold: bad threshold type")
+	}
+	// Value and MaxValue accept all values
 	return unsafe.Pointer(C.Thresh_New(
 		C.float(op.Value),
 		C.float(op.MaxValue),
