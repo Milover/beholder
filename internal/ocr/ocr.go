@@ -130,7 +130,15 @@ func (ip ImageProcessor) Init() error {
 	if err != nil {
 		return err
 	}
-	ok := C.Proc_Init(ip.p, &post[0], C.size_t(len(post)), &pre[0], C.size_t(len(pre)))
+	var ppost *unsafe.Pointer
+	if len(post) > 0 {
+		ppost = &post[0]
+	}
+	var ppre *unsafe.Pointer
+	if len(pre) > 0 {
+		ppre = &pre[0]
+	}
+	ok := C.Proc_Init(ip.p, ppost, C.size_t(len(post)), ppre, C.size_t(len(pre)))
 	if !ok {
 		return errors.New("ocr.ImageProcessor.Init: could not initialize image processing")
 	}
@@ -275,7 +283,7 @@ func (t Tesseract) IsValid() error {
 	if _, err := os.Stat(t.ModelDirPath); err != nil {
 		return err
 	}
-	if _, err := os.Stat(path.Join(t.ModelDirPath, t.Model)); err != nil {
+	if _, err := os.Stat(path.Join(t.ModelDirPath, t.Model+".traineddata")); err != nil {
 		return err
 	}
 	return nil

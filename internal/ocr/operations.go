@@ -475,8 +475,8 @@ func NewThreshold(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	// if 2 types are specified, 1 must be either ThreshOtsu or ThreshTriangle
 	typ := op.Type[0] + op.Type[1]
-	if !(typ >= ThreshBinary && typ <= ThreshToZeroInv) ||
-		!(typ >= ThreshOtsu && typ <= ThreshOtsu+ThreshToZeroInv) ||
+	if !(typ >= ThreshBinary && typ <= ThreshToZeroInv) &&
+		!(typ >= ThreshOtsu && typ <= ThreshOtsu+ThreshToZeroInv) &&
 		!(typ >= ThreshTriangle && typ <= ThreshTriangle+ThreshToZeroInv) {
 		return nil, errors.New("ocr.NewThreshold: bad threshold type")
 	}
