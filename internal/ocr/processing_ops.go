@@ -32,15 +32,6 @@ var opFactoryMap = map[string]opFactory{
 	"threshold":                     NewThreshold,
 }
 
-// drawTextBoxes represents a postprocessing operation which draws rectangles
-// around detected text.
-type drawTextBoxes struct {
-	// Text box line color.
-	Color [4]float32 `json:"color"`
-	// Text box line thickness.
-	Thickness int `json:"thickness"`
-}
-
 // crop represents an image cropping operation.
 type crop struct {
 	Left   int `json:"left"`
@@ -65,6 +56,15 @@ func NewCrop(m json.RawMessage) (unsafe.Pointer, error) {
 		C.int(op.Top),
 		C.int(op.Bottom),
 	)), nil
+}
+
+// drawTextBoxes represents a postprocessing operation which draws rectangles
+// around detected text.
+type drawTextBoxes struct {
+	// Text box line color.
+	Color [4]float32 `json:"color"`
+	// Text box line thickness.
+	Thickness int `json:"thickness"`
 }
 
 // NewDrawTextBoxes creates a drawTextBoxes operation with default values,
