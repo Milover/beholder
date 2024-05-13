@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path"
 	"strings"
 	"unsafe"
 )
@@ -64,7 +66,7 @@ func (o OCR) Init() error {
 // WARNING: ImageProcessor holds a pointer to C-allocated memory,
 // so when it is no longer needed, Delete must be called to release
 // the memory and clean up.
-// FIXME: missing a way to reset the image/read an image from a []byte.
+// TODO: missing a way to reset the image/read an image from a []byte.
 type ImageProcessor struct {
 	// Postprocessing holds a list of configurations for
 	// image postprocessing operations.
@@ -88,8 +90,12 @@ func (ip ImageProcessor) Delete() {
 	C.Proc_Delete(ip.p)
 }
 
-// Init initializes the C-allocated API with the configuration data.
+// Init initializes the C-allocated API with the configuration data,
+// if ip is valid.
 func (ip ImageProcessor) Init() error {
+	if err := ip.IsValid(); err != nil {
+		return err
+	}
 	op := make(map[string]json.RawMessage, 1)
 	helper := func(msgs []json.RawMessage) ([]unsafe.Pointer, error) {
 		ptrs := make([]unsafe.Pointer, 0, len(msgs))
@@ -127,6 +133,14 @@ func (ip ImageProcessor) Init() error {
 	ok := C.Proc_Init(ip.p, &post[0], C.size_t(len(post)), &pre[0], C.size_t(len(pre)))
 	if !ok {
 		return errors.New("ocr.ImageProcessor.Init: could not initialize image processing")
+	}
+	return nil
+}
+
+// IsValid is function used as an assertion that ip is able to be initialized.
+func (ip ImageProcessor) IsValid() error {
+	if ip.p == (C.Proc)(nil) {
+		return errors.New("ocr.ImageProcessor.IsValid: nil API pointer")
 	}
 	return nil
 }
@@ -219,19 +233,50 @@ func (t Tesseract) DetectAndRecognize() (string, error) {
 	return str, nil
 }
 
-// Init initializes the C-allocated API with the configuration data.
+// Init initializes the C-allocated API with the configuration data,
+// if t is valid.
 func (t Tesseract) Init() error {
-	cp := make([]*C.char, len(t.ConfigPaths))
-	for i, p := range t.ConfigPaths {
-		cp[i] = C.CString(p)
-		defer C.free(unsafe.Pointer(cp[i]))
+	if err := t.IsValid(); err != nil {
+		return err
 	}
 	mdp := C.CString(t.ModelDirPath)
 	defer C.free(unsafe.Pointer(mdp))
 	m := C.CString(t.Model)
 	defer C.free(unsafe.Pointer(m))
-	if ok := C.Tess_Init(t.p, &cp[0], C.size_t(len(t.ConfigPaths)), mdp, m); !ok {
+	// This could be moved into the 'if' block below and it would still be
+	// correct/valid, but it makes reasoning about the memory of cp difficult,
+	// so we pull 'cp' into the function scope and clarify that
+	// the memory 'cfgs' points to is valid until we return.
+	cp := make([]*C.char, len(t.ConfigPaths))
+	for i, p := range t.ConfigPaths {
+		cp[i] = C.CString(p)
+		defer C.free(unsafe.Pointer(cp[i]))
+	}
+	cfgs := (**C.char)(nil)
+	if len(cp) > 0 {
+		cfgs = &cp[0]
+	}
+	if ok := C.Tess_Init(t.p, cfgs, C.size_t(len(t.ConfigPaths)), mdp, m); !ok {
 		return errors.New("ocr.Tesseract.Init: could not initialize tesseract")
+	}
+	return nil
+}
+
+// IsValid is function used as an assertion that t is able to be initialized.
+func (t Tesseract) IsValid() error {
+	if t.p == (C.Tess)(nil) {
+		return errors.New("ocr.Tesseract.IsValid: nil API pointer")
+	}
+	for _, c := range t.ConfigPaths {
+		if _, err := os.Stat(c); err != nil {
+			return err
+		}
+	}
+	if _, err := os.Stat(t.ModelDirPath); err != nil {
+		return err
+	}
+	if _, err := os.Stat(path.Join(t.ModelDirPath, t.Model)); err != nil {
+		return err
 	}
 	return nil
 }

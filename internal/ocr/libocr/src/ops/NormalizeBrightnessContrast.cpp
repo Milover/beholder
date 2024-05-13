@@ -76,8 +76,8 @@ bool normalizeBrightnessContrast
 
 	// locate clip points
 	float max {acc.back()};
-	clipPct *= max / 100.0;	// ?
-	clipPct /= 2.0;			// ?
+	clipPct *= max / 100.0;	// convert from pct. to actual value
+	clipPct /= 2.0;			// because we clip from both sides
 
 	// FIXME: this is looks kinda dumb
 	// locate left cut
