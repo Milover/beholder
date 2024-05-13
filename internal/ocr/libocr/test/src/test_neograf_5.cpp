@@ -64,7 +64,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ip.preprocessing.emplace_back(new ocr::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});
 	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 3, 3, cv::MORPH_OPEN, 5});
 	// postprocessing
-	ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0.0, 0.0, 0.0, 0.0}, 3});
+	ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
 
 	// read/load an image
 	ip.readImage(ocr::testImage, cv::IMREAD_GRAYSCALE);
