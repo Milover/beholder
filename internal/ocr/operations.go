@@ -2,7 +2,7 @@ package ocr
 
 /*
 #include <stdlib.h>
-#include "processing_ops.h"
+#include "operations.h"
 */
 import "C"
 import (

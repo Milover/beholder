@@ -8,6 +8,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -26,9 +27,15 @@ License
 namespace ocr
 {
 
+// the internal/ocr directory
+const std::filesystem::path internalDir
+{
+	"../../../"
+};
+
 const std::string testImage
 {
-	"../../../testdata/images/neograf/imagefile_5.bmp"
+	"testdata/images/neograf/imagefile_5.bmp"
 };
 
 const std::string expected
@@ -42,10 +49,13 @@ const std::string expected
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
+	// chdir to the go project internal/ocr directory to make our life easier
+	std::filesystem::current_path(ocr::internalDir);
+
 	// setup tesseract
 	ocr::Tesseract t {};
-	t.configPaths = std::vector<std::string>{"../testdata/configs/test_neograf_5.patterns.config"};
-	t.modelPath = "../../../models/dotmatrix";
+	t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf_5.patterns.config"};
+	t.modelPath = "_models/dotmatrix";
 	t.model = "dotOCRDData1";
 	if (!t.init())
 	{

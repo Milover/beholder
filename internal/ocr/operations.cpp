@@ -1,6 +1,6 @@
 #include <array>
 
-#include "processing_ops.h"
+#include "operations.h"
 
 Crp Crp_New(int left, int right, int top, int bottom) {
 	return new ocr::Crop {left, right, top, bottom};
