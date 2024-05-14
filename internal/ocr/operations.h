@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
+typedef ocr::AutoCrop* AuCrp;
 typedef ocr::Crop* Crp;
 typedef ocr::DrawTextBoxes* DrawTB;
 typedef ocr::GaussianBlur* GaussBlur;
@@ -18,6 +19,7 @@ typedef ocr::Resize* Rsz;
 typedef ocr::Rotate* Rot;
 typedef ocr::Threshold* Thresh;
 #else
+typedef void* AuCrp;
 typedef void* Crp;
 typedef void* DrawTB;
 typedef void* GaussBlur;
@@ -30,6 +32,7 @@ typedef void* Rsz;
 typedef void* Thresh;
 #endif
 
+AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding);
 Crp Crp_New(int left, int right, int top, int bottom);
 DrawTB DrawTB_New(float* color, int thickness);
 GaussBlur GaussBlur_New(int kW, int kH, float sX, float sY);
