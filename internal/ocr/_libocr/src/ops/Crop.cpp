@@ -33,19 +33,17 @@ bool Crop::execute(const cv::Mat& in, cv::Mat& out) const
 	auto t {top > 0 ? top : 0};
 	auto b {bottom <= in.rows ? bottom : in.rows};
 	// sanity check
-	if (l > r)
+	if (l >= r)
 	{
-		l = r;
+		if (l == 0) { r = in.cols; } else { l = r - 1; }
 	}
-	if (t > b)
+	if (t >= b)
 	{
-		t = b;
+		if (t == 0) { b = in.rows; } else { t = b - 1; }
 	}
 	cv::Range cols(l, r);
 	cv::Range rows(t, b);
 	out = in(rows, cols);
-	// can never fail, because even if l = r, or t = b, there will always
-	// be at least 1 row and 1 column
 	return true;
 }
 

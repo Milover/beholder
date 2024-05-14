@@ -16,6 +16,7 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "AutoCrop.h"
 #include "Crop.h"
 #include "DrawTextBoxes.h"
 #include "GaussianBlur.h"

@@ -35,7 +35,7 @@ const std::filesystem::path internalDir
 
 const std::string testImage
 {
-	"testdata/images/neograf/imagefile_5.bmp"
+	"testdata/images/neograf/imagefile_4.bmp"
 };
 
 const std::string expected
@@ -66,15 +66,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// setup image processor
 	ocr::ImageProcessor ip {};
 	// preprocessin
-	ip.preprocessing.emplace_back(new ocr::Crop {-10, 2000, -10, 900});	// a nop crop
-	ip.preprocessing.emplace_back(new ocr::Rotate {360});				// a nop rotate
-	ip.preprocessing.emplace_back(new ocr::Resize {860, 430});
+	ip.preprocessing.emplace_back(new ocr::AutoCrop {50, 50.0, 50.0, 10.0});
+	//ip.preprocessing.emplace_back(new ocr::Crop {-10, 2000, -10, 900});	// a nop crop
+	//ip.preprocessing.emplace_back(new ocr::Rotate {360});				// a nop rotate
+	ip.preprocessing.emplace_back(new ocr::Resize {205, 34});
 	ip.preprocessing.emplace_back(new ocr::NormalizeBrightnessContrast {0.5});
 	ip.preprocessing.emplace_back(new ocr::MedianBlur {3});
 	ip.preprocessing.emplace_back(new ocr::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});
-	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 3, 3, cv::MORPH_OPEN, 5});
-	// postprocessing
-	ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
+	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 4, 4, cv::MORPH_OPEN, 1});
+	//// postprocessing
+	//ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
 
 	// read/load an image
 	ip.readImage(ocr::testImage, cv::IMREAD_GRAYSCALE);
@@ -82,7 +83,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// preprocess the image
 	ip.preprocess();
 	t.setImage(ip);
-	//ip.showImage();
+	//ip.writeImage();
+	ip.showImage();
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// run ocr

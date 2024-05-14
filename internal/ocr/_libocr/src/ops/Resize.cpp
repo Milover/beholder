@@ -28,7 +28,8 @@ namespace ocr
 
 bool Resize::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	cv::resize(in, out, cv::Size(width, height));
+	// we almost exclusively shrink images, hence INTER_AREA should be best
+	cv::resize(in, out, cv::Size(width, height), 0, 0, cv::INTER_AREA);
 	return true;
 }
 
