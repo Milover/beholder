@@ -45,6 +45,14 @@ ImageProcessor::~ImageProcessor()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+bool ImageProcessor::decodeImage(void* buffer, int bufSize, int flags)
+{
+	*img_ = cv::Mat{1, bufSize, CV_8UC1, buffer};
+	cv::imdecode(*img_, flags, img_);	// yolo
+	return img_->data != NULL;
+}
+
+
 const cv::Mat& ImageProcessor::getImage() const
 {
 	return *img_;
@@ -92,6 +100,12 @@ void ImageProcessor::showImage(const std::string& title) const
 {
 	cv::imshow(title, *img_);
 	cv::waitKey();
+}
+
+
+bool ImageProcessor::writeImage(const std::string& filename) const
+{
+	return cv::imwrite(filename, *img_);
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
