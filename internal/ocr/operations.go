@@ -38,10 +38,14 @@ var opFactoryMap = map[string]opFactory{
 // It currently uses morphologic gradients to detect text boxes and
 // then crops the image.
 type autoCrop struct {
-	KernelSize int     `json:"kernel_size"`
-	TextWidth  float32 `json:"text_width"`
+	// KernelSize is the size of the kernel used for connecting text blobs,
+	KernelSize int `json:"kernel_size"`
+	// TextWidth is the minium width of the blob for it to be considered text.
+	TextWidth float32 `json:"text_width"`
+	// TextHeight is the minium height of the blob for it to be considered text.
 	TextHeight float32 `json:"text_height"`
-	Padding    float32 `json:"padding"`
+	// Padding is the additional padding added to the detected text box.
+	Padding float32 `json:"padding"`
 }
 
 // NewAutoCrop creates an automaticcropping operation with default values,
