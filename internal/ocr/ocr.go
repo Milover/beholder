@@ -421,7 +421,7 @@ func (t Tesseract) Init() error {
 	defer C.free(unsafe.Pointer(in.modelPath))
 	in.model = C.CString(t.Model)
 	defer C.free(unsafe.Pointer(in.model))
-	//in.psMode = C.int(t.PageSegMode)
+	in.psMode = C.int(t.PageSegMode)
 
 	chPtrSize := unsafe.Sizeof((*C.char)(nil))
 	// handle configuration file names
@@ -436,7 +436,7 @@ func (t Tesseract) Init() error {
 		cfgsSlice[i] = C.CString(p)
 		defer C.free(unsafe.Pointer(cfgsSlice[i]))
 	}
-	// TODO: handle page seg mode and variables
+	// TODO: variables
 
 	ok := C.Tess_Init(t.p, in)
 	if !ok {

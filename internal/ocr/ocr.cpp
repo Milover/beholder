@@ -122,7 +122,8 @@ bool Tess_Init(Tess t, const TInit* in) {
 	}
 	t->modelPath = std::string(in->modelPath);
 	t->model = std::string(in->model);
-	// TODO: handle page seg mode and variables
+	t->pageSegMode = in->psMode;
+	// TODO: handle variables
 
 	return t->init();
 }

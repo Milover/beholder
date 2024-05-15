@@ -31,6 +31,7 @@ typedef struct {
 	size_t nCfgs;
 	const char* modelPath;
 	const char* model;
+	int psMode;
 } TInit;
 
 void Tess_Clear(Tess t);
