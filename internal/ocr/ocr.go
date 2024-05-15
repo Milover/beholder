@@ -61,6 +61,38 @@ func (o OCR) Init() error {
 	return nil
 }
 
+// Run is a function that runs the OCR pipeline (preprocessing, recognition
+// and postprocessing) on the provided image.
+// WARNING: the image buffer MUST be kept alive until the function returns.
+func (o OCR) Run(buf []byte) (string, error) {
+	if err := o.P.DecodeImage(buf, ImreadGrayscale); err != nil {
+		return "", err
+	}
+
+	if err := o.P.Preprocess(); err != nil {
+		return "", err
+	}
+	o.T.SetImage(*o.P, 1)
+
+	text, err := o.T.DetectAndRecognize()
+	if err != nil {
+		return text, err
+	}
+	if err = o.P.Postprocess(*o.T); err != nil {
+		return text, err
+	}
+	return text, nil
+}
+
+type ImreadMode int
+
+const (
+	ImreadUnchanged ImreadMode = iota - 1
+	ImreadGrayscale
+	ImreadAnyDepth
+	ImreadAnyColor = iota
+)
+
 // ImageProcessor is a handle for the image processing API
 // and contains API configuration data.
 // WARNING: ImageProcessor holds a pointer to C-allocated memory,
@@ -83,6 +115,24 @@ type ImageProcessor struct {
 // WARNING: Delete must be called to release the memory when no longer needed.
 func NewImageProcessor() *ImageProcessor {
 	return &ImageProcessor{p: C.Proc_New()}
+}
+
+// DecodeImage decodes and stores an image from the provided buffer.
+// WARNING: the image buffer MUST be kept alive until the function returns.
+func (ip ImageProcessor) DecodeImage(buf []byte, readMode ImreadMode) error {
+	if len(buf) <= 0 {
+		return errors.New("ocr.ImageProcessor.DecodeImage: empty image buffer")
+	}
+	ok := C.Proc_DecodeImage(
+		ip.p,
+		unsafe.Pointer(&buf[0]),
+		C.int(len(buf)),
+		C.int(readMode),
+	)
+	if !ok {
+		return errors.New("ocr.ImageProcessor.DecodeImage: could not decode image")
+	}
+	return nil
 }
 
 // Delete releases C-allocated memory. Once called, ip is no longer valid.
@@ -138,7 +188,13 @@ func (ip ImageProcessor) Init() error {
 	if len(pre) > 0 {
 		ppre = &pre[0]
 	}
-	ok := C.Proc_Init(ip.p, ppost, C.size_t(len(post)), ppre, C.size_t(len(pre)))
+	ok := C.Proc_Init(
+		ip.p,
+		ppost,
+		C.size_t(len(post)),
+		ppre,
+		C.size_t(len(pre)),
+	)
 	if !ok {
 		return errors.New("ocr.ImageProcessor.Init: could not initialize image processing")
 	}
@@ -175,10 +231,10 @@ func (ip ImageProcessor) Preprocess() error {
 }
 
 // ReadImage reads and stores an image from disc.
-func (ip ImageProcessor) ReadImage(filename string, flags int) error {
+func (ip ImageProcessor) ReadImage(filename string, readMode ImreadMode) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
-	if ok := C.Proc_ReadImage(ip.p, cs, C.int(flags)); !ok {
+	if ok := C.Proc_ReadImage(ip.p, cs, C.int(readMode)); !ok {
 		return errors.New("ocr.ImageProcessor.ReadImage: could not read image")
 	}
 	return nil
@@ -189,6 +245,100 @@ func (ip ImageProcessor) ShowImage(title string) {
 	cs := C.CString(title)
 	defer C.free(unsafe.Pointer(cs))
 	C.Proc_ShowImage(ip.p, cs)
+}
+
+// threshType represents the available types of threshold operations.
+type PSegMode int
+
+const (
+	PSMOSDOnly PSegMode = iota
+	PSMAutoOSD
+	PSMAutoOnly
+	PSMAuto
+	PSMSingleColumn
+	PSMSingleBlockVertText
+	PSMSingleBlock
+	PSMSingleLine
+	PSMSingleWord
+	PSMCircleWord
+	PSMSingleChar
+	PSMSparseText
+	PSMSparseTextOSD
+	PSMRawLine
+)
+
+func (m *PSegMode) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	switch s {
+	default:
+		return fmt.Errorf("bad page seg mode: %q", s)
+	case "psm_osd_only":
+		*m = PSMOSDOnly
+	case "psm_auto_osd":
+		*m = PSMAutoOSD
+	case "psm_auto_only":
+		*m = PSMAutoOnly
+	case "psm_auto":
+		*m = PSMAuto
+	case "psm_single_column":
+		*m = PSMSingleColumn
+	case "psm_single_block_vert_text":
+		*m = PSMSingleBlockVertText
+	case "psm_single_block":
+		*m = PSMSingleBlock
+	case "psm_single_line":
+		*m = PSMSingleLine
+	case "psm_single_word":
+		*m = PSMSingleWord
+	case "psm_circle_word":
+		*m = PSMCircleWord
+	case "psm_single_char":
+		*m = PSMSingleChar
+	case "psm_sparse_text":
+		*m = PSMSparseText
+	case "psm_sparse_text_osd":
+		*m = PSMSparseTextOSD
+	case "psm_raw_line":
+		*m = PSMRawLine
+	}
+	return nil
+}
+
+func (m PSegMode) MarshalJSON() ([]byte, error) {
+	switch m {
+	case PSMOSDOnly:
+		return json.Marshal("psm_osd_only")
+	case PSMAutoOSD:
+		return json.Marshal("psm_auto_osd")
+	case PSMAutoOnly:
+		return json.Marshal("psm_auto_only")
+	case PSMAuto:
+		return json.Marshal("psm_auto")
+	case PSMSingleColumn:
+		return json.Marshal("psm_single_column")
+	case PSMSingleBlockVertText:
+		return json.Marshal("psm_single_block_vert_text")
+	case PSMSingleBlock:
+		return json.Marshal("psm_single_block")
+	case PSMSingleLine:
+		return json.Marshal("psm_single_line")
+	case PSMSingleWord:
+		return json.Marshal("psm_single_word")
+	case PSMCircleWord:
+		return json.Marshal("psm_circle_word")
+	case PSMSingleChar:
+		return json.Marshal("psm_single_char")
+	case PSMSparseText:
+		return json.Marshal("psm_sparse_text")
+	case PSMSparseTextOSD:
+		return json.Marshal("psm_sparse_text_osd")
+	case PSMRawLine:
+		return json.Marshal("psm_raw_line")
+	}
+	return nil, fmt.Errorf("bad page seg mode: %d", m)
 }
 
 // Tesseract is a handle for the tesseract API
@@ -204,15 +354,26 @@ type Tesseract struct {
 	ModelDirPath string `json:"model_dir_path"`
 	// Model is the name of the model (trained data) file.
 	Model string `json:"model"`
+	// PageSegMode is the page segmentation mode
+	PageSegMode PSegMode `json:"page_seg_mode"`
+	// Variables are runtime settable variables
+	Variables map[string]string `json:"variables"`
 
 	// p is a pointer to the C++ API class.
 	p C.Tess
 }
 
-// NewTesseract constructs (C call) a new tesseract API.
+// NewTesseract constructs (C call) a new tesseract API with sensible defaults.
 // WARNING: Delete must be called to release the memory when no longer needed.
 func NewTesseract() *Tesseract {
-	return &Tesseract{p: C.Tess_New()}
+	return &Tesseract{
+		PageSegMode: PSMSingleBlock,
+		Variables: map[string]string{
+			"load_system_dawg": "0",
+			"load_freq_dawg":   "0",
+		},
+		p: C.Tess_New(),
+	}
 }
 
 // Delete releases C-allocated memory. Once called, t is no longer valid.
@@ -247,24 +408,32 @@ func (t Tesseract) Init() error {
 	if err := t.IsValid(); err != nil {
 		return err
 	}
-	mdp := C.CString(t.ModelDirPath)
-	defer C.free(unsafe.Pointer(mdp))
-	m := C.CString(t.Model)
-	defer C.free(unsafe.Pointer(m))
-	// This could be moved into the 'if' block below and it would still be
-	// correct/valid, but it makes reasoning about the memory of cp difficult,
-	// so we pull 'cp' into the function scope and clarify that
-	// the memory 'cfgs' points to is valid until we return.
-	cp := make([]*C.char, len(t.ConfigPaths))
+	// allocate the struct and handle the easy stuff (ints, strings...)
+	in := (*C.TInit)(C.malloc(C.sizeof_TInit))
+	defer C.free(unsafe.Pointer(in))
+	in.modelPath = C.CString(t.ModelDirPath)
+	defer C.free(unsafe.Pointer(in.modelPath))
+	in.model = C.CString(t.Model)
+	defer C.free(unsafe.Pointer(in.model))
+	//in.psMode = C.int(t.PageSegMode)
+
+	chPtrSize := unsafe.Sizeof((*C.char)(nil))
+	// handle configuration file names
+	in.nCfgs = C.size_t(len(t.ConfigPaths))
+	in.cfgs = (**C.char)(C.malloc(C.size_t(in.nCfgs) * C.size_t(chPtrSize)))
+	defer C.free(unsafe.Pointer(in.cfgs))
+	if in.cfgs == nil {
+		return errors.New("ocr.Tesseract.Init: could not allocate configs")
+	}
+	cfgsSlice := unsafe.Slice(in.cfgs, int(in.nCfgs))
 	for i, p := range t.ConfigPaths {
-		cp[i] = C.CString(p)
-		defer C.free(unsafe.Pointer(cp[i]))
+		cfgsSlice[i] = C.CString(p)
+		defer C.free(unsafe.Pointer(cfgsSlice[i]))
 	}
-	cfgs := (**C.char)(nil)
-	if len(cp) > 0 {
-		cfgs = &cp[0]
-	}
-	if ok := C.Tess_Init(t.p, cfgs, C.size_t(len(t.ConfigPaths)), mdp, m); !ok {
+	// TODO: handle page seg mode and variables
+
+	ok := C.Tess_Init(t.p, in)
+	if !ok {
 		return errors.New("ocr.Tesseract.Init: could not initialize tesseract")
 	}
 	return nil
@@ -290,6 +459,7 @@ func (t Tesseract) IsValid() error {
 }
 
 // SetImage sets the image on which text detection/recognition will be run.
+// It also clears the previous image and detection/recognition results.
 // FIXME: bytextPerPixel should be automatically determined.
 func (t Tesseract) SetImage(ip ImageProcessor, bytesPerPixel int) {
 	C.Tess_SetImage(t.p, ip.p, C.int(bytesPerPixel))

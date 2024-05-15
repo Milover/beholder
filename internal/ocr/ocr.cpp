@@ -5,6 +5,16 @@
 #include "ocr.h"
 
 
+bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags) {
+	if (!p) {
+		return false;
+	}
+	if (!buf && bufSize > 0) {
+		return false;
+	}
+	return p->decodeImage(buf, bufSize, flags);
+}
+
 void Proc_Delete(Proc p) {
 	if (p) {
 		delete p;
@@ -14,6 +24,9 @@ void Proc_Delete(Proc p) {
 
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 	if (!p) {
+		return false;
+	}
+	if ((!post && nPost > 0) || (!pre && nPre > 0)) {
 		return false;
 	}
 	auto helper = []
@@ -96,16 +109,20 @@ char* Tess_DetectAndRecognize(Tess t) {
 	return result;
 }
 
-bool Tess_Init(Tess t, char** cs, size_t nCs, const char* mp, const char* m) {
-	if (!t) {
+bool Tess_Init(Tess t, const TInit* in) {
+	if (!t || !in) {
 		return false;
 	}
-	t->configPaths.reserve(nCs);
-	for (auto i {0}; i < nCs; ++i) {
-		t->configPaths.emplace_back(cs[i]);
+	if (!in->cfgs && in->nCfgs > 0) {
+		return false;
 	}
-	t->modelPath = std::string(mp);
-	t->model = std::string(m);
+	t->configPaths.reserve(in->nCfgs);
+	for (auto i {0}; i < in->nCfgs; ++i) {
+		t->configPaths.emplace_back(in->cfgs[i]);
+	}
+	t->modelPath = std::string(in->modelPath);
+	t->model = std::string(in->model);
+	// TODO: handle page seg mode and variables
 
 	return t->init();
 }
@@ -115,5 +132,8 @@ Tess Tess_New() {
 }
 
 void Tess_SetImage(Tess t, Proc p, int bytesPerPixel) {
+	if (!t || !p) {
+		return;
+	}
 	t->setImage(*p, bytesPerPixel);
 }
