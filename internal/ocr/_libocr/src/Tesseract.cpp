@@ -115,10 +115,10 @@ bool Tesseract::init()
 	// to true, so we have to flip the result
 	success = !success;
 
-	p_->SetPageSegMode(pageSegMode);
+	p_->SetPageSegMode(static_cast<tesseract::PageSegMode>(pageSegMode));
 	for (const auto& [key, val] : variables)
 	{
-		success = success && p_->SetVariable(key, value);
+		success = success && p_->SetVariable(key.c_str(), val.c_str());
 	}
 
 	return success;
