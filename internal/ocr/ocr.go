@@ -354,9 +354,15 @@ type Tesseract struct {
 	ModelDirPath string `json:"model_dir_path"`
 	// Model is the name of the model (trained data) file.
 	Model string `json:"model"`
-	// PageSegMode is the page segmentation mode
+	// PageSegMode is the page segmentation mode.
 	PageSegMode PSegMode `json:"page_seg_mode"`
-	// Variables are runtime settable variables
+	// Variables are runtime settable variables.
+	// Here are some commonly used variables and their values:
+	//
+	//	"load_system_dawg":          "0"
+	//	"load_freq_dawg":            "0"
+	//	"classify_bln_numeric_mode": "1"
+	//	"tessedit_char_whitelist":   ".,:;0123456789"
 	Variables map[string]string `json:"variables"`
 
 	// p is a pointer to the C++ API class.
