@@ -116,6 +116,7 @@ bool Tess_Init(Tess t, const TInit* in) {
 	if (!in->cfgs && in->nCfgs > 0) {
 		return false;
 	}
+	t->configPaths.clear();
 	t->configPaths.reserve(in->nCfgs);
 	for (auto i {0}; i < in->nCfgs; ++i) {
 		t->configPaths.emplace_back(in->cfgs[i]);
