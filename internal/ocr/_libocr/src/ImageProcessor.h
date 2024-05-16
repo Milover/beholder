@@ -17,6 +17,7 @@ SourceFiles
 #ifndef OCR_IMAGE_PROCESSOR_H
 #define OCR_IMAGE_PROCESSOR_H
 
+#include <cstddef>
 #include <vector>
 #include <string>
 #include <vector>
@@ -79,6 +80,12 @@ public:
 
 	// Member functions
 
+		//- Decode an image from a buffer.
+		//	The buffer is left unchanged and the data is copied into the
+		//	ImageProcessor. New memory is not allocated if the ImageProcessor
+		//	has enough space to hold the decoded image.
+		bool decodeImage(void* buffer, int bufSize, int flags);
+
 		//- Get the stored image
 		const cv::Mat& getImage() const;
 
@@ -93,6 +100,9 @@ public:
 
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
+
+		//- Write an image to disc
+		bool writeImage(const std::string& filename = "img.png") const;
 
 
 	// Member operators

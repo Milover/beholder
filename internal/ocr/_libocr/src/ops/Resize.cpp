@@ -10,8 +10,9 @@ License
 
 #include <opencv2/core/types.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/imgproc.hpp>
 
-#include "Crop.h"
+#include "Resize.h"
 #include "OcrResults.h"
 #include "ProcessingOp.h"
 
@@ -25,31 +26,14 @@ namespace ocr
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Crop::execute(const cv::Mat& in, cv::Mat& out) const
+bool Resize::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	// snap to bounds
-	auto l {left > 0 ? left : 0};
-	auto r {right <= in.cols ? right : in.cols};
-	auto t {top > 0 ? top : 0};
-	auto b {bottom <= in.rows ? bottom : in.rows};
-	// sanity check
-	if (l > r)
-	{
-		l = r;
-	}
-	if (t > b)
-	{
-		t = b;
-	}
-	cv::Range cols(l, r);
-	cv::Range rows(t, b);
-	out = in(rows, cols);
-	// can never fail, because even if l = r, or t = b, there will always
-	// be at least 1 row and 1 column
+	// we almost exclusively shrink images, hence INTER_AREA should be best
+	cv::resize(in, out, cv::Size(width, height), 0, 0, cv::INTER_AREA);
 	return true;
 }
 
-bool Crop::execute
+bool Resize::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,

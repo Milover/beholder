@@ -2,7 +2,7 @@ package ocr
 
 /*
 #include <stdlib.h>
-#include "processing_ops.h"
+#include "operations.h"
 */
 import "C"
 import (
@@ -21,6 +21,7 @@ type opFactory func(json.RawMessage) (unsafe.Pointer, error)
 // opFactoryMap maps the names of image processing operations to their
 // factory functions.
 var opFactoryMap = map[string]opFactory{
+	"auto_crop":                     NewAutoCrop,
 	"crop":                          NewCrop,
 	"draw_text_boxes":               NewDrawTextBoxes,
 	"gaussian_blur":                 NewGaussianBlur,
@@ -31,6 +32,50 @@ var opFactoryMap = map[string]opFactory{
 	"resize":                        NewResize,
 	"rotate":                        NewRotate,
 	"threshold":                     NewThreshold,
+}
+
+// autoCrop represents an automatic image cropping operation.
+// It currently uses morphologic gradients to detect text boxes and
+// then crops the image.
+type autoCrop struct {
+	// KernelSize is the size of the kernel used for connecting text blobs,
+	KernelSize int `json:"kernel_size"`
+	// TextWidth is the minium width of the blob for it to be considered text.
+	TextWidth float32 `json:"text_width"`
+	// TextHeight is the minium height of the blob for it to be considered text.
+	TextHeight float32 `json:"text_height"`
+	// Padding is the additional padding added to the detected text box.
+	Padding float32 `json:"padding"`
+}
+
+// NewAutoCrop creates an automaticcropping operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
+	op := autoCrop{
+		KernelSize: 50,
+		TextWidth:  50,
+		TextHeight: 50,
+		Padding:    10,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.KernelSize <= 0 {
+		return nil, errors.New("ocr.NewAutoCrop: bad kernel size")
+	}
+	if op.Padding <= 0 {
+		return nil, errors.New("ocr.NewAutoCrop: bad padding")
+	}
+	// TextWidth and TextHeight accept all values
+	return unsafe.Pointer(C.AuCrp_New(
+		C.int(op.KernelSize),
+		C.float(op.TextWidth),
+		C.float(op.TextHeight),
+		C.float(op.Padding),
+	)), nil
 }
 
 // crop represents an image cropping operation.
@@ -475,8 +520,8 @@ func NewThreshold(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	// if 2 types are specified, 1 must be either ThreshOtsu or ThreshTriangle
 	typ := op.Type[0] + op.Type[1]
-	if !(typ >= ThreshBinary && typ <= ThreshToZeroInv) ||
-		!(typ >= ThreshOtsu && typ <= ThreshOtsu+ThreshToZeroInv) ||
+	if !(typ >= ThreshBinary && typ <= ThreshToZeroInv) &&
+		!(typ >= ThreshOtsu && typ <= ThreshOtsu+ThreshToZeroInv) &&
 		!(typ >= ThreshTriangle && typ <= ThreshTriangle+ThreshToZeroInv) {
 		return nil, errors.New("ocr.NewThreshold: bad threshold type")
 	}

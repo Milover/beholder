@@ -115,12 +115,11 @@ bool Tesseract::init()
 	// to true, so we have to flip the result
 	success = !success;
 
-	// NOTE: would be nice if we could get it to a single line/word
-	p_->SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
-	success = success && p_->SetVariable("load_system_dawg", "0");
-	success = success && p_->SetVariable("load_freq_dawg", "0");
-//	success = success && p_->SetVariable("classify_bln_numeric_mode", "1");
-//	success = success && p_->SetVariable("tessedit_char_whitelist", ".,:;0123456789");
+	p_->SetPageSegMode(static_cast<tesseract::PageSegMode>(pageSegMode));
+	for (const auto& [key, val] : variables)
+	{
+		success = success && p_->SetVariable(key.c_str(), val.c_str());
+	}
 
 	return success;
 }

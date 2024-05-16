@@ -1,6 +1,10 @@
 #include <array>
 
-#include "processing_ops.h"
+#include "operations.h"
+
+AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding) {
+	return new ocr::AutoCrop {kSize, txtHeight, txtWidth, padding};
+}
 
 Crp Crp_New(int left, int right, int top, int bottom) {
 	return new ocr::Crop {left, right, top, bottom};

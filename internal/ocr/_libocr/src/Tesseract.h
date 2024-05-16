@@ -18,6 +18,7 @@ SourceFiles
 #define OCR_TESSERACT_H
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ImageProcessor.h"
@@ -62,6 +63,14 @@ public:
 		std::string modelPath;
 		//- Model (trained data) name
 		std::string model;
+		//- Page segmentation mode
+		int pageSegMode {6};
+		//- A map of settable variables
+		std::vector<std::pair<std::string, std::string>> variables
+		{
+			{"load_system_dawg", "0"},
+			{"load_freq_dawg", "0"}
+		};
 
 	// Constructors
 

@@ -16,7 +16,7 @@ const (
 		"config_paths": [
 			"internal/ocr/testdata/configs/test_neograf_5.patterns.config"
 		],
-		"model_dir_path": "internal/ocr/models/dotmatrix",
+		"model_dir_path": "internal/ocr/_models/dotmatrix",
 		"model": "dotOCRDData1"
 	},
 	"image_processing": {
@@ -77,7 +77,7 @@ const (
 	}
 }
 `
-	testImg  string = "internal/ocr/testdata/images/neograf/imagefile_5.bmp"
+	img      string = "internal/ocr/testdata/images/neograf/imagefile_5.bmp"
 	expected string = "V20000229"
 )
 
@@ -94,7 +94,7 @@ func main() {
 	}
 	init := time.Now()
 
-	if err := o.P.ReadImage(testImg, 0); err != nil {
+	if err := o.P.ReadImage(img, 0); err != nil {
 		log.Fatal(err)
 	}
 	readimg := time.Now()
