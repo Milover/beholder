@@ -17,6 +17,11 @@ typedef void* Proc;
 typedef void* Tess;
 #endif
 
+typedef struct {
+	char* key;
+	char* value;
+} KeyVal;
+
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags);
 void Proc_Delete(Proc p);
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre);
@@ -32,6 +37,8 @@ typedef struct {
 	const char* modelPath;
 	const char* model;
 	int psMode;
+	KeyVal* vars;	// runtime settable Tesseract variables
+	size_t nVars;
 } TInit;
 
 void Tess_Clear(Tess t);

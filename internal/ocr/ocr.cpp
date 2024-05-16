@@ -116,16 +116,21 @@ bool Tess_Init(Tess t, const TInit* in) {
 	if (!in->cfgs && in->nCfgs > 0) {
 		return false;
 	}
-	t->configPaths.clear();
-	t->configPaths.reserve(in->nCfgs);
-	for (auto i {0}; i < in->nCfgs; ++i) {
-		t->configPaths.emplace_back(in->cfgs[i]);
-	}
 	t->modelPath = std::string(in->modelPath);
 	t->model = std::string(in->model);
 	t->pageSegMode = in->psMode;
-	// TODO: handle variables
-
+	// handle configs
+	t->configPaths.clear();
+	t->configPaths.reserve(in->nCfgs);
+	for (auto i {0ul}; i < in->nCfgs; ++i) {
+		t->configPaths.emplace_back(in->cfgs[i]);
+	}
+	// handle variables
+	t->variables.clear();
+	t->variables.reserve(in->nVars);
+	for (auto i {0ul}; i < in->nVars; ++i) {
+		t->variables.emplace_back(in->vars[i].key, in->vars[i].value);
+	}
 	return t->init();
 }
 

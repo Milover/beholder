@@ -240,7 +240,10 @@ func (ip ImageProcessor) ReadImage(filename string, readMode ImreadMode) error {
 	return nil
 }
 
-// ShowImage renders the current image in a new window.
+// ShowImage renders the current image in a new window and
+// waits for a key press.
+//
+// FIXME: crashes on macOS when not called from the main thread.
 func (ip ImageProcessor) ShowImage(title string) {
 	cs := C.CString(title)
 	defer C.free(unsafe.Pointer(cs))
@@ -424,17 +427,30 @@ func (t Tesseract) Init() error {
 	defer C.free(unsafe.Pointer(in.model))
 	in.psMode = C.int(t.PageSegMode)
 
-	chPtrSize := unsafe.Sizeof((*C.char)(nil))
 	// handle configuration file names
+	chPtrSize := unsafe.Sizeof((*C.char)(nil))
 	in.nCfgs = C.size_t(len(t.ConfigPaths))
-	in.cfgs = (**C.char)(C.malloc(C.size_t(in.nCfgs) * C.size_t(chPtrSize)))
+	in.cfgs = (**C.char)(C.malloc(in.nCfgs * C.size_t(chPtrSize)))
 	defer C.free(unsafe.Pointer(in.cfgs))
 	cfgsSlice := unsafe.Slice(in.cfgs, int(in.nCfgs))
 	for i, p := range t.ConfigPaths {
 		cfgsSlice[i] = C.CString(p)
 		defer C.free(unsafe.Pointer(cfgsSlice[i]))
 	}
-	// TODO: handle variables
+	// handle variables
+	kvSize := unsafe.Sizeof(C.KeyVal{})
+	in.nVars = C.size_t(len(t.Variables))
+	in.vars = (*C.KeyVal)(C.malloc(in.nVars * C.size_t(kvSize)))
+	defer C.free(unsafe.Pointer(in.vars))
+	varsSlice := unsafe.Slice(in.vars, int(in.nVars))
+	iVar := 0
+	for key, val := range t.Variables {
+		varsSlice[iVar].key = C.CString(key)
+		defer C.free(unsafe.Pointer(varsSlice[iVar].key))
+		varsSlice[iVar].value = C.CString(val)
+		defer C.free(unsafe.Pointer(varsSlice[iVar].value))
+		iVar++
+	}
 
 	ok := C.Tess_Init(t.p, in)
 	if !ok {
