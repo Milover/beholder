@@ -415,6 +415,7 @@ func (t Tesseract) Init() error {
 		return err
 	}
 	// allocate the struct and handle the easy stuff (ints, strings...)
+	// NOTE: C.malloc guarantees never to return nil, no need to check
 	in := (*C.TInit)(C.malloc(C.sizeof_TInit))
 	defer C.free(unsafe.Pointer(in))
 	in.modelPath = C.CString(t.ModelDirPath)
@@ -428,15 +429,12 @@ func (t Tesseract) Init() error {
 	in.nCfgs = C.size_t(len(t.ConfigPaths))
 	in.cfgs = (**C.char)(C.malloc(C.size_t(in.nCfgs) * C.size_t(chPtrSize)))
 	defer C.free(unsafe.Pointer(in.cfgs))
-	if in.cfgs == nil {
-		return errors.New("ocr.Tesseract.Init: could not allocate configs")
-	}
 	cfgsSlice := unsafe.Slice(in.cfgs, int(in.nCfgs))
 	for i, p := range t.ConfigPaths {
 		cfgsSlice[i] = C.CString(p)
 		defer C.free(unsafe.Pointer(cfgsSlice[i]))
 	}
-	// TODO: variables
+	// TODO: handle variables
 
 	ok := C.Tess_Init(t.p, in)
 	if !ok {
