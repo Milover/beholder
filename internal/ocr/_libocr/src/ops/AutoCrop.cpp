@@ -130,11 +130,11 @@ bool AutoCrop::execute(const cv::Mat& in, cv::Mat& out) const
 	// something goes horribly wrong
 	crop.x = crop.x > 0 ? crop.x : 0;
 	crop.x = crop.x < out.cols ? crop.x : out.cols - 1;
-	crop.width = crop.x + crop.width <= out.cols ? crop.width : 1;
+	crop.width = crop.x + crop.width <= out.cols ? crop.width : out.cols - crop.x;
 
 	crop.y = crop.y > 0 ? crop.y : 0;
 	crop.y = crop.y < out.rows ? crop.y : out.rows - 1;
-	crop.height = crop.y + crop.height <= out.rows ? crop.height : 1;
+	crop.height = crop.y + crop.height <= out.rows ? crop.height : out.rows - crop.y;
 
 	out = out(crop);
 	return true;
