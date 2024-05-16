@@ -275,33 +275,33 @@ func (m *PSegMode) UnmarshalJSON(data []byte) error {
 	switch s {
 	default:
 		return fmt.Errorf("bad page seg mode: %q", s)
-	case "psm_osd_only":
+	case "osd_only":
 		*m = PSMOSDOnly
-	case "psm_auto_osd":
+	case "auto_osd":
 		*m = PSMAutoOSD
-	case "psm_auto_only":
+	case "auto_only":
 		*m = PSMAutoOnly
-	case "psm_auto":
+	case "auto":
 		*m = PSMAuto
-	case "psm_single_column":
+	case "single_column":
 		*m = PSMSingleColumn
-	case "psm_single_block_vert_text":
+	case "single_block_vert_text":
 		*m = PSMSingleBlockVertText
-	case "psm_single_block":
+	case "single_block":
 		*m = PSMSingleBlock
-	case "psm_single_line":
+	case "single_line":
 		*m = PSMSingleLine
-	case "psm_single_word":
+	case "single_word":
 		*m = PSMSingleWord
-	case "psm_circle_word":
+	case "circle_word":
 		*m = PSMCircleWord
-	case "psm_single_char":
+	case "single_char":
 		*m = PSMSingleChar
-	case "psm_sparse_text":
+	case "sparse_text":
 		*m = PSMSparseText
-	case "psm_sparse_text_osd":
+	case "sparse_text_osd":
 		*m = PSMSparseTextOSD
-	case "psm_raw_line":
+	case "raw_line":
 		*m = PSMRawLine
 	}
 	return nil
@@ -310,33 +310,33 @@ func (m *PSegMode) UnmarshalJSON(data []byte) error {
 func (m PSegMode) MarshalJSON() ([]byte, error) {
 	switch m {
 	case PSMOSDOnly:
-		return json.Marshal("psm_osd_only")
+		return json.Marshal("osd_only")
 	case PSMAutoOSD:
-		return json.Marshal("psm_auto_osd")
+		return json.Marshal("auto_osd")
 	case PSMAutoOnly:
-		return json.Marshal("psm_auto_only")
+		return json.Marshal("auto_only")
 	case PSMAuto:
-		return json.Marshal("psm_auto")
+		return json.Marshal("auto")
 	case PSMSingleColumn:
-		return json.Marshal("psm_single_column")
+		return json.Marshal("single_column")
 	case PSMSingleBlockVertText:
-		return json.Marshal("psm_single_block_vert_text")
+		return json.Marshal("single_block_vert_text")
 	case PSMSingleBlock:
-		return json.Marshal("psm_single_block")
+		return json.Marshal("single_block")
 	case PSMSingleLine:
-		return json.Marshal("psm_single_line")
+		return json.Marshal("single_line")
 	case PSMSingleWord:
-		return json.Marshal("psm_single_word")
+		return json.Marshal("single_word")
 	case PSMCircleWord:
-		return json.Marshal("psm_circle_word")
+		return json.Marshal("circle_word")
 	case PSMSingleChar:
-		return json.Marshal("psm_single_char")
+		return json.Marshal("single_char")
 	case PSMSparseText:
-		return json.Marshal("psm_sparse_text")
+		return json.Marshal("sparse_text")
 	case PSMSparseTextOSD:
-		return json.Marshal("psm_sparse_text_osd")
+		return json.Marshal("sparse_text_osd")
 	case PSMRawLine:
-		return json.Marshal("psm_raw_line")
+		return json.Marshal("raw_line")
 	}
 	return nil, fmt.Errorf("bad page seg mode: %d", m)
 }
