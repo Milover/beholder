@@ -4,7 +4,6 @@ package ocr
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path"
@@ -27,16 +26,22 @@ var pipelineTests = []pipelineTest{
 		Name:     "neograf",
 		Error:    nil,
 		ImageSet: "testdata/images/neograf",
-		Image:    "imagefile_12.bmp",
+		Image:    "imagefile_14.bmp",
 		Expected: "V20000229",
 		Config: `
 {
 	"ocr": {
 		"config_paths": [
-			"testdata/configs/test_neograf_5.patterns.config"
+			"testdata/configs/test_neograf.patterns.config"
 		],
 		"model_dir_path": "_models/dotmatrix",
-		"model": "dotOCRDData1"
+		"model": "dotOCRDData1",
+		"page_seg_mode": "single_line",
+		"variables": {
+			"load_system_dawg": "0",
+			"load_freq_dawg": "0",
+			"tessedit_char_whitelist": "V0123456789"
+		}
 	},
 	"image_processing": {
 		"preprocessing": [
@@ -56,12 +61,15 @@ var pipelineTests = []pipelineTest{
 			},
 			{
 				"normalize_brightness_contrast": {
-					"clip_pct": 0.5
+					"clip_pct": 1.5
 				}
 			},
 			{
-				"median_blur": {
-					"kernel_size": 3
+				"gaussian_blur": {
+					"kernel_width": 3,
+					"kernel_height": 5,
+					"sigma_x": 0,
+					"sigma_y": 0
 				}
 			},
 			{
@@ -148,15 +156,15 @@ func TestOCRRunSet(t *testing.T) {
 
 			for _, file := range files {
 				f, err := os.Open(path.Join(tt.ImageSet, file))
+				defer f.Close()
 				assert.Nil(err, "unexpected os.Open() error")
 				buf, err := io.ReadAll(f)
 				assert.Nil(err, "unexpected io.ReadAll() error")
 
 				text, err := o.Run(buf)
 
-				fmt.Printf("%s:\t%s\n", file, text)
-				//assert.Equal(tt.Expected, text)
-				//assert.Equal(tt.Error, err)
+				assert.Equal(tt.Expected, text, f.Name())
+				assert.Equal(tt.Error, err)
 			}
 		})
 	}

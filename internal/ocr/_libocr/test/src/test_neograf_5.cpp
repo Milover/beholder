@@ -35,7 +35,9 @@ const std::filesystem::path internalDir
 
 const std::string testImage
 {
-	"testdata/images/neograf/imagefile_4.bmp"
+	//"testdata/images/neograf/imagefile_13.bmp"
+	"testdata/images/neograf/imagefile_14.bmp"
+	//"testdata/images/neograf/imagefile_18.bmp"
 };
 
 const std::string expected
@@ -54,9 +56,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// setup tesseract
 	ocr::Tesseract t {};
-	t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf_5.patterns.config"};
+	t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf.patterns.config"};
 	t.modelPath = "_models/dotmatrix";
 	t.model = "dotOCRDData1";
+	t.pageSegMode = 7;
+	t.variables = std::vector<std::pair<std::string, std::string>>
+	{
+		{"load_system_dawg", "0"},
+		{"load_freq_dawg", "0"},
+		{"tessedit_char_whitelist", "V0123456789"}
+	};
 	if (!t.init())
 	{
 		std::cerr << "Could not initialize tesseract.\n";
@@ -70,8 +79,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	//ip.preprocessing.emplace_back(new ocr::Crop {-10, 2000, -10, 900});	// a nop crop
 	//ip.preprocessing.emplace_back(new ocr::Rotate {360});				// a nop rotate
 	ip.preprocessing.emplace_back(new ocr::Resize {205, 34});
-	ip.preprocessing.emplace_back(new ocr::NormalizeBrightnessContrast {0.5});
-	ip.preprocessing.emplace_back(new ocr::MedianBlur {3});
+	ip.preprocessing.emplace_back(new ocr::NormalizeBrightnessContrast {1.5});
+	ip.preprocessing.emplace_back(new ocr::GaussianBlur {3, 5, 0, 0});
 	ip.preprocessing.emplace_back(new ocr::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});
 	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 4, 4, cv::MORPH_OPEN, 1});
 	//// postprocessing
