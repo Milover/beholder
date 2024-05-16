@@ -247,7 +247,7 @@ func (ip ImageProcessor) ShowImage(title string) {
 	C.Proc_ShowImage(ip.p, cs)
 }
 
-// threshType represents the available types of threshold operations.
+// PSegMode represents available page segmentation modes.
 type PSegMode int
 
 const (
