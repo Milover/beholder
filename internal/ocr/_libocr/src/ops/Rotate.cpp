@@ -47,7 +47,17 @@ bool Rotate::execute(const cv::Mat& in, cv::Mat& out) const
 	rot.at<double>(0, 2) += 0.5*static_cast<double>(bbox.width - in.cols);
 	rot.at<double>(1, 2) += 0.5*static_cast<double>(bbox.height - in.rows);
 
-	cv::warpAffine(in, out, rot, bbox.size(), cv::INTER_NEAREST);
+	// assume a white background
+	cv::warpAffine
+	(
+		in,
+		out,
+		rot,
+		bbox.size(),
+		cv::INTER_NEAREST,
+		cv::BORDER_CONSTANT,
+		cv::Scalar{255, 255, 255}
+	);
 	return true;
 }
 

@@ -118,7 +118,17 @@ bool AutoCrop::execute(const cv::Mat& in, cv::Mat& out) const
 	{
 		cv::RotatedRect {ctr, in.size(), box.angle}.boundingRect2f()
 	};
-	cv::warpAffine(in, out, rot, bbox.size(), cv::INTER_NEAREST);
+	// assume a white background
+	cv::warpAffine
+	(
+		in,
+		out,
+		rot,
+		bbox.size(),
+		cv::INTER_NEAREST,
+		cv::BORDER_CONSTANT,
+		cv::Scalar{255, 255, 255}
+	);
 
 	// crop (now centered on the image)
 	cv::Rect crop
