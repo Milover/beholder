@@ -16,6 +16,7 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "AddPadding.h"
 #include "AutoCrop.h"
 #include "CLAHE.h"
 #include "Crop.h"
