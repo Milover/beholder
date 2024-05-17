@@ -99,25 +99,33 @@ bool AutoCrop::execute(const cv::Mat& in, cv::Mat& out) const
 		)
 	};
 	const cv::Point2f ctr {box.center};
+	// determine bounding rectangle, center not relevant
+	cv::Rect2f bbox {};
+	{
+		cv::Rect2f imgBox
+		{
+			cv::RotatedRect {ctr, in.size(), box.angle}.boundingRect2f()
+		};
+		cv::Rect2f boxBox	// because the box is padded
+		{
+			cv::RotatedRect {ctr, box.size, 0}.boundingRect2f()
+		};
+		bbox.width = imgBox.width > boxBox.width ? imgBox.width : boxBox.width;
+		bbox.height = imgBox.height > boxBox.height ? imgBox.height : boxBox.height;
+	}
+	// adjust transformation matrix by adding a translation from the
+	// center of rotation to the (new) image center,
+	// i.e. center the text box on the image
+	cv::Mat rot {cv::getRotationMatrix2D(ctr, box.angle, 1.0)};
 	cv::Point2f iCtr
 	{
-		0.5f*static_cast<float>(in.cols - 1),
-		0.5f*static_cast<float>(in.rows - 1)
+		0.5f*(bbox.width - 1),
+		0.5f*(bbox.height - 1)
 	};
-	cv::Mat rot {cv::getRotationMatrix2D(ctr, box.angle, 1.0)};
-
-	// adjust transformation matrix by adding a translation from the
-	// center of rotation to the image center,
-	// i.e. center the text box on the image
 	cv::Point2f shift {iCtr - ctr};
 	rot.at<double>(0, 2) += static_cast<double>(shift.x);
 	rot.at<double>(1, 2) += static_cast<double>(shift.y);
 
-	// determine bounding rectangle, center not relevant
-	cv::Rect2f bbox
-	{
-		cv::RotatedRect {ctr, in.size(), box.angle}.boundingRect2f()
-	};
 	// assume a white background
 	cv::warpAffine
 	(
@@ -136,8 +144,6 @@ bool AutoCrop::execute(const cv::Mat& in, cv::Mat& out) const
 		cv::RotatedRect {iCtr, box.size, 0}.boundingRect()
 	};
 	// snap to bounds
-	// NOTE: unnecessary, but it's cheap and ensures we don't throw if
-	// something goes horribly wrong
 	crop.x = crop.x > 0 ? crop.x : 0;
 	crop.x = crop.x < out.cols ? crop.x : out.cols - 1;
 	crop.width = crop.x + crop.width <= out.cols ? crop.width : out.cols - crop.x;
