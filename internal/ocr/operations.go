@@ -54,7 +54,7 @@ func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
-	if op.Padding <= 0 {
+	if op.Padding < 0 {
 		return nil, errors.New("ocr.NewAddPadding: bad padding")
 	}
 	return unsafe.Pointer(C.AdPad_New(
@@ -94,7 +94,7 @@ func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	if op.KernelSize <= 0 {
 		return nil, errors.New("ocr.NewAutoCrop: bad kernel size")
 	}
-	if op.Padding <= 0 {
+	if op.Padding < 0 {
 		return nil, errors.New("ocr.NewAutoCrop: bad padding")
 	}
 	// TextWidth and TextHeight accept all values
@@ -148,8 +148,8 @@ func NewCLAHE(m json.RawMessage) (unsafe.Pointer, error) {
 type crop struct {
 	Left   int `json:"left"`
 	Top    int `json:"top"`
-	Width  int `json:"height"`
-	Height int `json:"width"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 // NewCrop creates a cropping operation with default values,
