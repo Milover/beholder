@@ -60,8 +60,10 @@ public:
 
 		//- Clip percentage
 		float clipLimit {40.0};
-		int tileWidth {8};
-		int tileHeight {8};
+		//- No. tile rows
+		int tileRows {8};
+		//- No. tile columns
+		int tileColumns {8};
 
 	//- Constructors
 
@@ -69,12 +71,12 @@ public:
 		CLAHE() = default;
 
 		//- Default constructor
-		CLAHE(float cLim, int tW, int tH)
+		CLAHE(float cLim, int tR, int tC)
 		:
 			ProcessingOp(),
 			clipLimit {cLim},
-			tileWidth {tW},
-			tileHeight {tH}
+			tileRows {tR},
+			tileColumns {tC}
 		{}
 
 	//- Member functions

@@ -29,7 +29,7 @@ bool CLAHE::execute(const cv::Mat& in, cv::Mat& out) const
 {
 	cv::Ptr<cv::CLAHE> clahe
 	{
-		cv::createCLAHE(clipLimit, cv::Size {tileWidth, tileHeight})
+		cv::createCLAHE(clipLimit, cv::Size {tileRows, tileColumns})
 	};
 	clahe->apply(in, out);
 	return true;
