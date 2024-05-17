@@ -21,9 +21,12 @@ type opFactory func(json.RawMessage) (unsafe.Pointer, error)
 // opFactoryMap maps the names of image processing operations to their
 // factory functions.
 var opFactoryMap = map[string]opFactory{
+	"add_padding":                   NewAddPadding,
 	"auto_crop":                     NewAutoCrop,
+	"clahe":                         NewCLAHE,
 	"crop":                          NewCrop,
 	"draw_text_boxes":               NewDrawTextBoxes,
+	"equalize_histogram":            NewEqualizeHistogram,
 	"gaussian_blur":                 NewGaussianBlur,
 	"invert":                        NewInvert,
 	"median_blur":                   NewMedianBlur,
@@ -32,6 +35,31 @@ var opFactoryMap = map[string]opFactory{
 	"resize":                        NewResize,
 	"rotate":                        NewRotate,
 	"threshold":                     NewThreshold,
+}
+
+// addPadding adds uniform (white) padding to the border of an image.
+type addPadding struct {
+	Padding int `json:"padding"`
+}
+
+// NewAddPadding creates a new border padding operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
+	op := addPadding{
+		Padding: 10,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Padding <= 0 {
+		return nil, errors.New("ocr.NewAddPadding: bad padding")
+	}
+	return unsafe.Pointer(C.AdPad_New(
+		C.int(op.Padding),
+	)), nil
 }
 
 // autoCrop represents an automatic image cropping operation.
@@ -78,12 +106,50 @@ func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	)), nil
 }
 
+// clahe represents a contrast limited adaptive histogram equalization operation.
+type clahe struct {
+	// ClipLimit is the threshold value for contrast limiting.
+	ClipLimit float32 `json:"clip_limit"`
+	// TileRows is the number of tile columns.
+	TileRows int `json:"tile_rows"`
+	// TileColumns is the number of tile rows.
+	TileColumns int `json:"tile_columns"`
+}
+
+// NewCLAHE creates a new contrast limited adaptive histogram equalization
+// operation with default values, unmarshals runtime data into it and then
+// constructs a C-class representing the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewCLAHE(m json.RawMessage) (unsafe.Pointer, error) {
+	op := clahe{
+		ClipLimit:   40.0,
+		TileRows:    8,
+		TileColumns: 8,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.TileRows <= 0 {
+		return nil, errors.New("ocr.NewCLAHE: bad tile rows")
+	}
+	if op.TileColumns <= 0 {
+		return nil, errors.New("ocr.NewCLAHE: bad tile columns")
+	}
+	// ClipLimit accepts all values
+	return unsafe.Pointer(C.CLH_New(
+		C.float(op.ClipLimit),
+		C.int(op.TileRows),
+		C.int(op.TileColumns),
+	)), nil
+}
+
 // crop represents an image cropping operation.
 type crop struct {
 	Left   int `json:"left"`
-	Right  int `json:"right"`
 	Top    int `json:"top"`
-	Bottom int `json:"bottom"`
+	Width  int `json:"height"`
+	Height int `json:"width"`
 }
 
 // NewCrop creates a cropping operation with default values,
@@ -99,9 +165,9 @@ func NewCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	// C does bound-snapping; all values accepted, no input validation required
 	return unsafe.Pointer(C.Crp_New(
 		C.int(op.Left),
-		C.int(op.Right),
 		C.int(op.Top),
-		C.int(op.Bottom),
+		C.int(op.Width),
+		C.int(op.Height),
 	)), nil
 }
 
@@ -132,6 +198,23 @@ func NewDrawTextBoxes(m json.RawMessage) (unsafe.Pointer, error) {
 		(*C.float)(&op.Color[0]),
 		C.int(op.Thickness),
 	)), nil
+}
+
+// equalizeHistogram represents a global image histogram equalization operation.
+type equalizeHistogram struct{}
+
+// NewEqualizeHistogram creates a global image histogram equalization operation
+// with default values, unmarshals runtime data into it and then
+// constructs a C-class representing the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewEqualizeHistogram(m json.RawMessage) (unsafe.Pointer, error) {
+	op := equalizeHistogram{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	// no input validation required
+	return unsafe.Pointer(C.EqHist_New()), nil
 }
 
 // gaussianBlur represents an operation which applies Gaussian blur to an image.

@@ -7,9 +7,12 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
+typedef ocr::AddPadding* AdPad;
 typedef ocr::AutoCrop* AuCrp;
+typedef ocr::CLAHE* CLH;
 typedef ocr::Crop* Crp;
 typedef ocr::DrawTextBoxes* DrawTB;
+typedef ocr::EqualizeHistogram* EqHist;
 typedef ocr::GaussianBlur* GaussBlur;
 typedef ocr::Invert* Inv;
 typedef ocr::MedianBlur* MedBlur;
@@ -19,9 +22,12 @@ typedef ocr::Resize* Rsz;
 typedef ocr::Rotate* Rot;
 typedef ocr::Threshold* Thresh;
 #else
+typedef void* AdPad;
 typedef void* AuCrp;
+typedef void* CLH;
 typedef void* Crp;
 typedef void* DrawTB;
+typedef void* EqHist;
 typedef void* GaussBlur;
 typedef void* Inv;
 typedef void* MedBlur;
@@ -32,9 +38,12 @@ typedef void* Rsz;
 typedef void* Thresh;
 #endif
 
+AdPad AdPad_New(int pad);
 AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding);
-Crp Crp_New(int left, int right, int top, int bottom);
+CLH CLH_New(float lim, int tRows, int tCols);
+Crp Crp_New(int left, int top, int width, int height);
 DrawTB DrawTB_New(float* color, int thickness);
+EqHist EqHist_New();
 GaussBlur GaussBlur_New(int kW, int kH, float sX, float sY);
 Inv Inv_New();
 MedBlur MedBlur_New(int ksize);
