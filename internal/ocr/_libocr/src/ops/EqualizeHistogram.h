@@ -7,15 +7,15 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An image cropping operation.
+	An image histogram equalization operation
 
 SourceFiles
-	Crop.cpp
+	EqualizeHistogram.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_CROP_OP_H
-#define OCR_CROP_OP_H
+#ifndef OCR_EQUALIZE_HISTOGRAM_OP_H
+#define OCR_EQUALIZE_HISTOGRAM_OP_H
 
 #include "ProcessingOp.h"
 
@@ -32,10 +32,10 @@ namespace ocr
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class Crop Declaration
+                       Class EqualizeHistogram Declaration
 \*---------------------------------------------------------------------------*/
 
-class Crop
+class EqualizeHistogram
 :
 	public ProcessingOp
 {
@@ -58,26 +58,10 @@ public:
 
 	//- Public data
 
-		//- Crop boundaries (inclusive)
-		int left;
-		int top;
-		int width;
-		int height;
-
 	//- Constructors
 
 		//- Default constructor
-		Crop() = default;
-
-		//- Default constructor
-		Crop(int l, int t, int w, int h)
-		:
-			ProcessingOp(),
-			left {l},
-			top {t},
-			width {w},
-			height {h}
-		{}
+		EqualizeHistogram() = default;
 
 	//- Member functions
 

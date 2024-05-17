@@ -7,15 +7,15 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An image cropping operation.
+	A contrast limited adaptive histogram equalization operation
 
 SourceFiles
-	Crop.cpp
+	CLAHE.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_CROP_OP_H
-#define OCR_CROP_OP_H
+#ifndef OCR_CLAHE_OP_H
+#define OCR_CLAHE_OP_H
 
 #include "ProcessingOp.h"
 
@@ -32,10 +32,10 @@ namespace ocr
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class Crop Declaration
+                            Class CLAHE Declaration
 \*---------------------------------------------------------------------------*/
 
-class Crop
+class CLAHE
 :
 	public ProcessingOp
 {
@@ -58,25 +58,23 @@ public:
 
 	//- Public data
 
-		//- Crop boundaries (inclusive)
-		int left;
-		int top;
-		int width;
-		int height;
+		//- Clip percentage
+		float clipLimit {40.0};
+		int tileWidth {8};
+		int tileHeight {8};
 
 	//- Constructors
 
 		//- Default constructor
-		Crop() = default;
+		CLAHE() = default;
 
 		//- Default constructor
-		Crop(int l, int t, int w, int h)
+		CLAHE(float cLim, int tW, int tH)
 		:
 			ProcessingOp(),
-			left {l},
-			top {t},
-			width {w},
-			height {h}
+			clipLimit {cLim},
+			tileWidth {tW},
+			tileHeight {tH}
 		{}
 
 	//- Member functions
