@@ -2,17 +2,33 @@
 
 #include "operations.h"
 
+AdPad AdPad_New(int pad) {
+	return new ocr::AddPadding {pad};
+}
+
 AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding) {
 	return new ocr::AutoCrop {kSize, txtHeight, txtWidth, padding};
 }
 
-Crp Crp_New(int left, int right, int top, int bottom) {
-	return new ocr::Crop {left, right, top, bottom};
+CLH CLH_New(float lim, int tRows, int tCols) {
+	return new ocr::CLAHE {lim, tRows, tCols};
+}
+
+Crp Crp_New(int left, int top, int width, int height) {
+	return new ocr::Crop {left, top, width, height};
+}
+
+DivGaussBlur DivGaussBlur_New(float scale, float sX, float sY, int kW, int kH) {
+	return new ocr::DivGaussianBlur {scale, sX, sY, kW, kH};
 }
 
 DrawTB DrawTB_New(float color[4], int thickness) {
 	std::array<float, 4> c {color[0], color[1], color[2], color[3]};
 	return new ocr::DrawTextBoxes {c, thickness};
+}
+
+EqHist EqHist_New() {
+	return new ocr::EqualizeHistogram {};
 }
 
 GaussBlur GaussBlur_New(int kW, int kH, float sX, float sY) {

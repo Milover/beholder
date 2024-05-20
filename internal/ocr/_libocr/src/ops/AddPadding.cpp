@@ -8,10 +8,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include <opencv2/core/types.hpp>
+#include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 
-#include "Crop.h"
+#include "AddPadding.h"
 #include "OcrResults.h"
 #include "ProcessingOp.h"
 
@@ -25,23 +25,26 @@ namespace ocr
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Crop::execute(const cv::Mat& in, cv::Mat& out) const
+bool AddPadding::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	cv::Rect crop {left, top, width, height};
-	// snap to bounds
-	crop.x = crop.x > 0 ? crop.x : 0;
-	crop.x = crop.x < in.cols ? crop.x : in.cols - 1;
-	crop.width = crop.x + crop.width <= in.cols ? crop.width : in.cols - crop.x;
-
-	crop.y = crop.y > 0 ? crop.y : 0;
-	crop.y = crop.y < in.rows ? crop.y : in.rows - 1;
-	crop.height = crop.y + crop.height <= in.rows ? crop.height : in.rows - crop.y;
-
-	out = out(crop);
+	cv::Mat tmp {in.rows + 2*padding, in.cols + 2*padding, in.depth()};
+	// assume white background
+	cv::copyMakeBorder
+	(
+		in,
+		tmp,
+		padding,
+		padding,
+		padding,
+		padding,
+		cv::BORDER_ISOLATED,
+		cv::Scalar {255, 255, 255}
+	);
+	out = tmp;
 	return true;
 }
 
-bool Crop::execute
+bool AddPadding::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,

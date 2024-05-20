@@ -60,9 +60,9 @@ public:
 
 		//- Crop boundaries (inclusive)
 		int left;
-		int right;
 		int top;
-		int bottom;
+		int width;
+		int height;
 
 	//- Constructors
 
@@ -70,13 +70,13 @@ public:
 		Crop() = default;
 
 		//- Default constructor
-		Crop(int l, int r, int t, int b)
+		Crop(int l, int t, int w, int h)
 		:
 			ProcessingOp(),
 			left {l},
-			right {r},
 			top {t},
-			bottom {b}
+			width {w},
+			height {h}
 		{}
 
 	//- Member functions

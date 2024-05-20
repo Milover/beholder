@@ -16,9 +16,13 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "AddPadding.h"
 #include "AutoCrop.h"
+#include "CLAHE.h"
 #include "Crop.h"
+#include "DivGaussianBlur.h"
 #include "DrawTextBoxes.h"
+#include "EqualizeHistogram.h"
 #include "GaussianBlur.h"
 #include "Invert.h"
 #include "MedianBlur.h"

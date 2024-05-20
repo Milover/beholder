@@ -7,15 +7,15 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An image brightness and contrast normalization operation.
+	An operation which adds uniform padding around the border of an image
 
 SourceFiles
-	GaussianBlur.cpp
+	AddPadding.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_GAUSSIAN_BLUR_OP_H
-#define OCR_GAUSSIAN_BLUR_OP_H
+#ifndef OCR_ADD_PADDING_OP_H
+#define OCR_ADD_PADDING_OP_H
 
 #include "ProcessingOp.h"
 
@@ -32,10 +32,10 @@ namespace ocr
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class GaussianBlur Declaration
+                        Class AddPadding Declaration
 \*---------------------------------------------------------------------------*/
 
-class GaussianBlur
+class AddPadding
 :
 	public ProcessingOp
 {
@@ -44,10 +44,10 @@ protected:
 	// Protected member functions
 
 		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
+		bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
 		//- Execute the processing operation
-		virtual bool execute
+		bool execute
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
@@ -59,25 +59,18 @@ public:
 	//- Public data
 
 		//- Kernel size
-		int kernelWidth {3};
-		int kernelHeight {3};
-		//- Kernel standard deviation
-		float sigmaX {0};
-		float sigmaY {0};
+		int padding {10};
 
 	//- Constructors
 
 		//- Default constructor
-		GaussianBlur() = default;
+		AddPadding() = default;
 
 		//- Default constructor
-		GaussianBlur(int kW, int kH, float sX, float sY)
+		AddPadding(int pad)
 		:
 			ProcessingOp(),
-			kernelWidth {kW},
-			kernelHeight {kH},
-			sigmaX {sX},
-			sigmaY {sY}
+			padding {pad}
 		{}
 
 	//- Member functions
