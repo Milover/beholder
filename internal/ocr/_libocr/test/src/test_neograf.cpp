@@ -35,8 +35,11 @@ const std::filesystem::path internalDir
 
 const std::string testImage
 {
+	"testdata/images/neograf/imagefile_1.bmp"
+	//"testdata/images/neograf/imagefile_8.bmp"
 	//"testdata/images/neograf/imagefile_13.bmp"
-	"testdata/images/neograf/imagefile_14.bmp"
+	//"testdata/images/neograf/imagefile_14.bmp"
+	//"testdata/images/neograf/imagefile_15.bmp"
 	//"testdata/images/neograf/imagefile_18.bmp"
 };
 
@@ -75,16 +78,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// setup image processor
 	ocr::ImageProcessor ip {};
 	// preprocessin
-	ip.preprocessing.emplace_back(new ocr::AutoCrop {50, 50.0, 50.0, 10.0});
-	//ip.preprocessing.emplace_back(new ocr::Crop {-10, 2000, -10, 900});	// a nop crop
-	//ip.preprocessing.emplace_back(new ocr::Rotate {360});				// a nop rotate
+	ip.preprocessing.emplace_back(new ocr::AutoCrop {35, 50.0, 50.0, 10.0});
 	ip.preprocessing.emplace_back(new ocr::Resize {205, 34});
 	ip.preprocessing.emplace_back(new ocr::NormalizeBrightnessContrast {1.5});
-	ip.preprocessing.emplace_back(new ocr::GaussianBlur {3, 5, 0, 0});
 	ip.preprocessing.emplace_back(new ocr::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});
-	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 4, 4, cv::MORPH_OPEN, 1});
-	//// postprocessing
-	//ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
+	ip.preprocessing.emplace_back(new ocr::GaussianBlur {3, 5, 0, 0});
+	ip.preprocessing.emplace_back(new ocr::EqualizeHistogram {});
+	ip.preprocessing.emplace_back(new ocr::Morphology {cv::MORPH_RECT, 3, 3, cv::MORPH_DILATE, 1});
+	// postprocessing
+	ip.postprocessing.emplace_back(new ocr::DrawTextBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
 
 	// read/load an image
 	ip.readImage(ocr::testImage, cv::IMREAD_GRAYSCALE);
