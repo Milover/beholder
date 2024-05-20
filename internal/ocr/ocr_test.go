@@ -185,7 +185,7 @@ var pipelineTests = []pipelineTest{
 		Name:         "dukat",
 		Error:        nil,
 		ImageSet:     "testdata/images/dukat",
-		Image:        "imagefile_148.jpeg",
+		Image:        "imagefile_115.jpeg",
 		ExpectedFile: "expected.csv",
 		Mapper: func(s string) string {
 			return strings.Map(
@@ -228,15 +228,15 @@ var pipelineTests = []pipelineTest{
 			},
 			{
 				"median_blur": {
-					"kernel_size": 5
+					"kernel_size": 7
 				}
 			},
 			{
 				"auto_crop": {
-					"kernel_size": 60,
+					"kernel_size": 50,
 					"text_width": 50,
 					"text_height": 50,
-					"padding": 0
+					"padding": 15
 				}
 			},
 			{
@@ -251,23 +251,27 @@ var pipelineTests = []pipelineTest{
 				}
 			},
 			{
-				"normalize_brightness_contrast": {
-					"clip_pct": 1.0
-				}
-			},
-			{
-				"auto_crop": {
-					"kernel_size": 20,
-					"text_width": 20,
-					"text_height": 10,
-					"padding": 10
+				"div_gaussian_blur": {
+					"scale_factor": 255,
+					"sigma_x": 5,
+					"sigma_y": 5,
+					"kernel_width": 0,
+					"kernel_height": 0
 				}
 			},
 			{
 				"threshold": {
-					"value": 120,
+					"value": 0,
 					"max_value": 255,
-					"type": [ "binary" ]
+					"type": [ "binary", "otsu" ]
+				}
+			},
+			{
+				"auto_crop": {
+					"kernel_size": 15,
+					"text_width": 20,
+					"text_height": 10,
+					"padding": 10
 				}
 			},
 			{
@@ -279,14 +283,11 @@ var pipelineTests = []pipelineTest{
 				}
 			},
 			{
-				"equalize_histogram": null
-			},
-			{
 				"morphology": {
 					"kernel_type": "rectangle",
-					"kernel_width": 3,
-					"kernel_height": 3,
-					"type": "close",
+					"kernel_width": 4,
+					"kernel_height": 4,
+					"type": "open",
 					"iterations": 1
 				}
 			}
