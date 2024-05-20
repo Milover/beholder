@@ -25,6 +25,7 @@ var opFactoryMap = map[string]opFactory{
 	"auto_crop":                     NewAutoCrop,
 	"clahe":                         NewCLAHE,
 	"crop":                          NewCrop,
+	"div_gaussian_blur":             NewDivGaussianBlur,
 	"draw_text_boxes":               NewDrawTextBoxes,
 	"equalize_histogram":            NewEqualizeHistogram,
 	"gaussian_blur":                 NewGaussianBlur,
@@ -171,6 +172,59 @@ func NewCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	)), nil
 }
 
+// divGaussianBlur represents an operation which applies background removal
+// by dividing the image with a Gaussian filtered and scaled version of itself.
+//
+// TODO: this should just be a division operation, and we should be able
+// to divide with 'a matrix', instead of re-implementing every possible
+// operation. This is fine for now, though.
+type divGaussianBlur struct {
+	// ScaleFactor scales the filtered image, usually by 255.
+	ScaleFactor float32 `json:"scale_factor"`
+	// SigmaX is the Gaussian filter kernel standard deviation
+	// in the x direction, usually some non-zero value.
+	SigmaX float32 `json:"sigma_x"`
+	// SigmaY is the Gaussian filter kernel standard deviation
+	// in the y direction, usually some non-zero value.
+	SigmaY float32 `json:"sigma_y"`
+	// KernelWidth is the Gaussian filter kernel width, usually 0.
+	KernelWidth int `json:"kernel_width"`
+	// KernelHeight is the Gaussian filter kernel height, usually 0.
+	KernelHeight int `json:"kernel_height"`
+}
+
+// NewDivGaussianBlur creates a divGaussianBlur operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewDivGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
+	op := divGaussianBlur{
+		ScaleFactor:  255.0,
+		SigmaX:       0.0,
+		SigmaY:       0.0,
+		KernelWidth:  0,
+		KernelHeight: 0,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.SigmaX <= 0 && (op.KernelWidth < 0 || op.KernelWidth%2 != 1) {
+		return nil, errors.New("ocr.NewDivGaussianBlur: bad kernel width")
+	}
+	if op.SigmaY <= 0 && (op.KernelHeight < 0 || op.KernelHeight%2 != 1) {
+		return nil, errors.New("ocr.NewDivGaussianBlur: bad kernel height")
+	}
+	// SigmaX and SigmaY accept all values
+	return unsafe.Pointer(C.DivGaussBlur_New(
+		C.float(op.ScaleFactor),
+		C.float(op.SigmaX),
+		C.float(op.SigmaY),
+		C.int(op.KernelWidth),
+		C.int(op.KernelHeight),
+	)), nil
+}
+
 // drawTextBoxes represents a postprocessing operation which draws rectangles
 // around detected text.
 type drawTextBoxes struct {
@@ -242,10 +296,10 @@ func NewGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
-	if op.KernelWidth <= 0 || op.KernelWidth%2 != 1 {
+	if op.SigmaX <= 0 && (op.KernelWidth < 0 || op.KernelWidth%2 != 1) {
 		return nil, errors.New("ocr.NewGaussianBlur: bad kernel width")
 	}
-	if op.KernelHeight <= 0 || op.KernelHeight%2 != 1 {
+	if op.SigmaY <= 0 && (op.KernelHeight < 0 || op.KernelHeight%2 != 1) {
 		return nil, errors.New("ocr.NewGaussianBlur: bad kernel height")
 	}
 	// SigmaX and SigmaY accept all values
@@ -274,7 +328,7 @@ func NewInvert(m json.RawMessage) (unsafe.Pointer, error) {
 	return unsafe.Pointer(C.Inv_New()), nil
 }
 
-// medianBlur represents an operation which applies Gaussian blur to an image.
+// medianBlur represents an operation which applies median blur to an image.
 type medianBlur struct {
 	// KernelSize is the size of the blur kernel (stencil).
 	// It should be an odd number.

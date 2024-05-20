@@ -7,17 +7,17 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An image brightness and contrast normalization operation.
+	A background removal operation by means of Gaussian blur division.
 
 SourceFiles
-	GaussianBlur.cpp
+	DivGaussianBlur.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef OCR_GAUSSIAN_BLUR_OP_H
-#define OCR_GAUSSIAN_BLUR_OP_H
+#ifndef OCR_DIV_GAUSSIAN_BLUR_OP_H
+#define OCR_DIV_GAUSSIAN_BLUR_OP_H
 
-#include "ProcessingOp.h"
+#include "GaussianBlur.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -32,12 +32,12 @@ namespace ocr
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class GaussianBlur Declaration
+                        Class DivGaussianBlur Declaration
 \*---------------------------------------------------------------------------*/
 
-class GaussianBlur
+class DivGaussianBlur
 :
-	public ProcessingOp
+	public GaussianBlur
 {
 protected:
 
@@ -58,26 +58,26 @@ public:
 
 	//- Public data
 
-		//- Kernel size
-		int kernelWidth {3};
-		int kernelHeight {3};
-		//- Kernel standard deviation
-		float sigmaX {0};
-		float sigmaY {0};
+		//- Scale factor
+		float scaleFactor {255.0};
 
 	//- Constructors
 
 		//- Default constructor
-		GaussianBlur() = default;
+		DivGaussianBlur() = default;
 
 		//- Default constructor
-		GaussianBlur(int kW, int kH, float sX, float sY)
+		DivGaussianBlur
+		(
+			float scale = 255.0,
+			float sX = 33.0,
+			float sY = 33.0,
+			int kW = 0,
+			int kH = 0
+		)
 		:
-			ProcessingOp(),
-			kernelWidth {kW},
-			kernelHeight {kH},
-			sigmaX {sX},
-			sigmaY {sY}
+			GaussianBlur(kW, kH, sX, sY),
+			scaleFactor {scale}
 		{}
 
 	//- Member functions

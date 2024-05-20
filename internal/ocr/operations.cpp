@@ -18,6 +18,10 @@ Crp Crp_New(int left, int top, int width, int height) {
 	return new ocr::Crop {left, top, width, height};
 }
 
+DivGaussBlur DivGaussBlur_New(float scale, float sX, float sY, int kW, int kH) {
+	return new ocr::DivGaussianBlur {scale, sX, sY, kW, kH};
+}
+
 DrawTB DrawTB_New(float color[4], int thickness) {
 	std::array<float, 4> c {color[0], color[1], color[2], color[3]};
 	return new ocr::DrawTextBoxes {c, thickness};

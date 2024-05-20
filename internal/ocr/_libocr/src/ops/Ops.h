@@ -20,6 +20,7 @@ Description
 #include "AutoCrop.h"
 #include "CLAHE.h"
 #include "Crop.h"
+#include "DivGaussianBlur.h"
 #include "DrawTextBoxes.h"
 #include "EqualizeHistogram.h"
 #include "GaussianBlur.h"
