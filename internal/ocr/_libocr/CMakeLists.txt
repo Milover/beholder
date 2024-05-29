@@ -100,7 +100,9 @@ list(
 	"${PROJECT_SOURCE_DIR}/src/ops")
 
 # main library target
-add_library (ocr SHARED)
+add_library (ocr STATIC)
+set_property(TARGET ocr
+	PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_include_directories(ocr PUBLIC ${OCR_INCLUDE_DIRS})
 target_link_libraries(ocr ${OCR_LIBRARIES})
 target_sources(ocr PRIVATE ${OCR_SRC})
