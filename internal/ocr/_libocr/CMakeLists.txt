@@ -59,6 +59,7 @@ list(APPEND OCR_LIBRARIES "PkgConfig::tesseract")
 #list(APPEND OCR_LIBRARIES "PkgConfig::leptonica")
 
 # OpenCV
+set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/opencv4")
 find_package(OpenCV REQUIRED)
 list(APPEND OCR_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
