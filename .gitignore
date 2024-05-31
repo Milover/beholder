@@ -42,3 +42,4 @@ internal/ocr/_libocr/test/bin/
 internal/ocr/_libocr/share
 internal/ocr/_libocr/third_party/opencv
 internal/ocr/_libocr/third_party/leptonica
+internal/ocr/_libocr/third_party/tesseract

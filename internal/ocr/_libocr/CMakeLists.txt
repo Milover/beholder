@@ -45,31 +45,20 @@ set(OCR_INCLUDE_DIRS "")
 set(OCR_LIBRARIES "")
 
 # FetchContent
-include(FetchContent)
-
-# PkgConfig
-find_package(PkgConfig REQUIRED)
+#include(FetchContent)
 
 # Tesseract
-pkg_check_modules(tesseract REQUIRED IMPORTED_TARGET tesseract)
-list(APPEND OCR_LIBRARIES "PkgConfig::tesseract")
-
-# Leptonica
-#pkg_check_modules(leptonica REQUIRED IMPORTED_TARGET lept)
-#list(APPEND OCR_LIBRARIES "PkgConfig::leptonica")
+set(Leptonica_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/leptonica")
+set(Tesseract_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/tesseract")
+find_package(Tesseract REQUIRED)
+list(APPEND OCR_INCLUDE_DIRS ${Tesseract_INCLUDE_DIRS})
+list(APPEND OCR_LIBRARIES "Tesseract::libtesseract")
 
 # OpenCV
 set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/opencv4")
 find_package(OpenCV REQUIRED)
 list(APPEND OCR_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
-
-# JSON
-#FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
-#FetchContent_MakeAvailable(json)
-#set(JSON_BuildTests OFF CACHE INTERNAL "")
-#set(JSON_Install OFF CACHE INTERNAL "")
-#list(APPEND OCR_LIBRARIES nlohmann_json::nlohmann_json)
 
 # Threads
 #find_package(Threads REQUIRED)
@@ -104,7 +93,13 @@ add_library (ocr STATIC)
 set_property(TARGET ocr
 	PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_include_directories(ocr PUBLIC ${OCR_INCLUDE_DIRS})
-target_link_libraries(ocr ${OCR_LIBRARIES})
+target_link_libraries(ocr PRIVATE ${OCR_LIBRARIES})
+target_link_options(ocr
+	PRIVATE
+	-Wl,--whole-archive
+	${OCR_LIBRARIES}
+	-Wl,--no-whole-archive
+	)
 target_sources(ocr PRIVATE ${OCR_SRC})
 target_sources(ocr PUBLIC FILE_SET HEADERS FILES ${OCR_HDR})
 
