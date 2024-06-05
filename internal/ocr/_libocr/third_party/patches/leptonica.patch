@@ -1,0 +1,13 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 55007ff..dbe6738 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -33,7 +33,7 @@ endif()
+ if (OPENJPEG_LIBRARIES)
+     # openjp2 < 2.5.0 does not sets the INTERFACE_INCLUDE_DIRECTORIES property
+     target_include_directories  (leptonica PRIVATE ${OPENJPEG_INCLUDE_DIRS})
+-    target_link_libraries       (leptonica PRIVATE openjp2)
++    target_link_libraries       (leptonica PRIVATE ${OPENJPEG_LIBRARIES})
+ endif()
+ if (PNG_LIBRARIES)
+     target_include_directories  (leptonica PRIVATE ${PNG_INCLUDE_DIRS})
