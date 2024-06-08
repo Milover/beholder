@@ -4,7 +4,7 @@
 # See the LICENSE file for license information
 
 # cmake options
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.25)
 
 # project name
 project(ocr)
