@@ -318,11 +318,12 @@ func TestOCRRunOnce(t *testing.T) {
 			err = o.Init()
 			assert.Nil(err, "could not initialize OCR")
 			// read the image
-			f, err := os.Open(path.Join(tt.ImageSet, tt.Image))
+			imagefile := path.Join(tt.ImageSet, tt.Image)
+			f, err := os.Open(imagefile)
+			assert.Nil(err, fmt.Sprintf("could not open %q", imagefile))
 			defer f.Close()
-			assert.Nil(err, fmt.Sprintf("could not open %q", f.Name()))
 			buf, err := io.ReadAll(f)
-			assert.Nil(err, fmt.Sprintf("could not read %q", f.Name()))
+			assert.Nil(err, fmt.Sprintf("could not read %q", imagefile))
 
 			// test
 			text, err := o.Run(buf)
@@ -330,14 +331,15 @@ func TestOCRRunOnce(t *testing.T) {
 			// check results and errors
 			var expected string
 			if len(tt.ExpectedFile) != 0 {
-				csvFile, err := os.Open(path.Join(tt.ImageSet, tt.ExpectedFile))
+				currentFile := path.Join(tt.ImageSet, tt.ExpectedFile)
+				csvFile, err := os.Open(currentFile)
+				assert.Nil(err, fmt.Sprintf("could not open %q", currentFile))
 				defer csvFile.Close()
-				assert.Nil(err, fmt.Sprintf("could not open %q", csvFile.Name()))
 				r := csv.NewReader(csvFile)
 				r.Comma = '\t'
 
 				records, err := r.ReadAll()
-				assert.Nil(err, fmt.Sprintf("could not read %q", csvFile.Name()))
+				assert.Nil(err, fmt.Sprintf("could not read %q", currentFile))
 
 				// find the expected string
 				for _, record := range records {
@@ -376,21 +378,22 @@ func TestOCRRunSet(t *testing.T) {
 			assert.Nil(err, "unexpected OCR.Init() error")
 			// get the image set file names
 			dir, err := os.Open(tt.ImageSet)
-			defer dir.Close()
 			assert.Nil(err, "unexpected os.Open() error")
+			defer dir.Close()
 			files, err := dir.Readdirnames(-1)
 			assert.Nil(err, "unexpected os.File.Readdirnames() error")
 			// read the expected values if necessary
 			var expectedRecords [][]string
 			if len(tt.ExpectedFile) != 0 {
-				csvFile, err := os.Open(path.Join(tt.ImageSet, tt.ExpectedFile))
+				currentFile := path.Join(tt.ImageSet, tt.ExpectedFile)
+				csvFile, err := os.Open(currentFile)
+				assert.Nil(err, fmt.Sprintf("could not open %q", currentFile))
 				defer csvFile.Close()
-				assert.Nil(err, fmt.Sprintf("could not open %q", csvFile.Name()))
 				r := csv.NewReader(csvFile)
 				r.Comma = '\t'
 
 				expectedRecords, err = r.ReadAll()
-				assert.Nil(err, fmt.Sprintf("could not read %q", csvFile.Name()))
+				assert.Nil(err, fmt.Sprintf("could not read %q", currentFile))
 			}
 
 			// test each image
@@ -399,8 +402,8 @@ func TestOCRRunSet(t *testing.T) {
 			for _, file := range files {
 				// read the image
 				f, err := os.Open(path.Join(tt.ImageSet, file))
-				defer f.Close()
 				assert.Nil(err, "unexpected os.Open() error")
+				defer f.Close()
 				if !slices.Contains(imgFormats, path.Ext(file)) {
 					continue
 				}
