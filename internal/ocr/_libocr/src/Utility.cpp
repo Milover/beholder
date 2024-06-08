@@ -8,6 +8,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <algorithm>
 #include <cctype>
 #include <memory>
 #include <string>
