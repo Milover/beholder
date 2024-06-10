@@ -9,11 +9,30 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
+	"time"
 	"unsafe"
+
+	"github.com/Milover/ocr/internal/stopwatch"
 )
+
+// Result holds the OCR pipeline results and statistics.
+type Result struct {
+	// Text is the text recognized by the OCR.
+	Text string
+	// TimeStamp is the time at which the OCR pipeline started.
+	TimeStamp time.Time
+	// RunDuration is the time elapsed from start to finish of the OCR pipeline.
+	RunDuration      time.Duration
+	ReadDuration     time.Duration
+	DecodeDuration   time.Duration
+	PreprocDuration  time.Duration
+	OCRDuration      time.Duration
+	PostprocDuration time.Duration
+}
 
 // OCR is a container for Tesseract and ImageProcessor APIs.
 // Since both are usually required at the same time, OCR simplifies
@@ -61,27 +80,41 @@ func (o OCR) Init() error {
 	return nil
 }
 
-// Run is a function that runs the OCR pipeline (preprocessing, recognition
-// and postprocessing) on the provided image.
-// WARNING: the image buffer MUST be kept alive until the function returns.
-func (o OCR) Run(buf []byte) (string, error) {
-	if err := o.P.DecodeImage(buf, ImreadGrayscale); err != nil {
-		return "", err
+// Run is a function that runs the OCR pipeline for a single image: reading,
+// preprocessing, recognition and postprocessing.
+func (o OCR) Run(r io.Reader) (Result, error) {
+	sw := stopwatch.New()
+	res := Result{TimeStamp: sw.Start}
+
+	buf, err := io.ReadAll(r)
+	if err != nil {
+		return res, err
 	}
+	res.ReadDuration = sw.Lap()
+
+	if err = o.P.DecodeImage(buf, ImreadGrayscale); err != nil {
+		return res, err
+	}
+	res.DecodeDuration = sw.Lap()
 
 	if err := o.P.Preprocess(); err != nil {
-		return "", err
+		return res, err
 	}
 	o.T.SetImage(*o.P, 1)
+	res.PreprocDuration = sw.Lap()
 
-	text, err := o.T.DetectAndRecognize()
-	if err != nil {
-		return text, err
+	if res.Text, err = o.T.DetectAndRecognize(); err != nil {
+		return res, err
 	}
+	res.OCRDuration = sw.Lap()
+
 	if err = o.P.Postprocess(*o.T); err != nil {
-		return text, err
+		return res, err
 	}
-	return text, nil
+	res.PostprocDuration = sw.Lap()
+
+	res.RunDuration = sw.Total()
+	return res, nil
 }
 
 type ImreadMode int

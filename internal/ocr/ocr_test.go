@@ -5,9 +5,7 @@ package ocr
 import (
 	"encoding/csv"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"slices"
@@ -25,20 +23,17 @@ var imgFormats = []string{
 
 type testFailure struct {
 	Filename string
-	Error    error
 	Expected string
 	Result   string
 }
 
-// Function calculateWidths calculates the maximum width of each column.
-func calculateWidths(failures []testFailure) (int, int, int, int) {
-	var maxFile, maxExp, maxRes, maxErr int
-
+// Function buildTable builds the test failure table string.
+func buildTable(failures []testFailure) string {
+	var maxFile, maxExp, maxRes int
 	for _, f := range failures {
 		lFile := len(f.Filename)
 		lExp := len(fmt.Sprintf("%q", f.Expected))
 		lRes := len(fmt.Sprintf("%q", f.Result))
-		lErr := 0
 
 		if lFile > maxFile {
 			maxFile = lFile
@@ -49,33 +44,12 @@ func calculateWidths(failures []testFailure) (int, int, int, int) {
 		if lRes > maxRes {
 			maxRes = lRes
 		}
-		if f.Error != nil {
-			if lErr = len(f.Error.Error()); lErr > maxErr {
-				maxErr = lErr
-			}
-		}
 	}
-	return maxFile, maxExp, maxRes, maxErr
-}
-
-// Function buildTable builds the test failure table string.
-func buildTable(failures []testFailure) string {
-	maxFile, maxExp, maxRes, maxErr := calculateWidths(failures)
-
-	format := fmt.Sprintf(
-		"| %%-%ds | %%-%dq | %%-%dq | %%-%ds |\n",
-		maxFile,
-		maxExp,
-		maxRes,
-		maxErr,
-	)
+	format := fmt.Sprintf("| %%-%ds | %%-%dq | %%-%dq |\n",
+		maxFile, maxExp, maxRes)
 	var table string
 	for _, f := range failures {
-		errStr := ""
-		if f.Error != nil {
-			errStr = f.Error.Error()
-		}
-		table += fmt.Sprintf(format, f.Filename, f.Expected, f.Result, errStr)
+		table += fmt.Sprintf(format, f.Filename, f.Expected, f.Result)
 	}
 	return table
 }
@@ -300,61 +274,78 @@ var pipelineTests = []pipelineTest{
 	},
 }
 
+func setupOCRTest(pt pipelineTest) (*OCR, [][]string, error) {
+	var records [][]string
+	o := NewOCR()
+	// unmarshal
+	if err := json.Unmarshal([]byte(pt.Config), &o); err != nil {
+		return o, records, fmt.Errorf("could not unmarshall JSON: %w", err)
+	}
+	// initialize
+	if err := o.Init(); err != nil {
+		return o, records, fmt.Errorf("could not initialize OCR: %w", err)
+	}
+	// read the expected values if necessary
+	if len(pt.ExpectedFile) != 0 {
+		f, err := os.Open(path.Join(pt.ImageSet, pt.ExpectedFile))
+		if err != nil {
+			return o, records, err
+		}
+		defer f.Close()
+		r := csv.NewReader(f)
+		r.Comma = '\t'
+		if records, err = r.ReadAll(); err != nil {
+			return o, records, fmt.Errorf("could not read 'expected' file: %w", err)
+		}
+	}
+	return o, records, nil
+}
+
+// getExpected gets the expected result for an image.
+// If working with an image set, it finds the result from 'records', otherwise
+// it returns 'dflt'.
+func getExpected(records [][]string, image string, dflt string) string {
+	if len(records) == 0 {
+		return dflt
+	}
+	var expected string
+	for _, record := range records {
+		if record[0] == image {
+			expected = strings.ReplaceAll(record[1], "\\n", "\n")
+			break
+		}
+	}
+	return expected
+}
+
 // TestOCRRunOnce runs the OCR pipeline for a single image at a time and
 // checks the results.
 func TestOCRRunOnce(t *testing.T) {
 	for _, tt := range pipelineTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
-			var err error
 
-			// new OCR
-			o := NewOCR()
+			// setup
+			o, expectedRecords, err := setupOCRTest(tt)
 			defer o.Delete()
-			// unmarshal
-			err = json.Unmarshal([]byte(tt.Config), &o)
-			assert.Nil(err, "could not unmarshall JSON")
-			// initialize
-			err = o.Init()
-			assert.Nil(err, "could not initialize OCR")
-			// read the image
-			imagefile := path.Join(tt.ImageSet, tt.Image)
-			f, err := os.Open(imagefile)
-			assert.Nil(err, fmt.Sprintf("could not open %q", imagefile))
-			defer f.Close()
-			buf, err := io.ReadAll(f)
-			assert.Nil(err, fmt.Sprintf("could not read %q", imagefile))
+			assert.Nil(err, "unexpected OCR test setup error")
+
+			// read image
+			img, err := os.Open(path.Join(tt.ImageSet, tt.Image))
+			assert.Nil(err, "could not open image")
+			defer img.Close()
 
 			// test
-			text, err := o.Run(buf)
+			res, err := o.Run(img)
+			assert.Equal(tt.Error, err, "unexpected OCR error")
 
-			// check results and errors
-			var expected string
-			if len(tt.ExpectedFile) != 0 {
-				currentFile := path.Join(tt.ImageSet, tt.ExpectedFile)
-				csvFile, err := os.Open(currentFile)
-				assert.Nil(err, fmt.Sprintf("could not open %q", currentFile))
-				defer csvFile.Close()
-				r := csv.NewReader(csvFile)
-				r.Comma = '\t'
+			// set expected
+			expected := getExpected(expectedRecords, tt.Image, tt.Expected)
+			assert.NotEqual(0, len(expected),
+				fmt.Sprintf("could not find expected for %v", tt.Image))
 
-				records, err := r.ReadAll()
-				assert.Nil(err, fmt.Sprintf("could not read %q", currentFile))
-
-				// find the expected string
-				for _, record := range records {
-					if record[0] == tt.Image {
-						expected = strings.ReplaceAll(record[1], "\\n", "\n")
-						break
-					}
-				}
-				assert.NotEqual(0, len(expected),
-					fmt.Sprintf("could not find expected for %v", tt.Image))
-			} else {
-				expected = tt.Expected
-			}
-			assert.Equal(tt.Mapper(expected), tt.Mapper(text))
-			assert.Equal(tt.Error, err)
+			// check results
+			assert.Equal(tt.Mapper(expected), tt.Mapper(res.Text), "OCR failure")
 		})
 	}
 }
@@ -365,77 +356,50 @@ func TestOCRRunSet(t *testing.T) {
 	for _, tt := range pipelineTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
-			var err error
 
-			// new OCR
-			o := NewOCR()
+			// setup
+			o, expectedRecords, err := setupOCRTest(tt)
 			defer o.Delete()
-			// unmarshall
-			err = json.Unmarshal([]byte(tt.Config), &o)
-			assert.Nil(err, "unexpected json.Unmarshal() error")
-			// initialize
-			err = o.Init()
-			assert.Nil(err, "unexpected OCR.Init() error")
+			assert.Nil(err, "unexpected OCR test setup error")
+
 			// get the image set file names
 			dir, err := os.Open(tt.ImageSet)
-			assert.Nil(err, "unexpected os.Open() error")
+			assert.Nil(err, "could not open image set directory")
 			defer dir.Close()
-			files, err := dir.Readdirnames(-1)
-			assert.Nil(err, "unexpected os.File.Readdirnames() error")
-			// read the expected values if necessary
-			var expectedRecords [][]string
-			if len(tt.ExpectedFile) != 0 {
-				currentFile := path.Join(tt.ImageSet, tt.ExpectedFile)
-				csvFile, err := os.Open(currentFile)
-				assert.Nil(err, fmt.Sprintf("could not open %q", currentFile))
-				defer csvFile.Close()
-				r := csv.NewReader(csvFile)
-				r.Comma = '\t'
-
-				expectedRecords, err = r.ReadAll()
-				assert.Nil(err, fmt.Sprintf("could not read %q", currentFile))
-			}
+			filenames, err := dir.Readdirnames(-1)
+			assert.Nil(err, "could not read image set file names")
 
 			// test each image
 			var failures []testFailure
 			var errFail error
-			for _, file := range files {
-				// read the image
-				f, err := os.Open(path.Join(tt.ImageSet, file))
-				assert.Nil(err, "unexpected os.Open() error")
-				defer f.Close()
-				if !slices.Contains(imgFormats, path.Ext(file)) {
+			for _, filename := range filenames {
+				// skip non-image files
+				if !slices.Contains(imgFormats, path.Ext(filename)) {
 					continue
 				}
-				buf, err := io.ReadAll(f)
-				assert.Nil(err, "unexpected io.ReadAll() error")
+				// read image
+				img, err := os.Open(path.Join(tt.ImageSet, filename))
+				assert.Nil(err, "could not open image")
+				defer img.Close()
 
 				// test
-				text, err := o.Run(buf)
+				res, err := o.Run(img)
+				assert.Equal(tt.Error, err, "unexpected OCR error")
 
-				// check results and errors
-				var expected string
-				if len(tt.ExpectedFile) != 0 {
-					for _, record := range expectedRecords {
-						if record[0] == file {
-							expected = strings.ReplaceAll(record[1], "\\n", "\n")
-							break
-						}
-					}
-					assert.NotEqual(0, len(expected),
-						fmt.Sprintf("could not find expected for %v", tt.Image))
-				} else {
-					expected = tt.Expected
-				}
-				if tt.Mapper(text) != tt.Mapper(expected) || !errors.Is(err, tt.Error) {
+				// set expected
+				expected := getExpected(expectedRecords, filename, tt.Expected)
+				assert.NotEqual(0, len(expected),
+					fmt.Sprintf("could not find expected for %v", filename))
+
+				// check results
+				if tt.Mapper(res.Text) != tt.Mapper(expected) {
 					errFail = fmt.Errorf("OCR failure")
 					failures = append(
 						failures,
 						testFailure{
-							Filename: f.Name(),
-							Error:    err,
+							Filename: img.Name(),
 							Expected: expected,
-							Result:   text,
+							Result:   res.Text,
 						},
 					)
 				}
@@ -447,7 +411,7 @@ func TestOCRRunSet(t *testing.T) {
 					return strings.Compare(a.Filename, b.Filename)
 				},
 			)
-			msg := fmt.Sprintf("failed: %v/%v\n", len(failures), len(files))
+			msg := fmt.Sprintf("failed: %v/%v\n", len(failures), len(filenames))
 			msg += buildTable(failures)
 
 			assert.Nil(errFail, msg)
