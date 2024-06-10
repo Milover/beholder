@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 	"time"
 
 	"github.com/Milover/ocr/internal/ocr"
@@ -37,6 +38,9 @@ type Stats struct {
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	var stats Stats
 	sw := stopwatch.New()
 
@@ -94,14 +98,24 @@ func run(cmd *cobra.Command, args []string) error {
 	stats.ExecDuration = sw.Total()
 
 	//o.P.ShowImage("result")
-	log.Printf("initialize  : %v\n", stats.InitDuration.String())
-	log.Printf("read        : %v\n", stats.OCRResult.ReadDuration.String())
-	log.Printf("decode      : %v\n", stats.OCRResult.DecodeDuration.String())
-	log.Printf("preprocess  : %v\n", stats.OCRResult.PreprocDuration.String())
-	log.Printf("ocr         : %v\n", stats.OCRResult.OCRDuration.String())
-	log.Printf("postprocess : %v\n", stats.OCRResult.PostprocDuration.String())
-	log.Printf("total       : %v\n", stats.OCRResult.RunDuration.String())
-	log.Printf("execution   : %v\n", stats.ExecDuration.String())
+	log.Printf(`timings
+initialize  : %v
+read        : %v
+decode      : %v
+preprocess  : %v
+ocr         : %v
+postprocess : %v
+total       : %v
+execution   : %v`,
+		stats.InitDuration.String(),
+		stats.OCRResult.ReadDuration.String(),
+		stats.OCRResult.DecodeDuration.String(),
+		stats.OCRResult.PreprocDuration.String(),
+		stats.OCRResult.OCRDuration.String(),
+		stats.OCRResult.PostprocDuration.String(),
+		stats.OCRResult.RunDuration.String(),
+		stats.ExecDuration.String(),
+	)
 	return nil
 }
 
