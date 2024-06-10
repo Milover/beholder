@@ -89,7 +89,6 @@ var pipelineTests = []pipelineTest{
 {
 	"ocr": {
 		"config_paths": [
-			"testdata/configs/test_neograf.patterns.config"
 		],
 		"model_dir_path": "_models/dotmatrix",
 		"model": "dotOCRDData1",
@@ -98,7 +97,10 @@ var pipelineTests = []pipelineTest{
 			"load_system_dawg": "0",
 			"load_freq_dawg": "0",
 			"tessedit_char_whitelist": "V0123456789"
-		}
+		},
+		"patterns": [
+			"\\A\\d\\d\\d\\d\\d\\d\\d\\d"
+		]
 	},
 	"image_processing": {
 		"preprocessing": [
@@ -175,7 +177,6 @@ var pipelineTests = []pipelineTest{
 {
 	"ocr": {
 		"config_paths": [
-			"testdata/configs/test_dukat.patterns.config"
 		],
 		"model_dir_path": "_models/dotmatrix",
 		"model": "Transit_FT_500",
@@ -185,7 +186,11 @@ var pipelineTests = []pipelineTest{
 			"load_freq_dawg": "0",
 			"classify_bln_numeric_mode": "1",
 			"tessedit_char_whitelist": ".:0123456789"
-		}
+		},
+		"patterns": [
+			"\\d\\d.\\d\\d.\\d\\d\\d\\d.",
+			"\\d\\d:\\d\\d"
+		]
 	},
 	"image_processing": {
 		"preprocessing": [
@@ -415,6 +420,68 @@ func TestOCRRunSet(t *testing.T) {
 			msg += buildTable(failures)
 
 			assert.Nil(errFail, msg)
+		})
+	}
+}
+
+type patternTest struct {
+	Name     string
+	Expected []string
+	Error    error
+	Config   string
+}
+
+var patternTests = []patternTest{
+	{
+		Name: "basic-good",
+		Expected: []string{
+			`\A\d\d`,
+			`\A\d\d`,
+		},
+		Error: nil,
+		Config: `
+{
+	"ocr": {
+		"model_dir_path": "_models/dotmatrix",
+		"model": "dotOCRDData1",
+		"variables": {
+			"load_system_dawg": "0",
+			"load_freq_dawg": "0"
+		},
+		"patterns": [
+			"\\A\\d\\d",
+			"\\A\\d\\d"
+		]
+	}
+}
+`,
+	},
+}
+
+// TestOCRPatternLoad checks if the pattern(s) from the config are properly
+// loaded when OCR is initialized.
+// NOTE: this is a stupid test, it doesn't test shit.
+func TestOCRPatternLoad(t *testing.T) {
+	for _, tt := range patternTests {
+		t.Run(tt.Name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			o := NewOCR()
+			err := json.Unmarshal([]byte(tt.Config), &o)
+			assert.Nil(err, "could not unmarshall JSON")
+
+			// We're not sure the JSON will be unmarshalled, and
+			// since we have no good way of checking the temporary file
+			// contents (we don't want to store the file name) or what
+			// Tesseract actually reads, we check what was unmarshalled here
+			// since that's what will be the contents of the temporary file.
+			assert.ElementsMatch(tt.Expected, o.T.Patterns, "bad OCR pattern(s)")
+
+			// test
+			err = o.Init()
+
+			// check if patterns were properly loaded
+			assert.Equal(tt.Error, err, "OCR init failure")
 		})
 	}
 }

@@ -392,6 +392,10 @@ type Tesseract struct {
 	Model string `json:"model"`
 	// PageSegMode is the page segmentation mode.
 	PageSegMode PSegMode `json:"page_seg_mode"`
+	// Patterns is a list of Tesseract user-patterns.
+	// For more info about the usage and format, see:
+	// https://github.com/tesseract-ocr/tesseract/blob/main/src/dict/trie.h#L184
+	Patterns []string `json:"patterns"`
 	// Variables are runtime settable variables.
 	// Here are some commonly used variables and their values:
 	//
@@ -450,6 +454,12 @@ func (t Tesseract) Init() error {
 	if err := t.IsValid(); err != nil {
 		return err
 	}
+	if patternsFile, err := t.setPatterns(); err != nil {
+		return err
+	} else {
+		defer os.Remove(patternsFile) // this could fail, but we don't care
+	}
+
 	// allocate the struct and handle the easy stuff (ints, strings...)
 	// NOTE: C.malloc guarantees never to return nil, no need to check
 	in := (*C.TInit)(C.malloc(C.sizeof_TInit))
@@ -485,8 +495,7 @@ func (t Tesseract) Init() error {
 		iVar++
 	}
 
-	ok := C.Tess_Init(t.p, in)
-	if !ok {
+	if ok := C.Tess_Init(t.p, in); !ok {
 		return errors.New("ocr.Tesseract.Init: could not initialize tesseract")
 	}
 	return nil
@@ -513,7 +522,36 @@ func (t Tesseract) IsValid() error {
 
 // SetImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
-// FIXME: bytextPerPixel should be automatically determined.
+// FIXME: bytesPerPixel should be automatically determined.
 func (t Tesseract) SetImage(ip ImageProcessor, bytesPerPixel int) {
 	C.Tess_SetImage(t.p, ip.p, C.int(bytesPerPixel))
+}
+
+// setPatterns sets up the stuff necessary for Tesseract
+// to read/load user-patterns.
+// TODO: we should check that the pattern is valid, otherwise Tesseract
+// will silently ignore it.
+func (t *Tesseract) setPatterns() (string, error) {
+	if len(t.Patterns) == 0 {
+		return "", nil
+	}
+	f, err := os.CreateTemp("", "ocr_patterns_")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	var b strings.Builder
+	for i, p := range t.Patterns {
+		b.WriteString(p)
+		if i != len(t.Patterns)-1 {
+			b.WriteRune('\n')
+		}
+	}
+	if _, err := f.WriteString(b.String()); err != nil {
+		return f.Name(), err
+	}
+	t.Variables["user_patterns_file"] = f.Name()
+
+	return f.Name(), nil
 }

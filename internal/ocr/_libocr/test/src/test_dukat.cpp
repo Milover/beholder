@@ -54,7 +54,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// setup tesseract
 	ocr::Tesseract t {};
-	t.configPaths = std::vector<std::string>{"testdata/configs/test_dukat.patterns.config"};
+	//t.configPaths = std::vector<std::string>{"testdata/configs/test_dukat.patterns.config"};
 	//t.modelPath = "_models/best";
 	t.modelPath = "_models/dotmatrix";
 	//t.model = "5x5_Dots_FT_500";
@@ -72,7 +72,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		{"load_system_dawg", "0"},
 		{"load_freq_dawg", "0"},
 		{"classify_bln_numeric_mode", "1"},
-		{"tessedit_char_whitelist", ".:0123456789"}
+		{"tessedit_char_whitelist", ".:0123456789"},
+		{"user_patterns_file", "testdata/configs/test_dukat.patterns"}
 	};
 	if (!t.init())
 	{
@@ -148,7 +149,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ip.preprocess();
 	t.setImage(ip);
 	//ip.writeImage();
-	ip.showImage();
+	//ip.showImage();
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// run ocr
