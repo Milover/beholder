@@ -385,10 +385,7 @@ func (m PSegMode) MarshalJSON() ([]byte, error) {
 type Tesseract struct {
 	// ConfigurationPaths is a list of configuration file paths.
 	ConfigPaths []string `json:"config_paths"`
-	// ModelDirPath is the path to the directory containing
-	// the model (trained data) file.
-	ModelDirPath string `json:"model_dir_path"`
-	// Model is the name of the model (trained data) file.
+	// Model is the path to the model (trained data) file.
 	Model string `json:"model"`
 	// PageSegMode is the page segmentation mode.
 	PageSegMode PSegMode `json:"page_seg_mode"`
@@ -464,9 +461,9 @@ func (t Tesseract) Init() error {
 	// NOTE: C.malloc guarantees never to return nil, no need to check
 	in := (*C.TInit)(C.malloc(C.sizeof_TInit))
 	defer C.free(unsafe.Pointer(in))
-	in.modelPath = C.CString(t.ModelDirPath)
+	in.modelPath = C.CString(path.Dir(t.Model))
 	defer C.free(unsafe.Pointer(in.modelPath))
-	in.model = C.CString(t.Model)
+	in.model = C.CString(strings.TrimSuffix(path.Base(t.Model), ".traineddata"))
 	defer C.free(unsafe.Pointer(in.model))
 	in.psMode = C.int(t.PageSegMode)
 
@@ -511,10 +508,7 @@ func (t Tesseract) IsValid() error {
 			return err
 		}
 	}
-	if _, err := os.Stat(t.ModelDirPath); err != nil {
-		return err
-	}
-	if _, err := os.Stat(path.Join(t.ModelDirPath, t.Model+".traineddata")); err != nil {
+	if _, err := os.Stat(t.Model); err != nil {
 		return err
 	}
 	return nil

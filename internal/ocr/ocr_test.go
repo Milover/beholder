@@ -90,8 +90,7 @@ var pipelineTests = []pipelineTest{
 	"ocr": {
 		"config_paths": [
 		],
-		"model_dir_path": "_models/dotmatrix",
-		"model": "dotOCRDData1",
+		"model": "_models/dotmatrix/dotOCRDData1.traineddata",
 		"page_seg_mode": "single_line",
 		"variables": {
 			"load_system_dawg": "0",
@@ -178,8 +177,7 @@ var pipelineTests = []pipelineTest{
 	"ocr": {
 		"config_paths": [
 		],
-		"model_dir_path": "_models/dotmatrix",
-		"model": "Transit_FT_500",
+		"model": "_models/dotmatrix/Transit_FT_500.traineddata",
 		"page_seg_mode": "single_block",
 		"variables": {
 			"load_system_dawg": "0",
@@ -442,8 +440,7 @@ var patternTests = []patternTest{
 		Config: `
 {
 	"ocr": {
-		"model_dir_path": "_models/dotmatrix",
-		"model": "dotOCRDData1",
+		"model": "_models/dotmatrix/dotOCRDData1.traineddata",
 		"variables": {
 			"load_system_dawg": "0",
 			"load_freq_dawg": "0"
