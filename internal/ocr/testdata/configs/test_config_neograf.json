@@ -2,7 +2,7 @@
 	"ocr": {
 		"config_paths": [
 		],
-		"model": "internal/ocr/_models/dotmatrix/dotOCRDData1.traineddata",
+		"model": "internal/ocr/model/dotmatrix/dotOCRDData1.traineddata",
 		"page_seg_mode": "single_line",
 		"variables": {
 			"load_system_dawg": "0",

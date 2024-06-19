@@ -16,6 +16,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/Milover/ocr/internal/ocr/model"
 	"github.com/Milover/ocr/internal/stopwatch"
 )
 
@@ -385,8 +386,9 @@ func (m PSegMode) MarshalJSON() ([]byte, error) {
 type Tesseract struct {
 	// ConfigurationPaths is a list of configuration file paths.
 	ConfigPaths []string `json:"config_paths"`
-	// Model is the path to the model (trained data) file.
-	Model string `json:"model"`
+	// Model is the tesseract OCR  model.
+	// It can be either an embedded model keyword, or a model file name.
+	Model model.Model `json:"model"`
 	// PageSegMode is the page segmentation mode.
 	PageSegMode PSegMode `json:"page_seg_mode"`
 	// Patterns is a list of Tesseract user-patterns.
@@ -461,11 +463,20 @@ func (t Tesseract) Init() error {
 	// NOTE: C.malloc guarantees never to return nil, no need to check
 	in := (*C.TInit)(C.malloc(C.sizeof_TInit))
 	defer C.free(unsafe.Pointer(in))
-	in.modelPath = C.CString(path.Dir(t.Model))
-	defer C.free(unsafe.Pointer(in.modelPath))
-	in.model = C.CString(strings.TrimSuffix(path.Base(t.Model), ".traineddata"))
-	defer C.free(unsafe.Pointer(in.model))
+
+	// set the page segmentation mode
 	in.psMode = C.int(t.PageSegMode)
+
+	// handle the model
+	mfn, remover, err := t.Model.File()
+	if err != nil {
+		return err
+	}
+	defer remover() // this could fail, but we don't care
+	in.modelPath = C.CString(path.Dir(mfn))
+	defer C.free(unsafe.Pointer(in.modelPath))
+	in.model = C.CString(strings.TrimSuffix(path.Base(mfn), ".traineddata"))
+	defer C.free(unsafe.Pointer(in.model))
 
 	// handle configuration file names
 	chPtrSize := unsafe.Sizeof((*C.char)(nil))
@@ -508,7 +519,7 @@ func (t Tesseract) IsValid() error {
 			return err
 		}
 	}
-	if _, err := os.Stat(t.Model); err != nil {
+	if err := t.Model.IsValid(); err != nil {
 		return err
 	}
 	return nil
