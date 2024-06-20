@@ -59,7 +59,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// setup tesseract
 	ocr::Tesseract t {};
-	t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf.patterns.config"};
+	//t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf.patterns.config"};
 	t.modelPath = "_models/dotmatrix";
 	t.model = "dotOCRDData1";
 	t.pageSegMode = 7;
@@ -67,13 +67,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	{
 		{"load_system_dawg", "0"},
 		{"load_freq_dawg", "0"},
-		{"tessedit_char_whitelist", "V0123456789"}
+		{"tessedit_char_whitelist", "V0123456789"},
+		{"user_patterns_file", "testdata/configs/test_neograf.patterns"}
 	};
 	if (!t.init())
 	{
 		std::cerr << "Could not initialize tesseract.\n";
 		return 1;
 	}
+	//t.dumpVariables();
+	std::cout << "No dawgs: " << t.getNoDawgs() << '\n';
 
 	// setup image processor
 	ocr::ImageProcessor ip {};
@@ -95,7 +98,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ip.preprocess();
 	t.setImage(ip);
 	//ip.writeImage();
-	ip.showImage();
+	//ip.showImage();
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// run ocr

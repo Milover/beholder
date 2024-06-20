@@ -8,6 +8,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <cstdio>
 #include <memory>
 #include <string>
 #include <utility>
@@ -84,6 +85,15 @@ bool Tesseract::detectText()
 	return !res_.textBoxes.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
 }
 
+void Tesseract::dumpVariables() const
+{
+	p_->PrintVariables(stdout);
+}
+
+int Tesseract::getNoDawgs() const
+{
+	return p_->NumDawgs();
+}
 
 const OcrResults& Tesseract::getResults() const
 {
@@ -93,7 +103,17 @@ const OcrResults& Tesseract::getResults() const
 
 bool Tesseract::init()
 {
-	auto p {vecStr2ChPtrArr(configPaths)};
+	// we supply all variables to Init so everything gets loaded properly
+	std::vector<std::string> vars;
+	std::vector<std::string> vals;
+	vars.reserve(variables.size());
+	vals.reserve(variables.size());
+	for (const auto& [key, val] : variables)
+	{
+		vars.emplace_back(key);
+		vals.emplace_back(val);
+	}
+	auto path {vecStr2ChPtrArr(configPaths)};
 	bool success
 	{
 		static_cast<bool>
@@ -102,10 +122,10 @@ bool Tesseract::init()
 				modelPath.c_str(),
 				model.c_str(),
 				tesseract::OEM_LSTM_ONLY,
-				p.get(),
+				path.get(),
 				configPaths.size(),
-				nullptr,
-				nullptr,
+				&vars,
+				&vals,
 				false
 			)
 		)
@@ -115,10 +135,11 @@ bool Tesseract::init()
 	// to true, so we have to flip the result
 	success = !success;
 
-	p_->SetPageSegMode(static_cast<tesseract::PageSegMode>(pageSegMode));
-	for (const auto& [key, val] : variables)
+	// set page segmentation mode only if pageSegMode was explicitly set,
+	// i.e. is different from the default
+	if (pageSegMode != tesseract::PSM_SINGLE_BLOCK)
 	{
-		success = success && p_->SetVariable(key.c_str(), val.c_str());
+		p_->SetPageSegMode(static_cast<tesseract::PageSegMode>(pageSegMode));
 	}
 
 	return success;

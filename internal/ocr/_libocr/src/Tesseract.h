@@ -64,7 +64,7 @@ public:
 		//- Model (trained data) name
 		std::string model;
 		//- Page segmentation mode
-		int pageSegMode {6};
+		int pageSegMode {6};	// PSM_SINGLE_BLOCK, which is the default
 		//- A map of settable variables
 		std::vector<std::pair<std::string, std::string>> variables
 		{
@@ -94,6 +94,12 @@ public:
 
 		//- Run text detection and store the results
 		bool detectText();
+
+		//- Dump Tesseract variables to stdout.
+		void dumpVariables() const;
+
+		//- Get No. dawgs.
+		int getNoDawgs() const;
 
 		//- Get a const reference to the OCR results
 		const OcrResults& getResults() const;

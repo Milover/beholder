@@ -4,14 +4,11 @@ MODULE		:= $(shell go list -m)
 MODULE_URL	:= $(shell go list -m | tr [:upper:] [:lower:])
 TARGET		:= $(shell basename $(MODULE))
 
-build:
-	echo $(MODULE)
-	go build -o bin/$(TARGET) main.go
+BUILD_TAGS ?=
 
-# FIXME: this probably doesn't work
-publish:
-	GOARCH=amd64 GOOS=linux   go build -o bin/$(TARGET)-linux   main.go
-	GOARCH=arm64 GOOS=darwin  go build -o bin/$(TARGET)-darwin  main.go
+build:
+	@echo $(MODULE)
+	go build -tags=$(BUILD_TAGS) -o bin/$(TARGET) main.go
 
 run:
 	go run ./...
