@@ -58,14 +58,9 @@ func (m Model) File() (string, Remover, error) {
 	rNoop := func() error {
 		return nil
 	}
-	rFile := func(s string) Remover {
-		return func() error {
-			return os.Remove(s)
-		}
-	}
 	// boiler plate return in case of error when handling an embedded model
 	retTmp := func(s string, err error) (string, Remover, error) {
-		return s, rNoop, errors.Join(err, os.Remove(s))
+		return "", rNoop, errors.Join(err, os.Remove(s))
 	}
 	// if m is an embedded model create a temporary file and return it
 	if m.isValidEmbed() {
@@ -81,17 +76,20 @@ func (m Model) File() (string, Remover, error) {
 		if err := f.Close(); err != nil {
 			return retTmp(f.Name(), err)
 		}
-		// rename the file so tesseract doesn't complain
-		if err := os.Rename(f.Name(), f.Name()+".traineddata"); err != nil {
+		// add the proper file extension so tesseract doesn't complain
+		newname := f.Name() + ".traineddata"
+		if err := os.Rename(f.Name(), newname); err != nil {
+			// WARNING: we're assuming that if Rename fails, the original file
+			// remains unchanged
 			return retTmp(f.Name(), err)
 		}
-		return f.Name(), rFile(f.Name()), err
+		return newname, func() error { return os.Remove(newname) }, err
 	}
 	// otherwise check if m is an externally supplied model
 	if m.isValidFileName() {
 		return string(m), rNoop, nil
 	}
-	return string(m), rNoop, fmt.Errorf("%w: %q", ErrBadModel, m)
+	return "", rNoop, fmt.Errorf("%w: %q", ErrBadModel, m)
 }
 
 // IsValid checks if m is a valid embedded model keyword or a model file name.
