@@ -277,7 +277,12 @@ func (ip ImageProcessor) ReadImage(filename string, readMode ImreadMode) error {
 // ShowImage renders the current image in a new window and
 // waits for a key press.
 //
-// FIXME: crashes on macOS when not called from the main thread.
+// Deprecated: this function crashes on darwin when not called from the main
+// thread.
+// There are ways around this, but they are all overly complex (and ugly)
+// for what we need and could potentially cause more critical issues.
+// Hence, any functionality requiring a GUI, regardless of the platform,
+// should be implemented through the web app.
 func (ip ImageProcessor) ShowImage(title string) {
 	cs := C.CString(title)
 	defer C.free(unsafe.Pointer(cs))
