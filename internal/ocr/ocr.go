@@ -16,6 +16,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/Milover/ocr/internal/maputils"
 	"github.com/Milover/ocr/internal/ocr/model"
 	"github.com/Milover/ocr/internal/stopwatch"
 )
@@ -309,78 +310,45 @@ const (
 	PSMRawLine
 )
 
+var (
+	pSegModeMap = map[PSegMode]string{
+		PSMOSDOnly:             "osd_only",
+		PSMAutoOSD:             "auto_osd",
+		PSMAutoOnly:            "auto_only",
+		PSMAuto:                "auto",
+		PSMSingleColumn:        "single_column",
+		PSMSingleBlockVertText: "single_block_vert_text",
+		PSMSingleBlock:         "single_block",
+		PSMSingleLine:          "single_line",
+		PSMSingleWord:          "single_word",
+		PSMCircleWord:          "circle_word",
+		PSMSingleChar:          "single_char",
+		PSMSparseText:          "sparse_text",
+		PSMSparseTextOSD:       "sparse_text_osd",
+		PSMRawLine:             "raw_line",
+	}
+	invPSegModeMap = maputils.Invert(pSegModeMap)
+)
+
 func (m *PSegMode) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-	switch s {
-	default:
+	mod, ok := invPSegModeMap[s]
+	if !ok {
 		return fmt.Errorf("bad page seg mode: %q", s)
-	case "osd_only":
-		*m = PSMOSDOnly
-	case "auto_osd":
-		*m = PSMAutoOSD
-	case "auto_only":
-		*m = PSMAutoOnly
-	case "auto":
-		*m = PSMAuto
-	case "single_column":
-		*m = PSMSingleColumn
-	case "single_block_vert_text":
-		*m = PSMSingleBlockVertText
-	case "single_block":
-		*m = PSMSingleBlock
-	case "single_line":
-		*m = PSMSingleLine
-	case "single_word":
-		*m = PSMSingleWord
-	case "circle_word":
-		*m = PSMCircleWord
-	case "single_char":
-		*m = PSMSingleChar
-	case "sparse_text":
-		*m = PSMSparseText
-	case "sparse_text_osd":
-		*m = PSMSparseTextOSD
-	case "raw_line":
-		*m = PSMRawLine
 	}
+	*m = mod
 	return nil
 }
 
 func (m PSegMode) MarshalJSON() ([]byte, error) {
-	switch m {
-	case PSMOSDOnly:
-		return json.Marshal("osd_only")
-	case PSMAutoOSD:
-		return json.Marshal("auto_osd")
-	case PSMAutoOnly:
-		return json.Marshal("auto_only")
-	case PSMAuto:
-		return json.Marshal("auto")
-	case PSMSingleColumn:
-		return json.Marshal("single_column")
-	case PSMSingleBlockVertText:
-		return json.Marshal("single_block_vert_text")
-	case PSMSingleBlock:
-		return json.Marshal("single_block")
-	case PSMSingleLine:
-		return json.Marshal("single_line")
-	case PSMSingleWord:
-		return json.Marshal("single_word")
-	case PSMCircleWord:
-		return json.Marshal("circle_word")
-	case PSMSingleChar:
-		return json.Marshal("single_char")
-	case PSMSparseText:
-		return json.Marshal("sparse_text")
-	case PSMSparseTextOSD:
-		return json.Marshal("sparse_text_osd")
-	case PSMRawLine:
-		return json.Marshal("raw_line")
+	key, ok := pSegModeMap[m]
+	if !ok {
+		return nil, fmt.Errorf("bad page seg mode: %d", m)
 	}
-	return nil, fmt.Errorf("bad page seg mode: %d", m)
+	return json.Marshal(key)
 }
 
 // Tesseract is a handle for the tesseract API

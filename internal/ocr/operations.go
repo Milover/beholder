@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"unsafe"
+
+	"github.com/Milover/ocr/internal/maputils"
 )
 
 // opFactory is a function which creates a new image processing operation
@@ -362,34 +364,34 @@ const (
 	KernelEllipse
 )
 
+var (
+	kernelTypeMap = map[kernelType]string{
+		KernelRect:    "rectangle",
+		KernelCross:   "cross",
+		KernelEllipse: "ellipse",
+	}
+	invKernelTypeMap = maputils.Invert(kernelTypeMap)
+)
+
 func (t *kernelType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-	switch s {
-	default:
+	typ, ok := invKernelTypeMap[s]
+	if !ok {
 		return fmt.Errorf("bad kernel type: %q", s)
-	case "rectangle":
-		*t = KernelRect
-	case "cross":
-		*t = KernelCross
-	case "ellipse":
-		*t = KernelEllipse
 	}
+	*t = typ
 	return nil
 }
 
 func (t kernelType) MarshalJSON() ([]byte, error) {
-	switch t {
-	case KernelRect:
-		return json.Marshal("rectangle")
-	case KernelCross:
-		return json.Marshal("cross")
-	case KernelEllipse:
-		return json.Marshal("ellipse")
+	key, ok := kernelTypeMap[t]
+	if !ok {
+		return nil, fmt.Errorf("bad kernel type: %d", t)
 	}
-	return nil, fmt.Errorf("bad kernel type: %d", t)
+	return json.Marshal(key)
 }
 
 // morphType represents the available morphology operation types.
@@ -406,54 +408,39 @@ const (
 	MorphHitMiss
 )
 
+var (
+	morphTypeMap = map[morphType]string{
+		MorphErode:    "erode",
+		MorphDilate:   "dilate",
+		MorphOpen:     "open",
+		MorphClose:    "close",
+		MorphGradient: "gradient",
+		MorphTopHat:   "top_hat",
+		MorphBlackHat: "black_hat",
+		MorphHitMiss:  "hit_miss",
+	}
+	invMorphTypeMap = maputils.Invert(morphTypeMap)
+)
+
 func (t *morphType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-	switch s {
-	default:
+	typ, ok := invMorphTypeMap[s]
+	if !ok {
 		return fmt.Errorf("bad morphology type: %q", s)
-	case "erode":
-		*t = MorphErode
-	case "dilate":
-		*t = MorphDilate
-	case "open":
-		*t = MorphOpen
-	case "close":
-		*t = MorphClose
-	case "gradient":
-		*t = MorphGradient
-	case "top_hat":
-		*t = MorphTopHat
-	case "black_hat":
-		*t = MorphBlackHat
-	case "hit_miss":
-		*t = MorphHitMiss
 	}
+	*t = typ
 	return nil
 }
 
 func (t morphType) MarshalJSON() ([]byte, error) {
-	switch t {
-	case MorphErode:
-		return json.Marshal("erode")
-	case MorphDilate:
-		return json.Marshal("dilate")
-	case MorphOpen:
-		return json.Marshal("open")
-	case MorphClose:
-		return json.Marshal("close")
-	case MorphGradient:
-		return json.Marshal("gradient")
-	case MorphTopHat:
-		return json.Marshal("top_hat")
-	case MorphBlackHat:
-		return json.Marshal("black_hat")
-	case MorphHitMiss:
-		return json.Marshal("hit_miss")
+	key, ok := morphTypeMap[t]
+	if !ok {
+		return nil, fmt.Errorf("bad morphology type: %d", t)
 	}
-	return nil, fmt.Errorf("bad morphology type: %d", t)
+	return json.Marshal(key)
 }
 
 // morphology represents a morphology operation.
@@ -584,50 +571,38 @@ const (
 	ThreshTriangle = 16
 )
 
+var (
+	threshTypeMap = map[threshType]string{
+		ThreshBinary:    "binary",
+		ThreshBinaryInv: "binary_inv",
+		ThreshTrunc:     "trunc",
+		ThreshToZero:    "to_zero",
+		ThreshToZeroInv: "to_zero_inv",
+		ThreshOtsu:      "otsu",
+		ThreshTriangle:  "triangle",
+	}
+	invThreshTypeMap = maputils.Invert(threshTypeMap)
+)
+
 func (t *threshType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-	switch s {
-	default:
+	typ, ok := invThreshTypeMap[s]
+	if !ok {
 		return fmt.Errorf("bad threshold type: %q", s)
-	case "binary":
-		*t = ThreshBinary
-	case "binary_inv":
-		*t = ThreshBinaryInv
-	case "trunc":
-		*t = ThreshTrunc
-	case "to_zero":
-		*t = ThreshToZero
-	case "to_zero_inv":
-		*t = ThreshToZeroInv
-	case "otsu":
-		*t = ThreshOtsu
-	case "triangle":
-		*t = ThreshTriangle
 	}
+	*t = typ
 	return nil
 }
 
 func (t threshType) MarshalJSON() ([]byte, error) {
-	switch t {
-	case ThreshBinary:
-		return json.Marshal("binary")
-	case ThreshBinaryInv:
-		return json.Marshal("binary_inv")
-	case ThreshTrunc:
-		return json.Marshal("trunc")
-	case ThreshToZero:
-		return json.Marshal("to_zero")
-	case ThreshToZeroInv:
-		return json.Marshal("to_zero_inv")
-	case ThreshOtsu:
-		return json.Marshal("otsu")
-	case ThreshTriangle:
-		return json.Marshal("triangle")
+	key, ok := threshTypeMap[t]
+	if !ok {
+		return nil, fmt.Errorf("bad threshold type: %d", t)
 	}
-	return nil, fmt.Errorf("bad threshold type: %d", t)
+	return json.Marshal(key)
 }
 
 // threshold represents a thresholding operation.
