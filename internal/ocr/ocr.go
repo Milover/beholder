@@ -16,7 +16,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/Milover/ocr/internal/maputils"
+	"github.com/Milover/ocr/internal/enumutils"
 	"github.com/Milover/ocr/internal/ocr/model"
 	"github.com/Milover/ocr/internal/stopwatch"
 )
@@ -327,28 +327,15 @@ var (
 		PSMSparseTextOSD:       "sparse_text_osd",
 		PSMRawLine:             "raw_line",
 	}
-	invPSegModeMap = maputils.Invert(pSegModeMap)
+	invPSegModeMap = enumutils.Invert(pSegModeMap)
 )
 
 func (m *PSegMode) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	mod, ok := invPSegModeMap[s]
-	if !ok {
-		return fmt.Errorf("bad page seg mode: %q", s)
-	}
-	*m = mod
-	return nil
+	return enumutils.UnmarshalJSON(data, m, invPSegModeMap)
 }
 
 func (m PSegMode) MarshalJSON() ([]byte, error) {
-	key, ok := pSegModeMap[m]
-	if !ok {
-		return nil, fmt.Errorf("bad page seg mode: %d", m)
-	}
-	return json.Marshal(key)
+	return enumutils.MarshalJSON(m, pSegModeMap)
 }
 
 // Tesseract is a handle for the tesseract API

@@ -8,10 +8,9 @@ import "C"
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"unsafe"
 
-	"github.com/Milover/ocr/internal/maputils"
+	"github.com/Milover/ocr/internal/enumutils"
 )
 
 // opFactory is a function which creates a new image processing operation
@@ -370,28 +369,15 @@ var (
 		KernelCross:   "cross",
 		KernelEllipse: "ellipse",
 	}
-	invKernelTypeMap = maputils.Invert(kernelTypeMap)
+	invKernelTypeMap = enumutils.Invert(kernelTypeMap)
 )
 
 func (t *kernelType) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	typ, ok := invKernelTypeMap[s]
-	if !ok {
-		return fmt.Errorf("bad kernel type: %q", s)
-	}
-	*t = typ
-	return nil
+	return enumutils.UnmarshalJSON(data, t, invKernelTypeMap)
 }
 
 func (t kernelType) MarshalJSON() ([]byte, error) {
-	key, ok := kernelTypeMap[t]
-	if !ok {
-		return nil, fmt.Errorf("bad kernel type: %d", t)
-	}
-	return json.Marshal(key)
+	return enumutils.MarshalJSON(t, kernelTypeMap)
 }
 
 // morphType represents the available morphology operation types.
@@ -419,28 +405,15 @@ var (
 		MorphBlackHat: "black_hat",
 		MorphHitMiss:  "hit_miss",
 	}
-	invMorphTypeMap = maputils.Invert(morphTypeMap)
+	invMorphTypeMap = enumutils.Invert(morphTypeMap)
 )
 
 func (t *morphType) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	typ, ok := invMorphTypeMap[s]
-	if !ok {
-		return fmt.Errorf("bad morphology type: %q", s)
-	}
-	*t = typ
-	return nil
+	return enumutils.UnmarshalJSON(data, t, invMorphTypeMap)
 }
 
 func (t morphType) MarshalJSON() ([]byte, error) {
-	key, ok := morphTypeMap[t]
-	if !ok {
-		return nil, fmt.Errorf("bad morphology type: %d", t)
-	}
-	return json.Marshal(key)
+	return enumutils.MarshalJSON(t, morphTypeMap)
 }
 
 // morphology represents a morphology operation.
@@ -581,28 +554,15 @@ var (
 		ThreshOtsu:      "otsu",
 		ThreshTriangle:  "triangle",
 	}
-	invThreshTypeMap = maputils.Invert(threshTypeMap)
+	invThreshTypeMap = enumutils.Invert(threshTypeMap)
 )
 
 func (t *threshType) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	typ, ok := invThreshTypeMap[s]
-	if !ok {
-		return fmt.Errorf("bad threshold type: %q", s)
-	}
-	*t = typ
-	return nil
+	return enumutils.UnmarshalJSON(data, t, invThreshTypeMap)
 }
 
 func (t threshType) MarshalJSON() ([]byte, error) {
-	key, ok := threshTypeMap[t]
-	if !ok {
-		return nil, fmt.Errorf("bad threshold type: %d", t)
-	}
-	return json.Marshal(key)
+	return enumutils.MarshalJSON(t, threshTypeMap)
 }
 
 // threshold represents a thresholding operation.
