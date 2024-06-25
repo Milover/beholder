@@ -120,7 +120,7 @@ execution   : %v`,
 }
 
 // runOCR runs the OCR pipeline on a single image file.
-func runOCR(filename string, o *ocr.OCR) (ocr.Result, error) {
+func runOCR(filename string, o ocr.OCR) (ocr.Result, error) {
 	img, err := os.Open(filename)
 	if err != nil {
 		return ocr.Result{}, err

@@ -31,8 +31,8 @@ type OCR struct {
 // NewOCR constructs a new OCR.
 // WARNING: since OCR's fields allocate C-memory,
 // Delete must be called to release memory when no longer needed.
-func NewOCR() *OCR {
-	return &OCR{
+func NewOCR() OCR {
+	return OCR{
 		T: NewTesseract(),
 		P: NewImageProcessor(),
 	}

@@ -277,7 +277,7 @@ var pipelineTests = []pipelineTest{
 	},
 }
 
-func setupOCRTest(pt pipelineTest) (*OCR, [][]string, error) {
+func setupOCRTest(pt pipelineTest) (OCR, [][]string, error) {
 	var records [][]string
 	o := NewOCR()
 	// unmarshal
