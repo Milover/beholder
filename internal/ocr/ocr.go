@@ -24,7 +24,7 @@ import (
 // So while this would be somewhat more restrictive, it would probably make
 // using the two less error prone.
 type OCR struct {
-	T *Tesseract      `json:"ocr"`
+	T *Tesseract      `json:"tesseract"`
 	P *ImageProcessor `json:"image_processing"`
 	O *Output         `json:"output"`
 }

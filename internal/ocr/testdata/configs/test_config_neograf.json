@@ -1,5 +1,9 @@
 {
-	"ocr": {
+	"output": {
+		"format": "json",
+		"target": "stdout"
+	},
+	"tesseract": {
 		"config_paths": [
 		],
 		"model": "internal/ocr/model/dotmatrix/dotOCRDData1.traineddata",

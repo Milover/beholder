@@ -91,7 +91,7 @@ var pipelineTests = []pipelineTest{
 		"format": "csv",
 		"target": "none"
 	},
-	"ocr": {
+	"tesseract": {
 		"config_paths": [
 		],
 		"model": "model/dotmatrix/dotOCRDData1.traineddata",
@@ -182,7 +182,7 @@ var pipelineTests = []pipelineTest{
 		"format": "json",
 		"target": "none"
 	},
-	"ocr": {
+	"tesseract": {
 		"config_paths": [
 		],
 		"model": "model/dotmatrix/Transit_FT_500.traineddata",
@@ -465,7 +465,7 @@ var patternTests = []patternTest{
 		Error: nil,
 		Config: `
 {
-	"ocr": {
+	"tesseract": {
 		"model": "model/dotmatrix/dotOCRDData1.traineddata",
 		"variables": {
 			"load_system_dawg": "0",
