@@ -76,6 +76,7 @@ func (o OCR) Run(r io.Reader) (Result, error) {
 	sw := stopwatch.New()
 	res := Result{TimeStamp: sw.Start}
 
+	// FIXME: this should probably happen in a different goroutine
 	buf, err := io.ReadAll(r)
 	if err != nil {
 		return res, err
