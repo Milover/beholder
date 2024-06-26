@@ -26,6 +26,7 @@ import (
 type OCR struct {
 	T *Tesseract      `json:"ocr"`
 	P *ImageProcessor `json:"image_processing"`
+	O *Output         `json:"output"`
 }
 
 // NewOCR constructs a new OCR.
@@ -35,6 +36,7 @@ func NewOCR() OCR {
 	return OCR{
 		T: NewTesseract(),
 		P: NewImageProcessor(),
+		O: NewOutput(),
 	}
 }
 
@@ -45,6 +47,14 @@ func (o OCR) Delete() {
 	o.P.Delete()
 }
 
+// Finalize frees all of o's resources, closes all open files and/or connections
+// and flushes the output buffer.
+// Once called, o is no longer valid.
+func (o OCR) Finalize() error {
+	o.Delete()
+	return o.O.Close()
+}
+
 // Init initializes C-allocated APIs with configuration data by calling
 // each of o's fields Init method.
 func (o OCR) Init() error {
@@ -52,6 +62,9 @@ func (o OCR) Init() error {
 		return err
 	}
 	if err := o.P.Init(); err != nil {
+		return err
+	}
+	if err := o.O.Init(); err != nil {
 		return err
 	}
 	return nil
