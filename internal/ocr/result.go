@@ -17,12 +17,12 @@ type Result struct {
 	// TimeStamp is the time at which the OCR pipeline started.
 	TimeStamp time.Time `json:"timestamp"`
 	// RunDuration is the time elapsed from start to finish of the OCR pipeline.
-	RunDuration      time.Duration
-	ReadDuration     time.Duration
-	DecodeDuration   time.Duration
-	PreprocDuration  time.Duration
-	OCRDuration      time.Duration
-	PostprocDuration time.Duration
+	RunDuration      time.Duration `json:"-"`
+	ReadDuration     time.Duration `json:"-"`
+	DecodeDuration   time.Duration `json:"-"`
+	PreprocDuration  time.Duration `json:"-"`
+	OCRDuration      time.Duration `json:"-"`
+	PostprocDuration time.Duration `json:"-"`
 }
 
 // ResultStatus designates whether the result of the OCR pipeline is
