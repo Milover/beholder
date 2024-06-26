@@ -87,7 +87,11 @@ var pipelineTests = []pipelineTest{
 		Mapper:   func(s string) string { return s },
 		Config: `
 {
-	"ocr": {
+	"output": {
+		"format": "csv",
+		"target": "none"
+	},
+	"tesseract": {
 		"config_paths": [
 		],
 		"model": "model/dotmatrix/dotOCRDData1.traineddata",
@@ -174,7 +178,11 @@ var pipelineTests = []pipelineTest{
 		},
 		Config: `
 {
-	"ocr": {
+	"output": {
+		"format": "json",
+		"target": "none"
+	},
+	"tesseract": {
 		"config_paths": [
 		],
 		"model": "model/dotmatrix/Transit_FT_500.traineddata",
@@ -277,7 +285,7 @@ var pipelineTests = []pipelineTest{
 	},
 }
 
-func setupOCRTest(pt pipelineTest) (*OCR, [][]string, error) {
+func setupOCRTest(pt pipelineTest) (OCR, [][]string, error) {
 	var records [][]string
 	o := NewOCR()
 	// unmarshal
@@ -330,7 +338,7 @@ func TestOCRRunOnce(t *testing.T) {
 
 			// setup
 			o, expectedRecords, err := setupOCRTest(tt)
-			defer o.Delete()
+			defer o.Finalize()
 			assert.Nil(err, "unexpected OCR test setup error")
 
 			// read image
@@ -341,6 +349,12 @@ func TestOCRRunOnce(t *testing.T) {
 			// test
 			res, err := o.Run(img)
 			assert.Equal(tt.Error, err, "unexpected OCR error")
+
+			// if there were no errors, try to write the result
+			if tt.Error == nil && err == nil {
+				err := o.O.Write(&res)
+				assert.Nil(err, "could not write Result")
+			}
 
 			// set expected
 			expected := getExpected(expectedRecords, tt.Image, tt.Expected)
@@ -355,14 +369,18 @@ func TestOCRRunOnce(t *testing.T) {
 
 // TestOCRRunSet runs the OCR pipeline for a set of images and
 // checks the results.
+// NOTE: skipped if -test.short flag is set.
 func TestOCRRunSet(t *testing.T) {
+	if testing.Short() {
+		t.SkipNow()
+	}
 	for _, tt := range pipelineTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// setup
 			o, expectedRecords, err := setupOCRTest(tt)
-			defer o.Delete()
+			defer o.Finalize()
 			assert.Nil(err, "unexpected OCR test setup error")
 
 			// get the image set file names
@@ -388,6 +406,12 @@ func TestOCRRunSet(t *testing.T) {
 				// test
 				res, err := o.Run(img)
 				assert.Equal(tt.Error, err, "unexpected OCR error")
+
+				// if there were no errors, try to write the result
+				if tt.Error == nil && err == nil {
+					err := o.O.Write(&res)
+					assert.Nil(err, "could not write Result")
+				}
 
 				// set expected
 				expected := getExpected(expectedRecords, filename, tt.Expected)
@@ -415,7 +439,9 @@ func TestOCRRunSet(t *testing.T) {
 				},
 			)
 			msg := fmt.Sprintf("failed: %v/%v\n", len(failures), len(filenames))
-			msg += buildTable(failures)
+			if testing.Verbose() {
+				msg += buildTable(failures)
+			}
 
 			assert.Nil(errFail, msg)
 		})
@@ -439,7 +465,7 @@ var patternTests = []patternTest{
 		Error: nil,
 		Config: `
 {
-	"ocr": {
+	"tesseract": {
 		"model": "model/dotmatrix/dotOCRDData1.traineddata",
 		"variables": {
 			"load_system_dawg": "0",
@@ -457,7 +483,7 @@ var patternTests = []patternTest{
 
 // TestOCRPatternLoad checks if the pattern(s) from the config are properly
 // loaded when OCR is initialized.
-// NOTE: this is a stupid test, it doesn't test shit.
+// FIXME: this is a stupid test, it doesn't test shit.
 func TestOCRPatternLoad(t *testing.T) {
 	for _, tt := range patternTests {
 		t.Run(tt.Name, func(t *testing.T) {
