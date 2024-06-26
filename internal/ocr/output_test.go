@@ -175,6 +175,17 @@ var outTargetTests = []outTargetTest{
 	},
 }
 
+func newOutTargetWRedirectedStdout(f func() (io.WriteCloser, error)) (io.WriteCloser, error) {
+	orig := os.Stdout
+
+	_, w, _ := os.Pipe()
+	os.Stdout = w
+	wc, err := f()
+	os.Stdout = orig
+
+	return wc, err
+}
+
 // TestOutTargets tests the operation of output targets set up
 // from a JSON formatted configuration.
 func TestOutTargets(t *testing.T) {
@@ -186,7 +197,9 @@ func TestOutTargets(t *testing.T) {
 			err := json.Unmarshal([]byte(tt.Spec), &m)
 			assert.Nil(err, "could not unmarshal JSON spec")
 
-			wc, err := newOutTarget(tt.Typ, m)
+			wc, err := newOutTargetWRedirectedStdout(func() (io.WriteCloser, error) {
+				return newOutTarget(tt.Typ, m)
+			})
 			// optionally register the Cleanup function
 			if tt.Cleanup != nil {
 				t.Cleanup(tt.Cleanup(wc))
