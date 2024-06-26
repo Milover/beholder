@@ -51,7 +51,7 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 	// setup OCR
 	o := ocr.NewOCR()
-	defer o.Delete()
+	defer o.Finalize()
 	// unmarshall
 	if err := json.Unmarshal(cfg, &o); err != nil {
 		return err
@@ -131,8 +131,16 @@ func runOCR(filename string, o ocr.OCR) (ocr.Result, error) {
 	if err != nil {
 		return res, err
 	}
-	log.Printf("OCR: %q", res.Text)
-
+	// FIXME: writes should happen in a different goroutine, since we don't
+	// want the output to block pipeline execution
+	if err := o.O.Write(&res); err != nil {
+		return res, err
+	}
+	// FIXME: this is only temporary, usually we don't want to flush after
+	// each write, but it makes the output nicer
+	if err := o.O.Flush(); err != nil {
+		return res, err
+	}
 	return res, nil
 }
 
