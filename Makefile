@@ -22,6 +22,9 @@ testv:
 test-integration:
 	go test -v -tags=integration ./...
 
+test-full:
+	go test -v -count=1 -tags=integration,embedtess ./...
+
 vet:
 	go vet ./...
 
