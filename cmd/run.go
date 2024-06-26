@@ -31,8 +31,6 @@ type Stats struct {
 	OCRResult ocr.Result
 	// InitDuration is the time elapsed while initializing the OCR pipeline.
 	InitDuration time.Duration
-	// ReadDuration is the time elapsed while reading the image.
-	ReadDuration time.Duration
 	// ExecDuration is the total time elapsed while running the program.
 	ExecDuration time.Duration
 }
