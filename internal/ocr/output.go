@@ -1,6 +1,7 @@
 package ocr
 
 import (
+	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -16,9 +17,11 @@ var (
 	ErrOutputTargetEmptyFile = errors.New("output target file name empty")
 )
 
-// ResultWriter writes a formatted Result to an output target.
+// ResultWriter is a buffered Result writer.
+// It writes a formatted Results to an underlying output target (io.WriteCloser).
 type ResultWriter interface {
 	Write(*Result) error
+	Flush() error
 }
 
 // Outputer wraps a ResultWriter and an io.Closer.
@@ -27,7 +30,9 @@ type Outputer interface {
 	io.Closer
 }
 
-// Output outputs formatted Result(s) to an output target.
+// Output manages all resources needed for outputting Results to targets.
+// It holds information needed to set up the Outputer and the output target,
+// and manages the operation and life-cycle of these resources.
 type Output struct {
 	// Format is the format Result output format specifier.
 	Format OutFmtType `json:"format"`
@@ -47,8 +52,21 @@ func NewOutput() *Output {
 	}
 }
 
+// Close closes the underlying output target and flushes the output buffer.
+// After calling Close() all o can no longer write to the output target.
+// Close() should always be called once Output is no longer required, so that
+// all underlying resources are freed and the write buffer is flushed.
+func (o *Output) Close() error {
+	return o.o.Close()
+}
+
+// Flush flushes any buffered data to the underlying output target.
+func (o *Output) Flush() error {
+	return o.o.Flush()
+}
+
 // Init initializes the Output so it can be used, i.e.
-// it initializes the output target and the Result writer.
+// it initializes the underlying output target and Outputer.
 func (o *Output) Init() error {
 	wc, err := newOutTarget(o.Target, o.Spec)
 	if err != nil {
@@ -58,17 +76,10 @@ func (o *Output) Init() error {
 	return err
 }
 
-// Write writes a formatted Result to the output target.
+// Write writes a Result to the underlying output target using the
+// underlying Outputer.
 func (o *Output) Write(r *Result) error {
 	return o.o.Write(r)
-}
-
-// Close closes the output target, at which point
-// it can no longer be written to.
-// Close() should always be called once Output is no longer required, so that
-// all underlying resources are freed and the write buffer is flushed.
-func (o *Output) Close() error {
-	return o.o.Close()
 }
 
 // OutFmtType represents available output formats.
@@ -130,6 +141,10 @@ func (o outNone) Close() error {
 	return nil
 }
 
+func (o outNone) Flush() error {
+	return nil
+}
+
 // newOutNone creates a new dummy outputer.
 func newOutNone(io.WriteCloser) (Outputer, error) {
 	return outNone{}, nil
@@ -170,11 +185,13 @@ func (o *outCSV) Write(r *Result) error {
 }
 
 func (o outCSV) Close() error {
+	err := o.Flush()
+	return errors.Join(o.c.Close(), err)
+}
+
+func (o outCSV) Flush() error {
 	o.w.Flush()
-	if err := o.w.Error(); err != nil {
-		return err
-	}
-	return o.c.Close()
+	return o.w.Error()
 }
 
 // newOutCSV creates a new CSV Outputer.
@@ -189,6 +206,7 @@ func newOutCSV(wc io.WriteCloser) (Outputer, error) {
 type outJSON struct {
 	w *json.Encoder
 	c io.Closer
+	b *bufio.Writer
 }
 
 func (o outJSON) Write(r *Result) error {
@@ -196,14 +214,21 @@ func (o outJSON) Write(r *Result) error {
 }
 
 func (o outJSON) Close() error {
-	return o.c.Close()
+	err := o.Flush()
+	return errors.Join(o.c.Close(), err)
+}
+
+func (o outJSON) Flush() error {
+	return o.b.Flush()
 }
 
 // newOutJSON creates a new JSON Outputer.
 func newOutJSON(wc io.WriteCloser) (Outputer, error) {
+	buf := bufio.NewWriter(wc)
 	return outJSON{
-		w: json.NewEncoder(wc),
+		w: json.NewEncoder(buf),
 		c: wc,
+		b: buf,
 	}, nil
 }
 

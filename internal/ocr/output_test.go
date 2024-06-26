@@ -3,6 +3,7 @@ package ocr
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -39,6 +40,7 @@ type outputerTest struct {
 	Name         string
 	ErrConstruct error
 	ErrWrite     error
+	ErrFlush     error
 	ErrClose     error
 	Typ          OutFmtType
 	Expected     string
@@ -50,36 +52,25 @@ var outputerTests = []outputerTest{
 	{
 		Name:         "bad-format",
 		ErrConstruct: ErrBadOutputFormat,
-		ErrWrite:     nil,
-		ErrClose:     nil,
 		Typ:          OutFmtType(-1),
 	},
 	{
-		Name:         "good-none",
-		ErrConstruct: nil,
-		ErrWrite:     nil,
-		ErrClose:     nil,
-		Typ:          OFTNone,
-		TypCheck:     func(o Outputer) { _ = o.(outNone) },
-		Expected:     "",
+		Name:     "good-none",
+		Typ:      OFTNone,
+		TypCheck: func(o Outputer) { _ = o.(outNone) },
+		Expected: "",
 	},
 	{
-		Name:         "good-csv",
-		ErrConstruct: nil,
-		ErrWrite:     nil,
-		ErrClose:     nil,
-		Typ:          OFTCSV,
-		TypCheck:     func(o Outputer) { _ = o.(*outCSV) },
-		Expected:     resultCSV,
+		Name:     "good-csv",
+		Typ:      OFTCSV,
+		TypCheck: func(o Outputer) { _ = o.(*outCSV) },
+		Expected: resultCSV,
 	},
 	{
-		Name:         "good-json",
-		ErrConstruct: nil,
-		ErrWrite:     nil,
-		ErrClose:     nil,
-		Typ:          OFTJSON,
-		TypCheck:     func(o Outputer) { _ = o.(outJSON) },
-		Expected:     resultJSON,
+		Name:     "good-json",
+		Typ:      OFTJSON,
+		TypCheck: func(o Outputer) { _ = o.(outJSON) },
+		Expected: resultJSON,
 	},
 }
 
@@ -114,9 +105,13 @@ func TestOutputers(t *testing.T) {
 				err := o.Write(&result)
 				assert.ErrorIs(err, tt.ErrWrite)
 
+				// flush the buffer
+				err = o.Flush()
+				assert.ErrorIs(err, tt.ErrFlush)
+
 				// close the target
 				err = o.Close()
-				assert.ErrorIs(err, tt.ErrClose)
+				assert.ErrorIs(err, errors.Join(tt.ErrFlush, tt.ErrClose))
 
 				// check output
 				assert.Equal(tt.Expected, target.String())
@@ -143,37 +138,26 @@ var outTargetTests = []outTargetTest{
 	{
 		Name:         "bad-target",
 		ErrConstruct: ErrBadOutputTarget,
-		ErrWrite:     nil,
-		ErrClose:     nil,
 		Typ:          OutTargetType(-1),
 		Spec:         `{}`,
 	},
 	{
-		Name:         "good-none",
-		ErrConstruct: nil,
-		ErrWrite:     nil,
-		ErrClose:     nil,
-		Typ:          OTTNone,
-		Spec:         `{}`,
-		TypCheck:     func(wc io.WriteCloser) { _ = wc.(outTargetNone) },
+		Name:     "good-none",
+		Typ:      OTTNone,
+		Spec:     `{}`,
+		TypCheck: func(wc io.WriteCloser) { _ = wc.(outTargetNone) },
 	},
 	{
-		Name:         "good-stdout",
-		ErrConstruct: nil,
-		ErrWrite:     nil,
-		ErrClose:     nil,
-		Typ:          OTTStdout,
-		Spec:         `{}`,
-		TypCheck:     func(wc io.WriteCloser) { _ = wc.(outTargetStdout) },
+		Name:     "good-stdout",
+		Typ:      OTTStdout,
+		Spec:     `{}`,
+		TypCheck: func(wc io.WriteCloser) { _ = wc.(outTargetStdout) },
 	},
 	{
-		Name:         "good-file",
-		ErrConstruct: nil,
-		ErrWrite:     nil,
-		ErrClose:     nil,
-		Typ:          OTTFile,
-		Spec:         `{"file": "definitely_does_not_exist"}`,
-		TypCheck:     func(wc io.WriteCloser) { _ = wc.(outTargetFile) },
+		Name:     "good-file",
+		Typ:      OTTFile,
+		Spec:     `{"file": "definitely_does_not_exist"}`,
+		TypCheck: func(wc io.WriteCloser) { _ = wc.(outTargetFile) },
 		Cleanup: func(wc io.WriteCloser) func() {
 			return func() {
 				t := wc.(outTargetFile)
@@ -186,8 +170,6 @@ var outTargetTests = []outTargetTest{
 	{
 		Name:         "bad-empty-file",
 		ErrConstruct: ErrOutputTargetEmptyFile,
-		ErrWrite:     nil,
-		ErrClose:     nil,
 		Typ:          OTTFile,
 		Spec:         `{}`,
 	},
