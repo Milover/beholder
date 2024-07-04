@@ -41,12 +41,12 @@ internal/ocr/_libocr/third_party/leptonica
 internal/ocr/_libocr/third_party/tesseract
 
 # libcamera stuff
-internal/ocr/camera/_libcamera/bin/
-internal/ocr/camera/_libcamera/build/
-internal/ocr/camera/_libcamera/lib/
-internal/ocr/camera/_libcamera/include/
-internal/ocr/camera/_libcamera/doc/
-internal/ocr/camera/_libcamera/vagrant/
-internal/ocr/camera/_libcamera/test/bin/
-internal/ocr/camera/_libcamera/share
-internal/ocr/camera/_libcamera/third_party/pylon
+internal/camera/_libcamera/bin/
+internal/camera/_libcamera/build/
+internal/camera/_libcamera/lib/
+internal/camera/_libcamera/include/
+internal/camera/_libcamera/doc/
+internal/camera/_libcamera/vagrant/
+internal/camera/_libcamera/test/bin/
+internal/camera/_libcamera/share
+internal/camera/_libcamera/third_party/pylon
