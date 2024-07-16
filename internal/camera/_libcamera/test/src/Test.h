@@ -14,11 +14,19 @@ Description
 #ifndef CAMERA_TEST_H
 #define CAMERA_TEST_H
 
+#include <chrono>
+#include <thread>
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace camera
 {
 
+void wait(int sec)
+{
+	const auto start {std::chrono::high_resolution_clock::now()};
+	std::this_thread::sleep_for(std::chrono::seconds {sec});
+}
 
 // * * * * * * * * * * * * * Global Variables  * * * * * * * * * * * * * * * //
 
