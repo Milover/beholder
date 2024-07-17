@@ -233,27 +233,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			// TODO: log/report that chunk features are disabled
 		}
 
-		/* NOTE: using PTP for timestamping is impractical and unnecessary.
-		 * We wanted to use it for controlling acquisition time, but the
-		 * timestamp can be lower than the recieved timestamp, so this isn't
-		 * stable.
-		 * We'll just stamp the result when it gets to Go.
-		// DONE: implement PTP: https://docs.baslerweb.com/precision-time-protocol
-		py::CBooleanParameter(cam.GetNodeMap(), "GevIEEE1588").SetValue(true);
-		for (auto i {0ul}; i < 20; ++i)
-		{
-			py::CCommandParameter(cam.GetNodeMap(), "GevIEEE1588DataSetLatch").Execute();
-			py::CCommandParameter(cam.GetNodeMap(), "GevTimestampControlLatch").Execute();
-			std::cerr << "status: " << py::CEnumParameter(cam.GetNodeMap(), "GevIEEE1588StatusLatched").ToString()
-					  << '\t'
-					  << "offset: " << py::CParameter(cam.GetNodeMap(), "GevIEEE1588OffsetFromMaster").ToString()
-					  << '\t'
-					  << "timestamp: " << py::CIntegerParameter(cam.GetNodeMap(), "GevTimestampValue").ToString()
-					  << '\n';
-			camera::wait(1);
-		}
-		*/
-
 		// Set up runtime config
 		// TODO: provide as function parameter
 		camera::ParamList params;
@@ -286,17 +265,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			{
 				cam.RetrieveResult(5000, result, py::TimeoutHandling_Return)
 			};
-			/* NOTE: not necessary, Go will timestamp
-			// NOTE: pass all timestamps to Go as a Unix time duration
-			// in microseconds.
-			//auto timestamp
-			//{
-			//	std::chrono::duration_cast<std::chrono::nanoseconds>
-			//	(
-			//		std::chrono::system_clock::now().time_since_epoch()
-			//	)
-			//};
-			*/
 
 			if (success && result->GrabSucceeded())
 			{
@@ -306,11 +274,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 						  << "pixel value:   " << static_cast<uint32_t>(img[0]) << '\n'
 						  << '\n'
 						  << "image ID:      " << result->GetID() << '\n'
-						  //<< "rcv timestamp: " << timestamp.count() << '\n'
 						  << "has CRC:       " << result->HasCRC() << '\n'
 						  << "CRC check:     " << result->CheckCRC() << '\n'
 						  << "payload size:  " << result->GetPayloadSize() << '\n'
-						  //<< "img timestamp: " << result->GetTimeStamp() << '\n'
 						  << '\n';
 				/* NOTE: chunk data is restrictive and impractical, so not using it.
 				// get chunk data
