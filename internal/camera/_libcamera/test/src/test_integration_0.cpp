@@ -19,9 +19,8 @@ License
 #include <pylon/PylonIncludes.h>
 #include <pylon/gige/GigETransportLayer.h>
 
-#include "ConfigurationEventPrinter.h"
-#include "ImageEventPrinter.h"
-
+#include "DefaultConfigurator.h"
+#include "Exception.h"
 #include "ParamEntry.h"
 #include "Params.h"
 #include "Test.h"
@@ -163,33 +162,25 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		// reset the config
 		cam.RegisterConfiguration
 		(
-			static_cast<py::CConfigurationEventHandler*>(nullptr),
+			new camera::DefaultConfigurator,
 			py::RegistrationMode_ReplaceAll,
-			py::Cleanup_None
+			py::Cleanup_Delete
 		);
 		cam.Open();
 
-		// load default set just in case
-		py::CEnumParameter(cam.GetNodeMap(), "UserSetSelector").SetValue("Default");
-		py::CCommandParameter(cam.GetNodeMap(), "UserSetLoad").Execute();
-
-		// disable all triggers, image compression and streaming
-		// TODO: move this to a Configuration class
-		py::CConfigurationHelper::DisableAllTriggers(cam.GetNodeMap());
-		py::CConfigurationHelper::DisableCompression(cam.GetNodeMap());
-		py::CConfigurationHelper::DisableGenDC(cam.GetNodeMap());
-
 		// Set up runtime config
 		// TODO: provide as function parameter
-		camera::ParamList params;
-		params.emplace_back("AcquisitionMode", "Continuous", camera::ParamType::Enum);
-		params.emplace_back("TriggerSelector", "FrameStart", camera::ParamType::Enum);
-		params.emplace_back("TriggerMode", "On", camera::ParamType::Enum);
-		params.emplace_back("TriggerSource", "Line1", camera::ParamType::Enum);
-		params.emplace_back("TriggerActivation", "RisingEdge", camera::ParamType::Enum);
-		params.emplace_back("ChunkModeActive", "true", camera::ParamType::Bool);
-		params.emplace_back("ChunkSelector", "PayloadCRC16", camera::ParamType::Enum);
-		params.emplace_back("ChunkEnable", "true", camera::ParamType::Bool);
+		camera::ParamList params
+		{
+			{"AcquisitionMode", "Continuous", camera::ParamType::Enum},
+			{"TriggerSelector", "FrameStart", camera::ParamType::Enum},
+			{"TriggerMode", "On", camera::ParamType::Enum},
+			{"TriggerSource", "Line1", camera::ParamType::Enum},
+			{"TriggerActivation", "RisingEdge", camera::ParamType::Enum},
+			{"ChunkModeActive", "true", camera::ParamType::Bool},
+			{"ChunkSelector", "PayloadCRC16", camera::ParamType::Enum},
+			{"ChunkEnable", "true", camera::ParamType::Bool}
+		};
 
 		// apply config
 		camera::setParams(cam.GetNodeMap(), params);
@@ -249,7 +240,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	}
 	catch(const py::GenericException& e)
 	{
-		std::cerr << "error: " << e.GetDescription() << '\n';
+		std::cerr << "error: " << e.what() << '\n';
+		return 1;
+	}
+	catch(const camera::Exception& e)
+	{
+		std::cerr << "error: " << e.what() << '\n';
+		return 1;
+	}
+	catch(...)
+	{
+		std::cerr << "error: unknown\n";
 		return 1;
 	}
 
