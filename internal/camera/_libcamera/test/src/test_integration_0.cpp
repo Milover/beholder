@@ -102,7 +102,7 @@ void printDevices(const py::DeviceInfoList_t& devices)
 
 void dumpCameraParams(py::CInstantCamera& cam)
 {
-	camera::ParamList list {camera::getWritableParams(cam.GetNodeMap())};
+	camera::ParamList list {camera::getReadableParams(cam.GetNodeMap())};
 	for (const auto& l : list)
 	{
 		std::cout << l.name << '\t' << l.value << '\n';
@@ -164,8 +164,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			py::RegistrationMode_ReplaceAll,
 			py::Cleanup_None
 		);
-		// TODO: implement PTP: https://docs.baslerweb.com/precision-time-protocol
-
 		/* NOTE: don't think we need events at this point
 		// DONE: set up events, if necessary
 		cam.RegisterConfiguration
@@ -185,16 +183,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 		cam.Open();
 
+		// load default set just in case
+		py::CEnumParameter(cam.GetNodeMap(), "UserSetSelector").SetValue("Default");
+		py::CCommandParameter(cam.GetNodeMap(), "UserSetLoad").Execute();
+
 		// disable all triggers, image compression and streaming
 		// TODO: move this to a Configuration class
 		py::CConfigurationHelper::DisableAllTriggers(cam.GetNodeMap());
 		py::CConfigurationHelper::DisableCompression(cam.GetNodeMap());
 		py::CConfigurationHelper::DisableGenDC(cam.GetNodeMap());
 
-		/* NOTE: chunk data is mostly useless.
-		 * Using functions provided by the CGrabResult.
-		 * Move all of this to a Configuration class if we end up using it.
-		// enable chunk features
+		// enable chunk features (only CRC16)
 		try
 		{
 			py::CBooleanParameter chunking {cam.GetNodeMap(), "ChunkModeActive"};
@@ -220,18 +219,38 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			selector.GetSettableValues(available);
 			for (const auto& a : available)
 			{
-				// XXX: the availability of these changes from device to device
+				// WARNING: the availability of these changes from device to device
 				// so we should not overly rely on these
-				if (activate(a, "Timestamp")) { continue; }
+				//if (activate(a, "Timestamp")) { continue; }
 				if (activate(a, "PayloadCRC16")) { continue; }
-				if (activate(a, "FrameID")) { continue; }	// unavailable
-				if (activate(a, "Framecounter")) { continue; }	// non-standard
+				//if (activate(a, "FrameID")) { continue; }	// unavailable
+				//if (activate(a, "Framecounter")) { continue; }	// non-standard
 			}
 		}
 		catch(py::GenericException& e)
 		{
 			std::cerr << "warning: "<< e.GetDescription() << '\n';
 			// TODO: log/report that chunk features are disabled
+		}
+
+		/* NOTE: using PTP for timestamping is impractical and unnecessary.
+		 * We wanted to use it for controlling acquisition time, but the
+		 * timestamp can be lower than the recieved timestamp, so this isn't
+		 * stable.
+		 * We'll just stamp the result when it gets to Go.
+		// DONE: implement PTP: https://docs.baslerweb.com/precision-time-protocol
+		py::CBooleanParameter(cam.GetNodeMap(), "GevIEEE1588").SetValue(true);
+		for (auto i {0ul}; i < 20; ++i)
+		{
+			py::CCommandParameter(cam.GetNodeMap(), "GevIEEE1588DataSetLatch").Execute();
+			py::CCommandParameter(cam.GetNodeMap(), "GevTimestampControlLatch").Execute();
+			std::cerr << "status: " << py::CEnumParameter(cam.GetNodeMap(), "GevIEEE1588StatusLatched").ToString()
+					  << '\t'
+					  << "offset: " << py::CParameter(cam.GetNodeMap(), "GevIEEE1588OffsetFromMaster").ToString()
+					  << '\t'
+					  << "timestamp: " << py::CIntegerParameter(cam.GetNodeMap(), "GevTimestampValue").ToString()
+					  << '\n';
+			camera::wait(1);
 		}
 		*/
 
@@ -267,26 +286,31 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			{
 				cam.RetrieveResult(5000, result, py::TimeoutHandling_Return)
 			};
+			/* NOTE: not necessary, Go will timestamp
 			// NOTE: pass all timestamps to Go as a Unix time duration
 			// in microseconds.
-			const std::chrono::time_point<std::chrono::system_clock> timestamp
-			{
-				std::chrono::system_clock::now()
-			};
+			//auto timestamp
+			//{
+			//	std::chrono::duration_cast<std::chrono::nanoseconds>
+			//	(
+			//		std::chrono::system_clock::now().time_since_epoch()
+			//	)
+			//};
+			*/
 
-			//if (success && result->GrabSucceeded())
-			if (success)	// XXX: is this sufficient?
+			if (success && result->GrabSucceeded())
 			{
 				const uint8_t* img {static_cast<uint8_t*>(result->GetBuffer())};
-				std::cout << "size x:       " << result->GetWidth() << '\n'
-						  << "size y:       " << result->GetHeight() << '\n'
-						  << "pixel value:  " << static_cast<uint32_t>(img[0]) << '\n'
+				std::cout << "size x:        " << result->GetWidth() << '\n'
+						  << "size y:        " << result->GetHeight() << '\n'
+						  << "pixel value:   " << static_cast<uint32_t>(img[0]) << '\n'
 						  << '\n'
-						  << "image ID:     " << result->GetID() << '\n'
-						  << "timestamp:    " << result->GetTimeStamp() << '\n'
-						  << "has CRC:      " << result->HasCRC() << '\n'
-						  << "CRC check:    " << result->CheckCRC() << '\n'
-						  << "payload size: " << result->GetPayloadSize() << '\n'
+						  << "image ID:      " << result->GetID() << '\n'
+						  //<< "rcv timestamp: " << timestamp.count() << '\n'
+						  << "has CRC:       " << result->HasCRC() << '\n'
+						  << "CRC check:     " << result->CheckCRC() << '\n'
+						  << "payload size:  " << result->GetPayloadSize() << '\n'
+						  //<< "img timestamp: " << result->GetTimeStamp() << '\n'
 						  << '\n';
 				/* NOTE: chunk data is restrictive and impractical, so not using it.
 				// get chunk data
@@ -304,12 +328,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 				}
 				*/
 			}
-			else
+			else if (success)
 			{
 				std::cerr << "error: "
 						  << std::hex << result->GetErrorCode()
 						  << std::dec << " " << result->GetErrorDescription()
 						  << '\n';
+			}
+			else
+			{
+				std::cerr << "error: timed-out or no device attached" << '\n';
 			}
 		}
 
