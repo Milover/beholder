@@ -193,46 +193,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		py::CConfigurationHelper::DisableCompression(cam.GetNodeMap());
 		py::CConfigurationHelper::DisableGenDC(cam.GetNodeMap());
 
-		// enable chunk features (only CRC16)
-		try
-		{
-			py::CBooleanParameter chunking {cam.GetNodeMap(), "ChunkModeActive"};
-			chunking.SetValue(true);
-
-			py::CEnumParameter selector {cam.GetNodeMap(), "ChunkSelector"};
-			py::CBooleanParameter enable {cam.GetNodeMap(), "ChunkEnable"};
-			auto activate = [&selector, &enable]
-			(
-				const py::String_t& avail,
-				const py::String_t& name
-			) -> bool
-			{
-				if (avail == name)
-				{
-					selector.SetValue(name);
-					enable.SetValue(true);
-					return true;
-				}
-				return false;
-			};
-			py::StringList_t available;
-			selector.GetSettableValues(available);
-			for (const auto& a : available)
-			{
-				// WARNING: the availability of these changes from device to device
-				// so we should not overly rely on these
-				//if (activate(a, "Timestamp")) { continue; }
-				if (activate(a, "PayloadCRC16")) { continue; }
-				//if (activate(a, "FrameID")) { continue; }	// unavailable
-				//if (activate(a, "Framecounter")) { continue; }	// non-standard
-			}
-		}
-		catch(py::GenericException& e)
-		{
-			std::cerr << "warning: "<< e.GetDescription() << '\n';
-			// TODO: log/report that chunk features are disabled
-		}
-
 		// Set up runtime config
 		// TODO: provide as function parameter
 		camera::ParamList params;
@@ -241,6 +201,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		params.emplace_back("TriggerMode", "On", camera::ParamType::Enum);
 		params.emplace_back("TriggerSource", "Line1", camera::ParamType::Enum);
 		params.emplace_back("TriggerActivation", "RisingEdge", camera::ParamType::Enum);
+		params.emplace_back("ChunkModeActive", "true", camera::ParamType::Bool);
+		params.emplace_back("ChunkSelector", "PayloadCRC16", camera::ParamType::Enum);
+		params.emplace_back("ChunkEnable", "true", camera::ParamType::Bool);
 
 		// apply config
 		camera::setParams(cam.GetNodeMap(), params);
@@ -278,21 +241,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 						  << "CRC check:     " << result->CheckCRC() << '\n'
 						  << "payload size:  " << result->GetPayloadSize() << '\n'
 						  << '\n';
-				/* NOTE: chunk data is restrictive and impractical, so not using it.
-				// get chunk data
-				if (result->IsChunkDataAvailable())
-				{
-					camera::ParamList chunkParams
-					{
-						camera::getReadableParams(result->GetChunkDataNodeMap())
-					};
-					std::cout << "Framecounter: " << camera::getParameter("ChunkFramecounter", chunkParams).value << '\n'
-							  << "FrameID:      " << camera::getParameter("ChunkFrameID", chunkParams).value << '\n'
-							  << "Timestamp:    " << camera::getParameter("ChunkTimestamp", chunkParams).value << '\n'
-							  << "CRC:          " << camera::getParameter("ChunkPayloadCRC16", chunkParams).value << '\n'
-							  << '\n';
-				}
-				*/
 			}
 			else if (success)
 			{
