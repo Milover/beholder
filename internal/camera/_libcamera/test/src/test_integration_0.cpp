@@ -100,12 +100,11 @@ void printDevices(const py::DeviceInfoList_t& devices)
 	}
 }
 
-void dumpCameraParams(py::CInstantCamera& cam)
+void dumpParams(const ParamList& params)
 {
-	camera::ParamList list {camera::getReadableParams(cam.GetNodeMap())};
-	for (const auto& l : list)
+	for (const auto& p : params)
 	{
-		std::cout << l.name << '\t' << l.value << '\n';
+		std::cout << p.name << '\t' << p.value << '\n';
 	}
 }
 
@@ -114,6 +113,66 @@ const py::String_t CameraMAC {"0030534487E9"};
 const py::String_t CameraSubnetMask {"255.255.255.0"};
 const py::String_t CameraGateway {"0.0.0.0"};
 const py::String_t CameraIP {"192.168.1.85"};	// the new IP
+
+/*
+struct CameraRemovedException
+:
+	std::runtime_error
+{
+public:
+
+	// Constructors
+
+		// Default constructor
+		CameraRemovedException() = default;
+
+		// Default copy constructor
+		CameraRemovedException(const CameraRemovedException&) = default;
+
+		// Construct from a string
+		CameraRemovedException(const std::string& what_arg)
+		:
+			std::runtime_error(what_arg)
+		{}
+
+		// Construct from a char pointer
+		CameraRemovedException(const char* what_arg)
+		:
+			std::runtime_error(what_arg)
+		{}
+
+	// Destructor
+	virtual ~CameraRemovedException() = default;
+
+};
+
+class RemovalConfigurationEventHandler
+:
+	public py::CConfigurationEventHandler
+{
+public:
+
+	// Constructors
+
+		// Default constructor
+		RemovalConfigurationEventHandler() = default;
+
+		// Default copy constructor
+		RemovalConfigurationEventHandler(const RemovalConfigurationEventHandler&) = default;
+
+	// Destructor
+	virtual ~RemovalConfigurationEventHandler() = default;
+
+	// Public member functions
+
+		// Handle camera device removal by throwing an exception.
+		void OnCameraDeviceRemoved(py::CInstantCamera&)
+		{
+			throw CameraRemovedException {"camera removal detected"};
+		}
+
+};
+*/
 
 } // end namespace camera
 
@@ -125,6 +184,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// Before using any pylon methods, the pylon runtime must be initialized.
 	py::PylonAutoInitTerm autoInitTerm;
+
+	// construct the cam
+	auto deleterCam = [](py::CInstantCamera* ptr)
+	{
+		ptr->DestroyDevice();
+		delete ptr;
+	};
+	std::unique_ptr<py::CInstantCamera, decltype(deleterCam)> cam
+	{
+		new py::CInstantCamera {},
+		deleterCam
+	};
 
 	try
 	{
@@ -155,43 +226,35 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 		// Setup device(s)
 		// TODO: assert No. devices == No. provided MACs
-		py::CInstantCamera cam {pTl->CreateDevice(devices.front())};
+		cam->Attach(pTl->CreateDevice(devices.front()), py::Cleanup_Delete);
 
 		// reset the config
-		cam.RegisterConfiguration
+		cam->RegisterConfiguration
 		(
 			static_cast<py::CConfigurationEventHandler*>(nullptr),
 			py::RegistrationMode_ReplaceAll,
 			py::Cleanup_None
 		);
-		/* NOTE: don't think we need events at this point
 		// DONE: set up events, if necessary
-		cam.RegisterConfiguration
-		(
-			new py::CConfigurationEventPrinter,
-			py::RegistrationMode_Append,
-			py::Cleanup_Delete
-		);
-		cam.RegisterImageEventHandler
-		(
-			new py::CImageEventPrinter,
-			py::RegistrationMode_Append,
-			py::Cleanup_Delete
-		);
-		cam.GrabCameraEvents = true;
-		*/
+		//cam->RegisterConfiguration
+		//(
+		//	new camera::RemovalConfigurationEventHandler,
+		//	py::RegistrationMode_Append,
+		//	py::Cleanup_Delete
+		//);
+		//cam->GrabCameraEvents = true;
 
-		cam.Open();
+		cam->Open();
 
 		// load default set just in case
-		py::CEnumParameter(cam.GetNodeMap(), "UserSetSelector").SetValue("Default");
-		py::CCommandParameter(cam.GetNodeMap(), "UserSetLoad").Execute();
+		py::CEnumParameter(cam->GetNodeMap(), "UserSetSelector").SetValue("Default");
+		py::CCommandParameter(cam->GetNodeMap(), "UserSetLoad").Execute();
 
 		// disable all triggers, image compression and streaming
 		// TODO: move this to a Configuration class
-		py::CConfigurationHelper::DisableAllTriggers(cam.GetNodeMap());
-		py::CConfigurationHelper::DisableCompression(cam.GetNodeMap());
-		py::CConfigurationHelper::DisableGenDC(cam.GetNodeMap());
+		py::CConfigurationHelper::DisableAllTriggers(cam->GetNodeMap());
+		py::CConfigurationHelper::DisableCompression(cam->GetNodeMap());
+		py::CConfigurationHelper::DisableGenDC(cam->GetNodeMap());
 
 		// Set up runtime config
 		// TODO: provide as function parameter
@@ -206,40 +269,41 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		params.emplace_back("ChunkEnable", "true", camera::ParamType::Bool);
 
 		// apply config
-		camera::setParams(cam.GetNodeMap(), params);
-		//camera::dumpCameraParams(cam);
+		camera::setParams(cam->GetNodeMap(), params);
+		//camera::dumpParams(camera::GetReadableParams(cam->GetNodeMap()));
+		//camera::dumpParams(camera::getReadableParams(cam->GetTLNodeMap()));
 
 		// Acquire image(s)
 		// XXX: should we provide our own buffers?
 		// DONE: handle timeouts and/or data corruption
-		// TODO: handle camera removal
+		// DONE: handle camera removal
 		// 		XXX: may need to wait for ~1s within the catch
 		// 		statement for the system to detect device removal
 		// DONE: retrieve chunk data
 		// TODO: communication between Go and C++
 		// TODO: heartbeats?
-		cam.StartGrabbing(1);
+		cam->StartGrabbing(1);
 		py::CGrabResultPtr result;
 
-		while (cam.IsGrabbing())
+		while (cam->IsGrabbing())
 		{
 			std::cout << "Waiting for image..." << '\n';
 			bool success
 			{
-				cam.RetrieveResult(5000, result, py::TimeoutHandling_Return)
+				cam->RetrieveResult(2000, result, py::TimeoutHandling_Return)
 			};
 
 			if (success && result->GrabSucceeded())
 			{
 				const uint8_t* img {static_cast<uint8_t*>(result->GetBuffer())};
-				std::cout << "size x:        " << result->GetWidth() << '\n'
-						  << "size y:        " << result->GetHeight() << '\n'
-						  << "pixel value:   " << static_cast<uint32_t>(img[0]) << '\n'
+				std::cout << "size x:          " << result->GetWidth() << '\n'
+						  << "size y:          " << result->GetHeight() << '\n'
+						  << "pixel value:     " << static_cast<uint32_t>(img[0]) << '\n'
 						  << '\n'
-						  << "image ID:      " << result->GetID() << '\n'
-						  << "has CRC:       " << result->HasCRC() << '\n'
-						  << "CRC check:     " << result->CheckCRC() << '\n'
-						  << "payload size:  " << result->GetPayloadSize() << '\n'
+						  << "image ID:        " << result->GetID() << '\n'
+						  << "has CRC:         " << result->HasCRC() << '\n'
+						  << "CRC check:       " << result->CheckCRC() << '\n'
+						  << "payload size:    " << result->GetPayloadSize() << '\n'
 						  << '\n';
 			}
 			else if (success)
@@ -249,20 +313,24 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 						  << std::dec << " " << result->GetErrorDescription()
 						  << '\n';
 			}
+			else if (cam->IsCameraDeviceRemoved())
+			{
+				std::cerr << "error: camera removed\n";
+				return 1;
+			}
 			else
 			{
-				std::cerr << "error: timed-out or no device attached" << '\n';
+				std::cerr << "error: timed-out" << '\n';
 			}
 		}
-
-		// WARNING: docs say we should  call pTl->DestroyDevice(), so
-		// we should check if this is ok, eg. with cam.HasOwnership()
-		// or something similar
-		cam.DestroyDevice();
 	}
+	//catch(const camera::CameraRemovedException& e)
+	//{
+	//	std::cerr << "error: " << e.what() << '\n';
+	//	return 1;
+	//}
 	catch(const py::GenericException& e)
 	{
-		// Error handling.
 		std::cerr << "error: " << e.GetDescription() << '\n';
 		return 1;
 	}
