@@ -20,7 +20,7 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include <pylon/PylonIncludes.h>
+#include <GenApi/Types.h>
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -45,6 +45,13 @@ enum class ParamType : int
 	Enum = GenApi::intfIEnumeration,
 	Register = GenApi::intfIRegister,
 	Unknown = -1	// we don't actually know if this is ok; yolo
+};
+
+enum class ParamAccessMode
+{
+	Read,
+	ReadWrite,
+	Unknown = -1
 };
 
 /*---------------------------------------------------------------------------*\

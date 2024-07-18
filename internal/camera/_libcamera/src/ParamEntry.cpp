@@ -11,11 +11,9 @@ License
 #include <algorithm>
 #include <utility>
 
-#include <pylon/PylonIncludes.h>
+#include <GenApi/Types.h>
 
 #include "ParamEntry.h"
-
-namespace py = Pylon;
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 

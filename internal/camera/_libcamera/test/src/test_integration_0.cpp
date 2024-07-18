@@ -11,6 +11,7 @@ License
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -18,10 +19,9 @@ License
 
 #include <pylon/PylonIncludes.h>
 
-#include "DefaultConfigurator.h"
+#include "Camera.h"
 #include "Exception.h"
 #include "ParamEntry.h"
-#include "Params.h"
 #include "TransportLayer.h"
 
 #include "Test.h"
@@ -100,19 +100,19 @@ void printDevices(const py::DeviceInfoList_t& devices)
 	}
 }
 
-void dumpParams(const ParamList& params)
+void dumpParams(const ParamList& list)
 {
-	for (const auto& p : params)
+	for (const auto& l : list)
 	{
-		std::cout << p.name << '\t' << p.value << '\n';
+		std::cout << l.name << '\t' << l.value << '\n';
 	}
 }
 
-const py::String_t CameraSN {"24491241"};
-const py::String_t CameraMAC {"0030534487E9"};
-const py::String_t CameraSubnetMask {"255.255.255.0"};
-const py::String_t CameraGateway {"0.0.0.0"};
-const py::String_t CameraIP {"192.168.1.85"};	// the new IP
+const std::string CameraSN {"24491241"};
+const std::string CameraMAC {"0030534487E9"};
+const std::string CameraSubnetMask {"255.255.255.0"};
+const std::string CameraGateway {"0.0.0.0"};
+const std::string CameraIP {"192.168.1.85"};	// the new IP
 
 const camera::ParamList CameraParameters
 {
@@ -141,40 +141,25 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		// Create transport layer
 		camera::TransportLayer tl {camera::DeviceClass::GigE};
 
-		// Create camera device
-		// XXX: is cam.DestroyDevice() called when destructor is called?
-		py::CInstantCamera cam
+		// Create camera device and apply configuration
+		camera::Camera cam
 		{
-			tl.createDevice(camera::CameraMAC, camera::DeviceDesignator::MAC),
-			py::Cleanup_Delete
+			tl.createDevice(camera::CameraMAC, camera::DeviceDesignator::MAC)
 		};
-		assert(cam.IsPylonDeviceAttached());
+		assert(cam.isValid());
 
-		// Reset camera config
-		cam.RegisterConfiguration
-		(
-			new camera::DefaultConfigurator,
-			py::RegistrationMode_ReplaceAll,
-			py::Cleanup_Delete
-		);
-		cam.Open();
-
-		// Apply runtime config
-		camera::setParams(cam.GetNodeMap(), camera::CameraParameters);
+		cam.setParams(camera::CameraParameters);
+		camera::dumpParams(cam.getParams());
 
 		// Acquire image(s)
-		// XXX: should we provide our own buffers?
-		// TODO: communication between Go and C++
-		cam.StartGrabbing(1);
-		py::CGrabResultPtr result;
+		cam.startAcquisition(1);
+		py::CGrabResultPtr result;	// TODO: this guy
 
-		while (cam.IsGrabbing())
+		while (cam.isAcquiring())
 		{
 			std::cout << "Waiting for image...\n";
-			bool success
-			{
-				cam.RetrieveResult(2000, result, py::TimeoutHandling_Return)
-			};
+			bool success {cam.acquire(result, std::chrono::seconds {2})};
+
 			if (success && result->GrabSucceeded())
 			{
 				if (result->HasCRC() && !result->CheckCRC())
@@ -200,7 +185,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			}
 			else
 			{
-				if (cam.IsCameraDeviceRemoved())
+				if (!cam.isValid())
 				{
 					throw camera::Exception {"camera device removed"};
 				}

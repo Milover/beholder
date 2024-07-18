@@ -58,8 +58,11 @@ TransportLayer::TransportLayer(DeviceClass dc)
 
 TransportLayer::~TransportLayer()
 {
-	Pylon::CTlFactory::GetInstance().ReleaseTl(tl_);
-	tl_ = nullptr;
+	if (tl_)
+	{
+		Pylon::CTlFactory::GetInstance().ReleaseTl(tl_);
+		tl_ = nullptr;
+	}
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //

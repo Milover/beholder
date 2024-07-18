@@ -61,9 +61,7 @@ private:
 
 public:
 
-	//- Public enums
-
-	//- Public enums
+	//- Public data
 
 	// Constructors
 
