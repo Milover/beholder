@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/Milover/ocr/internal/enumutils"
+	"github.com/Milover/beholder/internal/enumutils"
 )
 
 var (

@@ -9,8 +9,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/Milover/ocr/internal/ocr"
-	"github.com/Milover/ocr/internal/stopwatch"
+	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
 )
 

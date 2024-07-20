@@ -8,7 +8,7 @@ import "C"
 import (
 	"io"
 
-	"github.com/Milover/ocr/internal/stopwatch"
+	"github.com/Milover/beholder/internal/stopwatch"
 )
 
 // OCR is a container for Tesseract and ImageProcessor APIs.

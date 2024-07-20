@@ -10,7 +10,7 @@ import (
 	"errors"
 	"unsafe"
 
-	"github.com/Milover/ocr/internal/enumutils"
+	"github.com/Milover/beholder/internal/enumutils"
 )
 
 // opFactory is a function which creates a new image processing operation

@@ -3,7 +3,7 @@ package ocr
 import (
 	"time"
 
-	"github.com/Milover/ocr/internal/enumutils"
+	"github.com/Milover/beholder/internal/enumutils"
 )
 
 // Result holds the OCR pipeline results and statistics.

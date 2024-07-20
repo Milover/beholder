@@ -1,4 +1,4 @@
-module github.com/Milover/ocr
+module github.com/Milover/beholder
 
 go 1.22.3
 

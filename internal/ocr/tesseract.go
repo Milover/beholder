@@ -12,8 +12,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/Milover/ocr/internal/enumutils"
-	"github.com/Milover/ocr/internal/ocr/model"
+	"github.com/Milover/beholder/internal/enumutils"
+	"github.com/Milover/beholder/internal/ocr/model"
 )
 
 // PSegMode represents available page segmentation modes.
