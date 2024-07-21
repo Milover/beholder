@@ -1,0 +1,268 @@
+/*---------------------------------------------------------------------------*\
+
+	camera - Copyright (C) 2024 P. Milovic
+
+-------------------------------------------------------------------------------
+License
+	See the LICENSE file for license information.
+
+\*---------------------------------------------------------------------------*/
+
+#include <cassert>
+#include <chrono>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+#include <vector>
+
+#include <pylon/PylonIncludes.h>
+#include <pylon/gige/GigETransportLayer.h>
+
+#include "Camera.h"
+#include "Exception.h"
+#include "Image.h"
+#include "ParamEntry.h"
+#include "TransportLayer.h"
+
+#include "Test.h"
+
+// * * * * * * * * * * * * * * * * Constants * * * * * * * * * * * * * * * * //
+
+namespace camera
+{
+
+const std::vector<int> TableWidths {32, 14, 17, 17, 15, 8, 4, 6, 5};
+
+template<typename... Ts>
+void printTableRows(const std::vector<int>& widths, const Ts&... ss)
+{
+	assert(widths.size() == sizeof...(ss));
+
+	auto count {0ul};
+	auto f = [&count, &widths] (const auto& s)
+	{
+		std::cout.width(widths[count]);
+		std::cout << s;
+		++count;
+	};
+	(f(ss), ...);
+
+	std::cout << '\n';
+}
+
+void printDevices(const Pylon::DeviceInfoList_t& devices)
+{
+	camera::printTableRows
+	(
+		camera::TableWidths,
+		"Friendly Name",
+		"MAC",
+		"IP Address",
+		"Subnet Mask",
+		"Gateway",
+		"Mode",
+		"IP?",
+		"DHCP?",
+		"LLA?"
+	);
+
+	for (const auto& d : devices)
+	{
+		// Determine current configuration mode.
+		Pylon::String_t activeMode;
+		if (d.IsPersistentIpActive())
+		{
+			activeMode = "Static";
+		}
+		else if (d.IsDhcpActive())
+		{
+			activeMode = "DHCP";
+		}
+		else
+		{
+			activeMode = "AutoIP";
+		}
+		camera::printTableRows
+		(
+			camera::TableWidths,
+			d.GetFriendlyName(),
+			d.GetMacAddress(),
+			d.GetIpAddress(),
+			d.GetSubnetMask(),
+			d.GetDefaultGateway(),
+			activeMode,
+			d.IsPersistentIpSupported(),
+			d.IsDhcpSupported(),
+			d.IsAutoIpSupported()
+		);
+	}
+}
+
+// acA2440-20gm
+//const std::string CameraSN {"24491241"};
+//const std::string CameraMAC {"0030534487E9"};
+
+// acA4024-8gc
+const std::string CameraSN {"23096460"};
+const std::string CameraMAC {"0030532F3F8C"};
+
+const std::string CameraSubnetMask {"255.255.255.0"};
+const std::string CameraGateway {"0.0.0.0"};
+const std::string CameraIP {"192.168.1.85"};	// the new IP
+
+const std::size_t CameraNImages {10};
+
+const camera::ParamList CameraParameters
+{
+	{"AcquisitionMode",            "Continuous",                   camera::ParamType::Enum},
+
+	{"TriggerSelector",            "FrameStart",                   camera::ParamType::Enum},
+	{"TriggerMode",                "On",                           camera::ParamType::Enum},
+	{"TriggerSource",              "Software",                     camera::ParamType::Enum},
+
+	{"ExposureMode",               "Timed",                        camera::ParamType::Enum},
+	{"ExposureTimeAbs",            "1500",                         camera::ParamType::Int},
+
+	{"ChunkModeActive",            "true",                         camera::ParamType::Bool},
+	{"ChunkSelector",              "PayloadCRC16",                 camera::ParamType::Enum},
+	{"ChunkEnable",                "true",                         camera::ParamType::Bool}
+};
+
+} // end namespace camera
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
+{
+	// Before using any pylon methods, the pylon runtime must be initialized.
+	Pylon::PylonAutoInitTerm autoInitTerm;
+
+	try
+	{
+		/* TODO: add to TransportLayer
+		Pylon::CTlFactory& factory {Pylon::CTlFactory::GetInstance()};
+		Pylon::IGigETransportLayer* tl_ {static_cast<Pylon::IGigETransportLayer*>(factory.CreateTl(Pylon::BaslerGigEDeviceClass))};
+
+		//Pylon::DeviceInfoList_t filter;
+		//filter.push_back(Pylon::CDeviceInfo {}.SetMacAddress(camera::CameraMAC.c_str()));
+		//filter.push_back(Pylon::CDeviceInfo {}.SetSerialNumber(camera::CameraSN.c_str()));
+		Pylon::DeviceInfoList_t devices;
+		tl_->EnumerateAllDevices(devices);		// XXX: not the same as EnumerateDevices!!!
+		camera::printDevices(devices);
+
+		tl_->BroadcastIpConfiguration
+		(
+			camera::CameraMAC.c_str(),
+			false,
+			true,
+			camera::CameraIP.c_str(),
+			camera::CameraSubnetMask.c_str(),
+			camera::CameraGateway.c_str(),
+			devices[0].GetUserDefinedName()
+		);
+		tl_->RestartIpConfiguration(camera::CameraMAC.c_str());
+		Pylon::CTlFactory::GetInstance().ReleaseTl(tl_);
+		*/
+		// Create transport layer
+		camera::TransportLayer tl {camera::DeviceClass::GigE};
+
+		// Create camera device and apply configuration
+		camera::Camera cam
+		{
+			tl.createDevice(camera::CameraMAC, camera::DeviceDesignator::MAC)
+		};
+		assert(cam.isValid());
+
+		if (!cam.setParams(camera::CameraParameters))
+		{
+			std::cerr << "warning: some parameters not set\n";
+		}
+		//camera::dumpParams(cam.getParams());
+		//camera::dumpParams(cam.getParams(camera::ParamAccessMode::Read));
+
+		// Acquire image(s)
+		cam.startAcquisition(camera::CameraNImages);
+
+		std::vector<std::unique_ptr<camera::Image>> images;
+		images.reserve(camera::CameraNImages);
+
+		Pylon::CInstantCamera& pyCam {cam.getRef()};
+		assert(pyCam.CanWaitForFrameTriggerReady());
+
+		for (auto i {0ul}; i < camera::CameraNImages; ++i)
+		{
+			std::cout << "Triggering...";
+			auto start {std::chrono::system_clock::now()};
+			if (pyCam.WaitForFrameTriggerReady(500, Pylon::TimeoutHandling_Return))
+			{
+				pyCam.ExecuteSoftwareTrigger();
+			}
+			else
+			{
+				std::cerr << "frame trigger error: timed-out\n";
+				continue;
+			}
+			std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(std::chrono::system_clock::now() - start).count()
+					  << "ms\n";
+
+			std::cout << "Acquiring...\n";
+			try
+			{
+				std::unique_ptr<camera::Image> img
+				{
+					cam.acquire(std::chrono::seconds {2})
+				};
+				if (!img)
+				{
+					continue;
+				}
+				std::cout << "image id:   " << img->id << '\n'
+						  << "image size: " << static_cast<double>(img->getRef().GetImageSize()) / 1000000.0 << "MB\n"
+						  << '\n';
+				images.emplace_back(img.release());
+			}
+			catch(const Pylon::TimeoutException& e)
+			{
+				std::cerr << "error: " << e.what() << '\n';
+			}
+			catch(const Pylon::GenericException& e)
+			{
+				if (!cam.isValid())
+				{
+					throw camera::Exception {"camera device removed", e};
+				}
+				throw e;
+			}
+		}
+		// Write image(s) to file(s)
+		auto imgCount {0ul};
+		for (auto& i : images)
+		{
+			i->getRef().Save
+			(
+				Pylon::ImageFileFormat_Png,
+				(std::string{"image_"} + std::to_string(imgCount) + std::string{".png"}).c_str()
+			);
+			++imgCount;
+		}
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "error: " << e.what() << '\n';
+		return 1;
+	}
+	catch(const camera::Exception& e)
+	{
+		std::cerr << "error: " << e.what() << '\n';
+		return 1;
+	}
+	catch(...)
+	{
+		std::cerr << "error: unknown\n";
+		return 1;
+	}
+
+	return 0;
+}
+
+// ************************************************************************* //

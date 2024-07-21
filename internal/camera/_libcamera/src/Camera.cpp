@@ -8,6 +8,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <iostream>
+
 #include <GenApi/INode.h>
 #include <pylon/Device.h>
 #include <pylon/InstantCamera.h>
@@ -35,31 +37,28 @@ namespace camera
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
 Camera::Camera(Pylon::IPylonDevice* d)
+:
+	cam_ {d, Pylon::Cleanup_Delete}
 {
-	cam_ = new Pylon::CInstantCamera {d, Pylon::Cleanup_Delete};
-	cam_->RegisterConfiguration
+	cam_.RegisterConfiguration
 	(
 		new camera::DefaultConfigurator,
 		Pylon::RegistrationMode_ReplaceAll,
 		Pylon::Cleanup_Delete
 	);
-	cam_->Open();
+	cam_.Open();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Camera::~Camera()
 {
-	if (cam_)
-	{
-		cam_->DestroyDevice();
-		cam_ = nullptr;
-	}
+	cam_.DestroyDevice();
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-ParamList Camera::getParams(ParamAccessMode mode) const
+ParamList Camera::getParams(ParamAccessMode mode)
 {
 	ParamList params;
 	bool (*condition)(GenApi::INode*);
@@ -96,60 +95,66 @@ ParamList Camera::getParams(ParamAccessMode mode) const
 	(
 		params,
 		condition,
-		cam_->GetNodeMap(),
-		cam_->GetTLNodeMap(),
-		cam_->GetStreamGrabberNodeMap(),
-		cam_->GetEventGrabberNodeMap(),
-		cam_->GetInstantCameraNodeMap()
+		cam_.GetNodeMap(),
+		cam_.GetTLNodeMap(),
+		cam_.GetStreamGrabberNodeMap(),
+		cam_.GetEventGrabberNodeMap(),
+		cam_.GetInstantCameraNodeMap()
 	);
 	return params;
 }
 
 bool Camera::isAcquiring() const noexcept
 {
-	return cam_->IsGrabbing();
+	return cam_.IsGrabbing();
 }
 
 bool Camera::isValid() const noexcept
 {
-	return cam_->IsPylonDeviceAttached()
-		&& !cam_->IsCameraDeviceRemoved()
-		&& cam_->IsOpen();
+	return cam_.IsPylonDeviceAttached() && !cam_.IsCameraDeviceRemoved();
 }
 
-bool Camera::setParams(const ParamList& params) const noexcept
+bool Camera::setParams(const ParamList& params) noexcept
 {
 	bool ok {true};
 	for (const auto& p : params)
 	{
 		try
 		{
-			Pylon::CParameter par {cam_->GetNodeMap(), p.name.c_str()};
+			Pylon::CParameter par {cam_.GetNodeMap(), p.name.c_str()};
 			par.FromString(p.value.c_str());
 		}
 		catch(...)
 		{
 			ok = false;
+			std::cerr << "could not set \"" << p.name << "\"\n";
 			// TODO: log error
 		}
 	}
 	return ok;
 }
 
-void Camera::startAcquisition() const
+void Camera::startAcquisition()
 {
-	cam_->StartGrabbing();
+	cam_.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
 }
 
-void Camera::startAcquisition(std::size_t nImages) const
+void Camera::startAcquisition(std::size_t nImages)
 {
-	cam_->StartGrabbing(nImages);
+	cam_.StartGrabbing(nImages, Pylon::GrabStrategy_LatestImageOnly);
 }
 
-void Camera::stopAcquisition() const noexcept
+void Camera::stopAcquisition() noexcept
 {
-	cam_->StopGrabbing();
+	cam_.StopGrabbing();
 }
+
+#ifndef NDEBUG
+Pylon::CInstantCamera& Camera::getRef() noexcept
+{
+	return cam_;
+}
+#endif
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 

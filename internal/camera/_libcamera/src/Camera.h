@@ -20,6 +20,8 @@ SourceFiles
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <iostream>
+#include <memory>
 #include <ratio>
 #include <utility>
 
@@ -31,6 +33,8 @@ SourceFiles
 #include <pylon/InstantCamera.h>
 #include <pylon/Parameter.h>
 
+#include "Exception.h"
+#include "Image.h"
 #include "ParamEntry.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -48,8 +52,10 @@ private:
 
 	// Private data
 
-		//- Pylon instant camera handle
-		Pylon::CInstantCamera* cam_;
+		//- Pylon instant camera
+		Pylon::CInstantCamera cam_;
+		//- Pylon grab result
+		Pylon::CGrabResultPtr res_;
 
 	// Private Member functions
 
@@ -83,7 +89,8 @@ public:
 
 	// Constructors
 
-		//- Construct from a device
+		//- Construct from a device.
+		//	The device is attached and open after construction.
 		Camera(Pylon::IPylonDevice* d);
 
 		//- Disable copy constructor
@@ -94,35 +101,42 @@ public:
 
 	// Member functions
 
-		//- Acquire an image
+		//- Acquire an image.
+		//	WARNING: acquisition must be started manually, however,
+		//	acquisition can be stopped automatically, eg. when a certain
+		//	number of images has been acquired.
 		template<typename Rep, typename Period = std::ratio<1>>
-		bool acquire
+		std::unique_ptr<Image> acquire
 		(
-			Pylon::CGrabResultPtr& result,
 			const std::chrono::duration<Rep, Period>& timeout
-		) const;
+		);
+
+#ifndef NDEBUG
+		//- Get reference to the underlying pylon camera
+		Pylon::CInstantCamera& getRef() noexcept;
+#endif
 
 		//- Get camera parameters
-		ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite) const;
+		ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite);
 
 		//- Return acquisition state
 		bool isAcquiring() const noexcept;
 
-		//- Check if the camera is valid (device attached and open).
+		//- Check if the camera is valid (device attached).
 		bool isValid() const noexcept;
 
 		//- Set camera parameters in the order provided.
 		//	Returns true if no errors ocurred.
-		bool setParams(const ParamList& params) const noexcept;
+		bool setParams(const ParamList& params) noexcept;
 
 		//- Start image acquisition
-		void startAcquisition() const;
+		void startAcquisition();
 
 		//- Start image acquisition and stop after nImages have been acquired.
-		void startAcquisition(std::size_t nImages) const;
+		void startAcquisition(std::size_t nImages);
 
 		//- Stop image acquisition
-		void stopAcquisition() const noexcept;
+		void stopAcquisition() noexcept;
 
 	// Member operators
 
@@ -134,18 +148,43 @@ public:
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<typename Rep, typename Period>
-bool Camera::acquire
+std::unique_ptr<Image> Camera::acquire
 (
-	Pylon::CGrabResultPtr& result,
 	const std::chrono::duration<Rep, Period>& timeout
-) const
+)
 {
-	return cam_->RetrieveResult
-	(
-		std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(),
-		result,
-		Pylon::TimeoutHandling_Return
-	);
+	if (!isAcquiring())
+	{
+		throw Exception {"acquisition not started"};
+	}
+	bool success
+	{
+		cam_.RetrieveResult
+		(
+			std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(),
+			res_,
+			Pylon::TimeoutHandling_ThrowException
+		)
+	};
+	if (success && res_->GrabSucceeded())
+	{
+		if (res_->HasCRC() && !res_->CheckCRC())
+		{
+			std::cerr << "CRC check failed\n";
+		}
+		else
+		{
+			std::unique_ptr<Image> img {new Image {res_}};
+			res_.Release();
+			return img;
+		}
+	}
+	else if (success)
+	{
+		std::cerr << "error code: " << res_->GetErrorCode() << '\t'
+				  << res_->GetErrorDescription();
+	}
+	return nullptr;
 }
 
 // * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //
