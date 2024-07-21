@@ -3,11 +3,6 @@
 #
 # See the LICENSE file for license information
 
-# compiler flags
-add_compile_options(
-		"-Wall" "-Wextra" "-Wshadow" "-pedantic"
-)
-
 # append to include directories
 list(APPEND CAMERA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND CAMERA_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src")

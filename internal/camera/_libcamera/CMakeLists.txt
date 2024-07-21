@@ -6,19 +6,17 @@
 # cmake options
 cmake_minimum_required(VERSION 3.25)
 
+# build type
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
 # project name
 project(camera)
 
 # camera support is Linux only
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	message(FATAL_ERROR "Camera support can only be built on Linux")
-endif()
-
-# build type
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Debug CACHE STRING
-		"Choose type of build, options are: Debug Release"
-		FORCE)
 endif()
 
 # install prefix
@@ -102,10 +100,9 @@ target_sources(camera PUBLIC FILE_SET HEADERS FILES ${CAMERA_HDR})
 install(TARGETS camera DESTINATION "${PROJECT_SOURCE_DIR}/lib")
 install(FILES ${CAMERA_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include")
 
-# enable testing
-include(CTest)
-
+# enable testing in debug mode
 if(CMAKE_BUILD_TYPE MATCHES Debug)
+	include(CTest)
 	add_subdirectory(test/src)
 endif()
 
