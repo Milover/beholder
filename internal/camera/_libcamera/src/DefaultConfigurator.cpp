@@ -37,6 +37,9 @@ void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const
 	Pylon::CConfigurationHelper::DisableAllTriggers(nodemap);
 	Pylon::CConfigurationHelper::DisableCompression(nodemap);
 	Pylon::CConfigurationHelper::DisableGenDC(nodemap);
+
+	// set pixel format to 8-bit
+	Pylon::CEnumParameter(nodemap, "PixelFormat").SetValue("BayerRG8");
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
