@@ -95,6 +95,15 @@ bool ImageProcessor::readImage(const std::string& path, int flags)
 	return img_->data != NULL;
 }
 
+void ImageProcessor::copyBayerRGGB8(int rows, int cols, void* buf, size_t step)
+{
+	if (step < 1) {
+		step = cv::Mat::AUTO_STEP;
+	}
+	cv::Mat tmp {rows, cols, CV_8UC1, buf, step};
+	cv::cvtColor(tmp, *img_, cv::COLOR_BayerRGGB2BGR, 3);
+}
+
 
 void ImageProcessor::showImage(const std::string& title) const
 {

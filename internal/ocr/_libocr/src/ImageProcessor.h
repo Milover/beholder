@@ -98,6 +98,10 @@ public:
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
 
+		//- Copy a Bayer RGGB 8-bit image locally and convert it into a
+		//	3-channel BGR image (OpenCV standard)
+		void copyBayerRGGB8(int rows, int cols, void* buf, size_t step);
+
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
 
