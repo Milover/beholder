@@ -6,8 +6,8 @@
 #include <vector>
 #include <string>
 
-#include "pylon/TypeMappings.h"
-#include "pylon/Device.h"
+#include <pylon/TypeMappings.h>
+#include <pylon/Device.h>
 
 #include "camera.h"
 
