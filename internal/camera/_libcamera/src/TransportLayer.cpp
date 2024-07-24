@@ -8,7 +8,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include <cassert>
+#include <algorithm>
+#include <cstring>
+#include <iostream>
 #include <string>
 
 #include <pylon/Container.h>
@@ -35,25 +37,6 @@ namespace camera
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
-TransportLayer::TransportLayer(DeviceClass dc)
-{
-	Pylon::CTlFactory& factory {Pylon::CTlFactory::GetInstance()};
-	switch (dc)
-	{
-		case DeviceClass::GigE:
-		{
-			tl_ = factory.CreateTl(Pylon::BaslerGigEDeviceClass);
-			break;
-		}
-		case DeviceClass::Unknown:
-		{
-			tl_ = nullptr;
-			break;
-		}
-	}
-	assert(tl_ != nullptr);
-}
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 TransportLayer::~TransportLayer()
@@ -67,11 +50,43 @@ TransportLayer::~TransportLayer()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+bool TransportLayer::init(DeviceClass dc) noexcept
+{
+	try
+	{
+		Pylon::CTlFactory& factory {Pylon::CTlFactory::GetInstance()};
+		switch (dc)
+		{
+			case DeviceClass::GigE:
+			{
+				tl_ = factory.CreateTl(Pylon::BaslerGigEDeviceClass);
+				return true;
+				break;
+			}
+			case DeviceClass::Unknown:
+			{
+				tl_ = nullptr;
+				return false;
+				break;
+			}
+		}
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not initialize transport layer: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not initialize transport layer" << std::endl;
+	}
+	return false;
+}
+
 Pylon::IPylonDevice* TransportLayer::createDevice
 (
 	const std::string& designator,
 	DeviceDesignator ddt
-) const
+) const noexcept
 {
 	return createDevice(designator.c_str(), ddt);
 }
@@ -81,37 +96,62 @@ Pylon::IPylonDevice* TransportLayer::createDevice
 (
 	const char* designator,
 	DeviceDesignator ddt
-) const
+) const noexcept
 {
-	using Info = Pylon::CDeviceInfo;
-	using InfoList = Pylon::DeviceInfoList_t;
-
-	InfoList filter;
-	switch (ddt)
+	try
 	{
-		case DeviceDesignator::MAC:
+		Pylon::DeviceInfoList_t devices {};
+		if (auto ptr {dynamic_cast<Pylon::IGigETransportLayer*>(tl_)}; ptr)
 		{
-			filter.push_back(Info {}.SetMacAddress(designator));
-			break;
+			ptr->EnumerateAllDevices(devices);
 		}
-		case DeviceDesignator::SN:
+		else
 		{
-			filter.push_back(Info {}.SetSerialNumber(designator));
-			break;
+			tl_->EnumerateDevices(devices);
 		}
-		case DeviceDesignator::Unknown:
+		if (devices.empty())
 		{
+			std::cerr << "could not create device: "
+					  << "no devices available" << std::endl;
 			return nullptr;
-			break;
 		}
+		auto selector = [ddt, designator](const auto& info) -> bool
+		{
+			switch (ddt)
+			{
+				case DeviceDesignator::MAC:
+				{
+					return std::strcmp(designator, info.GetMacAddress().c_str()) == 0;
+				}
+				case DeviceDesignator::SN:
+				{
+					return std::strcmp(designator, info.GetSerialNumber().c_str()) == 0;
+				}
+				case DeviceDesignator::Unknown:
+				{
+					return false;
+				}
+			}
+			return false;
+		};
+		auto found {std::find_if(devices.begin(), devices.end(), selector)};
+		if (found == devices.end())
+		{
+			std::cerr << "could not create device: "
+					  << "could not find specified device" << std::endl;
+			return nullptr;
+		}
+		return tl_->CreateDevice(*found);
 	}
-	InfoList devices;
-	tl_->EnumerateDevices(devices, filter);
-	if (devices.size() != 1)
+	catch(const Pylon::GenericException& e)
 	{
-		return nullptr;
+		std::cerr << "could not create device: " << e.what() << std::endl;
 	}
-	return tl_->CreateDevice(devices.front());
+	catch(...)
+	{
+		std::cerr << "could not create device" << std::endl;
+	}
+	return nullptr;
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //

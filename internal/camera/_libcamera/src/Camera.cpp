@@ -36,9 +36,7 @@ namespace camera
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
-Camera::Camera(Pylon::IPylonDevice* d)
-:
-	cam_ {d, Pylon::Cleanup_Delete}
+Camera::Camera()
 {
 	cam_.RegisterConfiguration
 	(
@@ -46,12 +44,11 @@ Camera::Camera(Pylon::IPylonDevice* d)
 		Pylon::RegistrationMode_ReplaceAll,
 		Pylon::Cleanup_Delete
 	);
-	cam_.Open();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Camera::~Camera()
+Camera::~Camera() noexcept
 {
 	cam_.DestroyDevice();
 }
@@ -61,7 +58,7 @@ Camera::~Camera()
 ParamList Camera::getParams(ParamAccessMode mode)
 {
 	ParamList params;
-	bool (*condition)(GenApi::INode*);
+	bool (*condition)(GenApi::INode*) {nullptr};
 	switch (mode)
 	{
 		case ParamAccessMode::Read:
@@ -109,13 +106,46 @@ bool Camera::isAcquiring() const noexcept
 	return cam_.IsGrabbing();
 }
 
-bool Camera::isValid() const noexcept
+bool Camera::init(Pylon::IPylonDevice* d) noexcept
+{
+	try
+	{
+		cam_.Attach(d, Pylon::Cleanup_Delete);
+		cam_.Open();
+		return true;
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not initialize camera: " << e.what() << std::endl;
+	}
+	catch(const Exception& e)
+	{
+		std::cerr << "could not initialize camera: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not initialize camera" << std::endl;
+	}
+	return false;
+}
+
+bool Camera::isInitialized() const noexcept
+{
+	return isAttached() && cam_.IsOpen();
+}
+
+bool Camera::isAttached() const noexcept
 {
 	return cam_.IsPylonDeviceAttached() && !cam_.IsCameraDeviceRemoved();
 }
 
 bool Camera::setParams(const ParamList& params) noexcept
 {
+	if (!isInitialized())
+	{
+		std::cerr << "could not set parameters, camera uninitialized" << std::endl;
+		return false;
+	}
 	bool ok {true};
 	for (const auto& p : params)
 	{
@@ -124,24 +154,54 @@ bool Camera::setParams(const ParamList& params) noexcept
 			Pylon::CParameter par {cam_.GetNodeMap(), p.name.c_str()};
 			par.FromString(p.value.c_str());
 		}
+		catch(const Pylon::GenericException& e)
+		{
+			ok = false;
+			std::cerr << "could not set \"" << p.name << ": " << e.what() << std::endl;
+		}
 		catch(...)
 		{
 			ok = false;
-			std::cerr << "could not set \"" << p.name << "\"\n";
-			// TODO: log error
+			std::cerr << "could not set \"" << p.name << "\"" << std::endl;
 		}
 	}
 	return ok;
 }
 
-void Camera::startAcquisition()
+bool Camera::startAcquisition() noexcept
 {
-	cam_.StartGrabbing(Pylon::GrabStrategy_LatestImageOnly);
+	try
+	{
+		cam_.StartGrabbing();
+		return true;
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not start acquisition: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not start acquisition" << std::endl;
+	}
+	return false;
 }
 
-void Camera::startAcquisition(std::size_t nImages)
+bool Camera::startAcquisition(std::size_t nImages) noexcept
 {
-	cam_.StartGrabbing(nImages, Pylon::GrabStrategy_LatestImageOnly);
+	try
+	{
+		cam_.StartGrabbing(nImages);
+		return true;
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not start acquisition: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not start acquisition" << std::endl;
+	}
+	return false;
 }
 
 void Camera::stopAcquisition() noexcept

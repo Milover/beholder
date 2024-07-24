@@ -91,13 +91,13 @@ public:
 
 		//- Construct from a device.
 		//	The device is attached and open after construction.
-		Camera(Pylon::IPylonDevice* d);
+		Camera();
 
 		//- Disable copy constructor
 		Camera(const Camera&) = delete;
 
 	//- Destructor
-	~Camera();
+	~Camera() noexcept;
 
 	// Member functions
 
@@ -114,26 +114,39 @@ public:
 #ifndef NDEBUG
 		//- Get reference to the underlying pylon camera
 		Pylon::CInstantCamera& getRef() noexcept;
+
+		//- Get reference to the underlying pylon camera
+		Pylon::CGrabResultPtr& getResultRef() noexcept
+		{
+			return res_;
+		}
 #endif
+
 
 		//- Get camera parameters
 		ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite);
 
+		//- Initialize camera device
+		bool init(Pylon::IPylonDevice* d) noexcept;
+
 		//- Return acquisition state
 		bool isAcquiring() const noexcept;
 
-		//- Check if the camera is valid (device attached).
-		bool isValid() const noexcept;
+		//- Check if the camera is initialized (device attached and open).
+		bool isInitialized() const noexcept;
+
+		//- Check if the camera device is attached.
+		bool isAttached() const noexcept;
 
 		//- Set camera parameters in the order provided.
 		//	Returns true if no errors ocurred.
 		bool setParams(const ParamList& params) noexcept;
 
 		//- Start image acquisition
-		void startAcquisition();
+		bool startAcquisition() noexcept;
 
 		//- Start image acquisition and stop after nImages have been acquired.
-		void startAcquisition(std::size_t nImages);
+		bool startAcquisition(std::size_t nImages) noexcept;
 
 		//- Stop image acquisition
 		void stopAcquisition() noexcept;
@@ -153,6 +166,10 @@ std::unique_ptr<Image> Camera::acquire
 	const std::chrono::duration<Rep, Period>& timeout
 )
 {
+	if (!isAttached())
+	{
+		throw Exception {"no camera device attached"};
+	}
 	if (!isAcquiring())
 	{
 		throw Exception {"acquisition not started"};
@@ -163,26 +180,29 @@ std::unique_ptr<Image> Camera::acquire
 		(
 			std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(),
 			res_,
-			Pylon::TimeoutHandling_ThrowException
+			Pylon::TimeoutHandling_Return
 		)
 	};
 	if (success && res_->GrabSucceeded())
 	{
 		if (res_->HasCRC() && !res_->CheckCRC())
 		{
-			std::cerr << "CRC check failed\n";
+			std::cerr << "CRC check failed" << std::endl;
 		}
 		else
 		{
 			std::unique_ptr<Image> img {new Image {res_}};
-			res_.Release();
 			return img;
 		}
 	}
 	else if (success)
 	{
 		std::cerr << "error code: " << res_->GetErrorCode() << '\t'
-				  << res_->GetErrorDescription();
+				  << res_->GetErrorDescription() << std::endl;
+	}
+	else
+	{
+		std::cerr << "acquisition timed out" << std::endl;
 	}
 	return nullptr;
 }

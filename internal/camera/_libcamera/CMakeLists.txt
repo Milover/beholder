@@ -83,8 +83,11 @@ list(
 
 # main library target
 add_library (camera SHARED)
-set_property(TARGET camera
-	PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_target_properties(camera PROPERTIES
+    BUILD_WITH_INSTALL_RPATH FALSE
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+	INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/share/lib/pylon")
+#	INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_include_directories(camera PUBLIC ${CAMERA_INCLUDE_DIRS})
 target_link_libraries(camera PUBLIC ${CAMERA_LIBRARIES})
 #target_link_options(camera
@@ -97,7 +100,7 @@ target_sources(camera PRIVATE ${CAMERA_SRC})
 target_sources(camera PUBLIC FILE_SET HEADERS FILES ${CAMERA_HDR})
 
 # install targets
-install(TARGETS camera DESTINATION "${PROJECT_SOURCE_DIR}/lib")
+install(TARGETS camera LIBRARY DESTINATION "${PROJECT_SOURCE_DIR}/lib")
 install(FILES ${CAMERA_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include")
 
 # enable testing in debug mode

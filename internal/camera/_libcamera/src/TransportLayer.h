@@ -66,7 +66,7 @@ public:
 	// Constructors
 
 		//- Construct from a device class
-		TransportLayer(DeviceClass dc = DeviceClass::GigE);
+		TransportLayer() = default;
 
 		//- Disable copy constructor
 		TransportLayer(const TransportLayer&) = delete;
@@ -76,19 +76,22 @@ public:
 
 	// Member functions
 
+		//- Initialize camera device
+		bool init(DeviceClass dc = DeviceClass::GigE) noexcept;
+
 		//- Enumerate and create a device with the provided designator.
 		Pylon::IPylonDevice* createDevice
 		(
 			const std::string& designator,
 			DeviceDesignator ddt = DeviceDesignator::MAC
-		) const;
+		) const noexcept;
 
 		//- Enumerate and create a device with the provided designator.
 		Pylon::IPylonDevice* createDevice
 		(
 			const char* designator,
 			DeviceDesignator ddt = DeviceDesignator::MAC
-		) const;
+		) const noexcept;
 
 
 	// Member operators

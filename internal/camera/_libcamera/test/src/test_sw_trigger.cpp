@@ -16,12 +16,12 @@ License
 #include <vector>
 
 #include <pylon/PylonIncludes.h>
-#include <pylon/gige/GigETransportLayer.h>
 
 #include "Camera.h"
 #include "Exception.h"
 #include "Image.h"
 #include "ParamEntry.h"
+#include "PylonAPI.h"
 #include "TransportLayer.h"
 
 #include "Test.h"
@@ -135,50 +135,38 @@ const camera::ParamList CameraParameters
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
 	// Before using any pylon methods, the pylon runtime must be initialized.
-	Pylon::PylonAutoInitTerm autoInitTerm;
+	camera::PylonAPI py {};
 
 	try
 	{
-		/* TODO: add to TransportLayer
-		Pylon::CTlFactory& factory {Pylon::CTlFactory::GetInstance()};
-		Pylon::IGigETransportLayer* tl_ {static_cast<Pylon::IGigETransportLayer*>(factory.CreateTl(Pylon::BaslerGigEDeviceClass))};
-
-		//Pylon::DeviceInfoList_t filter;
-		//filter.push_back(Pylon::CDeviceInfo {}.SetMacAddress(camera::CameraMAC.c_str()));
-		//filter.push_back(Pylon::CDeviceInfo {}.SetSerialNumber(camera::CameraSN.c_str()));
-		Pylon::DeviceInfoList_t devices;
-		tl_->EnumerateAllDevices(devices);		// XXX: not the same as EnumerateDevices!!!
-		camera::printDevices(devices);
-
-		tl_->BroadcastIpConfiguration
-		(
-			camera::CameraMAC.c_str(),
-			false,
-			true,
-			camera::CameraIP.c_str(),
-			camera::CameraSubnetMask.c_str(),
-			camera::CameraGateway.c_str(),
-			devices[0].GetUserDefinedName()
-		);
-		tl_->RestartIpConfiguration(camera::CameraMAC.c_str());
-		Pylon::CTlFactory::GetInstance().ReleaseTl(tl_);
-		*/
 		// Create transport layer
-		camera::TransportLayer tl {camera::DeviceClass::GigE};
-
-		// Create camera device and apply configuration
-		camera::Camera cam
+		camera::TransportLayer tl {};
+		if (!tl.init(camera::DeviceClass::GigE))
 		{
-			tl.createDevice(camera::CameraMAC, camera::DeviceDesignator::MAC)
-		};
-		assert(cam.isValid());
-
+			std::cerr << "error: transport layer initialization failed\n";
+			return 1;
+		}
+		// Create camera device and apply configuration
+		camera::Camera cam {};
+		if
+		(
+			!cam.init
+			(
+				tl.createDevice(camera::CameraMAC, camera::DeviceDesignator::MAC)
+			)
+		)
+		{
+			std::cerr << "error: camera initialization failed\n";
+			return 1;
+		}
 		if (!cam.setParams(camera::CameraParameters))
 		{
-			std::cerr << "warning: some parameters not set\n";
+			std::cerr << "warning: encountered issues while setting parameters\n";
 		}
 		//camera::dumpParams(cam.getParams());
 		//camera::dumpParams(cam.getParams(camera::ParamAccessMode::Read));
+
+		assert(cam.isInitialized());
 
 		// Acquire image(s)
 		cam.startAcquisition(camera::CameraNImages);
@@ -206,44 +194,23 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 					  << "ms\n";
 
 			std::cout << "Acquiring...\n";
-			try
+			std::unique_ptr<camera::Image> img
 			{
-				std::unique_ptr<camera::Image> img
-				{
-					cam.acquire(std::chrono::seconds {2})
-				};
-				if (!img)
-				{
-					continue;
-				}
-				std::cout << "image id:   " << img->id << '\n'
-						  << "image size: " << static_cast<double>(img->getRef().GetImageSize()) / 1000000.0 << "MB\n"
-						  << '\n';
-				images.emplace_back(img.release());
-			}
-			catch(const Pylon::TimeoutException& e)
+				cam.acquire(std::chrono::seconds {2})
+			};
+			if (!img)
 			{
-				std::cerr << "error: " << e.what() << '\n';
+				continue;
 			}
-			catch(const Pylon::GenericException& e)
-			{
-				if (!cam.isValid())
-				{
-					throw camera::Exception {"camera device removed", e};
-				}
-				throw e;
-			}
+			std::cout << "image id:   " << img->id << '\n'
+					  << "image size: " << static_cast<double>(img->getRef().GetImageSize()) / 1000000.0 << "MB\n"
+					  << '\n';
+			images.emplace_back(img.release());
 		}
 		// Write image(s) to file(s)
-		auto imgCount {0ul};
 		for (auto& i : images)
 		{
-			i->getRef().Save
-			(
-				Pylon::ImageFileFormat_Png,
-				(std::string{"image_"} + std::to_string(imgCount) + std::string{".png"}).c_str()
-			);
-			++imgCount;
+			i->write(std::string{"image_"} + std::to_string(i->id) + ".png");
 		}
 	}
 	catch(const Pylon::GenericException& e)

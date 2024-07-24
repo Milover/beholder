@@ -7,20 +7,14 @@ License
 	See the LICENSE file for license information.
 
 Description
-	A wrapper class for a camera image.
-
-SourceFiles
-	Image.cpp
+	A wrapper class for the pylon runtime manager.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef CAMERA_IMAGE_H
-#define CAMERA_IMAGE_H
+#ifndef CAMERA_PYLON_H
+#define CAMERA_PYLON_H
 
-#include <cstdlib>
-
-#include <pylon/GrabResultPtr.h>
-#include <pylon/PylonImage.h>
+#include <pylon/PylonBase.h>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -28,65 +22,37 @@ namespace camera
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class Image Declaration
+                    Class PylonAPI Declaration
 \*---------------------------------------------------------------------------*/
 
-class Image
+class PylonAPI
 {
 private:
 
 	// Private data
 
-		//- Pylon image
-		Pylon::CPylonImage img_;
-
-	// Private Member functions
+		//- Pylon API handle
+		Pylon::PylonAutoInitTerm py_;
 
 public:
 
-	// Public data
-
-		//- Pylon image ID
-		const std::size_t id;
-		//- Number of image rows
-		const std::size_t rows;
-		//- Number of image columns
-		const std::size_t cols;
-
 	// Constructors
 
-		//- Construct from a grab result
-		Image(const Pylon::CGrabResultPtr& r);
+		//- Default constructor
+		PylonAPI() = default;
 
 		//- Disable copy constructor
-		Image(const Image&) = delete;
+		PylonAPI(const PylonAPI&) = delete;
 
 	//- Destructor
-	~Image() = default;
-
-	// Member functions
-
-		//- Get a pointer to the underlying bytes of the image
-		unsigned char* getBuffer() noexcept;
-
-		//- Get image step size in bytes
-		std::size_t getStep() const;
-
-		//- Write image to disc
-		bool write(const std::string& filename) noexcept;
-
-#ifndef NDEBUG
-		//- Get reference to the underlying image
-		Pylon::CPylonImage& getRef() noexcept;
-#endif
+	~PylonAPI() = default;
 
 	// Member operators
 
 		//- Disable copy assignment
-		Image& operator=(const Image&) = delete;
+		PylonAPI& operator=(const PylonAPI&) = delete;
 
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -21,8 +21,9 @@ Description
 #include "Exception.h"
 #include "Image.h"
 #include "ParamEntry.h"
+#include "PylonAPI.h"
 #include "TransportLayer.h"
-//#include "Utility.h"
+#include "Utility.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
