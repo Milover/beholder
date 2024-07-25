@@ -56,7 +56,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ocr::Tesseract t {};
 	//t.configPaths = std::vector<std::string>{"testdata/configs/test_dukat.patterns.config"};
 	//t.modelPath = "_models/best";
-	t.modelPath = "_models/dotmatrix";
+	t.modelPath = "model/dotmatrix";
 	//t.model = "5x5_Dots_FT_500";
 	//t.model = "DisplayDots_FT_500";
 	//t.model = "DotMatrix_FT_500";

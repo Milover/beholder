@@ -39,6 +39,7 @@ internal/ocr/_libocr/share
 internal/ocr/_libocr/third_party/opencv
 internal/ocr/_libocr/third_party/leptonica
 internal/ocr/_libocr/third_party/tesseract
+internal/ocr/_libocr/third_party/install_manifest.txt
 
 # libcamera stuff
 internal/camera/_libcamera/bin/
@@ -50,3 +51,4 @@ internal/camera/_libcamera/vagrant/
 internal/camera/_libcamera/test/bin/
 internal/camera/_libcamera/share
 internal/camera/_libcamera/third_party/pylon
+internal/camera/_libcamera/third_party/install_manifest.txt

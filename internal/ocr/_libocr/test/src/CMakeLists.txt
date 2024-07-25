@@ -3,16 +3,11 @@
 #
 # See the LICENSE file for license information
 
-# compiler flags
-add_compile_options(
-		"-Wall" "-Wextra" "-Wshadow" "-pedantic"
-)
-
 # append to include directories
-list(APPEND OCR_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
-list(APPEND OCR_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src")
-list(APPEND OCR_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/lib")
-list(APPEND OCR_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include")
+#list(APPEND OCR_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+#list(APPEND OCR_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src")
+#list(APPEND OCR_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/lib")
+#list(APPEND OCR_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include")
 
 # append library
 list(APPEND OCR_LIBRARIES ocr)
