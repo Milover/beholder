@@ -116,6 +116,7 @@ const camera::ParamList CameraParameters
 {
 	{"AcquisitionMode",            "Continuous",                   camera::ParamType::Enum},
 
+	{"TriggerSelector",            "FrameStart",                   camera::ParamType::Enum},
 	{"TriggerMode",                "On",                           camera::ParamType::Enum},
 	{"TriggerSource",              "Line1",                        camera::ParamType::Enum},
 	{"TriggerActivation",          "RisingEdge",                   camera::ParamType::Enum},
