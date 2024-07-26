@@ -1,5 +1,4 @@
-// Beholder is a program which performs optical character recognition for
-// dot matrix fonts.
+// Beholder is a program for operating industrial vision systems.
 package main // import github.com/Milover/beholder
 
 import "github.com/Milover/beholder/cmd"
