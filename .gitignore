@@ -24,31 +24,17 @@ vendor/
 # Project binaries
 bin/
 
-# Raw test images
+# Raw OCR test images
 internal/ocr/testdata/images
 
-# libocr stuff
-internal/ocr/_libocr/bin/
-internal/ocr/_libocr/build/
-internal/ocr/_libocr/lib/
-internal/ocr/_libocr/include/
-internal/ocr/_libocr/doc/
-internal/ocr/_libocr/vagrant/
-internal/ocr/_libocr/test/bin/
-internal/ocr/_libocr/share
-internal/ocr/_libocr/third_party/opencv
-internal/ocr/_libocr/third_party/leptonica
-internal/ocr/_libocr/third_party/tesseract
-internal/ocr/_libocr/third_party/install_manifest.txt
-
-# libcamera stuff
-internal/camera/_libcamera/bin/
-internal/camera/_libcamera/build/
-internal/camera/_libcamera/lib/
-internal/camera/_libcamera/include/
-internal/camera/_libcamera/doc/
-internal/camera/_libcamera/vagrant/
-internal/camera/_libcamera/test/bin/
-internal/camera/_libcamera/share
-internal/camera/_libcamera/third_party/pylon
-internal/camera/_libcamera/third_party/install_manifest.txt
+# libbeholder stuff
+internal/_libbeholder/bin/
+internal/_libbeholder/build/
+internal/_libbeholder/doc/
+internal/_libbeholder/vagrant/
+internal/_libbeholder/test/bin/
+internal/_libbeholder/third_party/opencv
+internal/_libbeholder/third_party/leptonica
+internal/_libbeholder/third_party/tesseract
+internal/_libbeholder/third_party/pylon
+internal/_libbeholder/third_party/install_manifest.txt

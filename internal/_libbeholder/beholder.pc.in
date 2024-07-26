@@ -1,0 +1,13 @@
+# Package information for pkg-config
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include/beholder
+
+Name: beholder
+Description: A library for operating industrial vision systems
+Version: @PROJECT_VERSION@
+Requires: lept opencv4 pylon tesseract
+Libs: -L${libdir} -lbeholder
+Cflags: -I${includedir}

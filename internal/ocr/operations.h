@@ -1,27 +1,27 @@
-#ifndef _PROCESSING_OPS_H
-#define _PROCESSING_OPS_H
+#ifndef _BEHOLDER_OPS_H
+#define _BEHOLDER_OPS_H
 
 #ifdef __cplusplus
-#include "libocr.h"
+#include "libbeholder.h"
 extern "C" {
 #endif
 
 #ifdef __cplusplus
-typedef ocr::AddPadding* AdPad;
-typedef ocr::AutoCrop* AuCrp;
-typedef ocr::CLAHE* CLH;
-typedef ocr::Crop* Crp;
-typedef ocr::DivGaussianBlur* DivGaussBlur;
-typedef ocr::DrawTextBoxes* DrawTB;
-typedef ocr::EqualizeHistogram* EqHist;
-typedef ocr::GaussianBlur* GaussBlur;
-typedef ocr::Invert* Inv;
-typedef ocr::MedianBlur* MedBlur;
-typedef ocr::Morphology* Morph;
-typedef ocr::NormalizeBrightnessContrast* NormBC;
-typedef ocr::Resize* Rsz;
-typedef ocr::Rotate* Rot;
-typedef ocr::Threshold* Thresh;
+typedef beholder::AddPadding* AdPad;
+typedef beholder::AutoCrop* AuCrp;
+typedef beholder::CLAHE* CLH;
+typedef beholder::Crop* Crp;
+typedef beholder::DivGaussianBlur* DivGaussBlur;
+typedef beholder::DrawTextBoxes* DrawTB;
+typedef beholder::EqualizeHistogram* EqHist;
+typedef beholder::GaussianBlur* GaussBlur;
+typedef beholder::Invert* Inv;
+typedef beholder::MedianBlur* MedBlur;
+typedef beholder::Morphology* Morph;
+typedef beholder::NormalizeBrightnessContrast* NormBC;
+typedef beholder::Resize* Rsz;
+typedef beholder::Rotate* Rot;
+typedef beholder::Threshold* Thresh;
 #else
 typedef void* AdPad;
 typedef void* AuCrp;

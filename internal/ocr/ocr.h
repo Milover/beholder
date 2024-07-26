@@ -1,17 +1,17 @@
-#ifndef _OCR_H
-#define _OCR_H
+#ifndef _BEHOLDER_OCR_H
+#define _BEHOLDER_OCR_H
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 #ifdef __cplusplus
-#include "libocr.h"
+#include "libbeholder.h"
 extern "C" {
 #endif
 
 #ifdef __cplusplus
-typedef ocr::ImageProcessor* Proc;
-typedef ocr::Tesseract* Tess;
+typedef beholder::ImageProcessor* Proc;
+typedef beholder::Tesseract* Tess;
 #else
 typedef void* Proc;
 typedef void* Tess;

@@ -1,19 +1,19 @@
-#ifndef _CAMERA_H
-#define _CAMERA_H
+#ifndef _BEHOLDER_CAMERA_H
+#define _BEHOLDER_CAMERA_H
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 #ifdef __cplusplus
-#include "libcamera.h"
+#include "libbeholder.h"
 extern "C" {
 #endif
 
 #ifdef __cplusplus
-typedef camera::Camera* Cam;
-typedef camera::Image* Img;
-typedef camera::PylonAPI* Pyl;
-typedef camera::TransportLayer* Trans;
+typedef beholder::Camera* Cam;
+typedef beholder::Image* Img;
+typedef beholder::PylonAPI* Pyl;
+typedef beholder::TransportLayer* Trans;
 #else
 typedef void* Cam;
 typedef void* Img;

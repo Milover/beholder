@@ -42,14 +42,14 @@ bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 	}
 	auto helper = []
 	(
-		ocr::ImageProcessor::OpList& list,
+		beholder::ImageProcessor::OpList& list,
 		void** ptrs,
 		std::size_t nPtrs
 	) -> void
 	{
 		list.reserve(nPtrs);
 		for (auto i {0ul}; i < nPtrs; ++i) {
-			list.emplace_back(static_cast<ocr::ProcessingOp*>(ptrs[i]));
+			list.emplace_back(static_cast<beholder::ProcessingOp*>(ptrs[i]));
 		}
 	};
 	helper(p->postprocessing, post, nPost);
@@ -58,7 +58,7 @@ bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 }
 
 Proc Proc_New() {
-	return new ocr::ImageProcessor {};
+	return new beholder::ImageProcessor {};
 }
 
 bool Proc_Postprocess(Proc p, Tess t) {
@@ -165,7 +165,7 @@ bool Tess_Init(Tess t, const TInit* in) {
 }
 
 Tess Tess_New() {
-	return new ocr::Tesseract {};
+	return new beholder::Tesseract {};
 }
 
 void Tess_SetImage(Tess t, Proc p, int bytesPerPixel) {
