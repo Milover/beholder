@@ -32,7 +32,24 @@ namespace camera
 
 // * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+bool Camera::triggerImpl(TriggerType typ)
+{
+	switch (typ)
+	{
+		case TriggerType::Software:
+		{
+			cam_.ExecuteSoftwareTrigger();
+			return true;
+			break;
+		}
+		case TriggerType::Unknown:
+		{
+			return false;
+			break;
+		}
+	}
+	return false;
+}
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
@@ -54,6 +71,13 @@ Camera::~Camera() noexcept
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+#ifndef NDEBUG
+Pylon::CInstantCamera& Camera::getRef() noexcept
+{
+	return cam_;
+}
+#endif
 
 ParamList Camera::getParams(ParamAccessMode mode)
 {
@@ -209,12 +233,26 @@ void Camera::stopAcquisition() noexcept
 	cam_.StopGrabbing();
 }
 
-#ifndef NDEBUG
-Pylon::CInstantCamera& Camera::getRef() noexcept
+bool Camera::trigger(TriggerType typ) noexcept
 {
-	return cam_;
+	try
+	{
+		return triggerImpl(typ);
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not execute trigger: " << e.what() << std::endl;
+	}
+	catch(const Exception& e)
+	{
+		std::cerr << "could not execute trigger: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not execute trigger: " << std::endl;
+	}
+	return false;
 }
-#endif
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 

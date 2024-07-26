@@ -94,6 +94,20 @@ Cam Cam_New() {
 	return new camera::Camera {};
 }
 
+bool Cam_Trigger(Cam c) {
+	if (!c) {
+		return false;
+	}
+	return c->trigger();
+}
+
+bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs) {
+	if (!c) {
+		return false;
+	}
+	return c->waitAndTrigger(std::chrono::milliseconds {timeoutMs});
+}
+
 // TODO: bool Cam_SetParameters(Params p)
 
 bool Cam_StartAcquisition(Cam c) {
@@ -119,7 +133,7 @@ unsigned char* Img_Buffer(Img i) {
 ImgInfo* Img_Info(Img i) {
 	ImgInfo* info;
 	if (i) {
-		info = new ImgInfo {i->id, i->cols, i->rows, i->getStep()};
+		info = new ImgInfo {i->id, i->cols, i->rows, i->getStep(), i->isMonochrome()};
 	}
 	return info;
 }

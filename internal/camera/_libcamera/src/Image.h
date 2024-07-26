@@ -69,8 +69,12 @@ public:
 		//- Get a pointer to the underlying bytes of the image
 		unsigned char* getBuffer() noexcept;
 
+		//- Check if the image is monochrome
+		std::size_t getStep() const noexcept;
+
 		//- Get image step size in bytes
-		std::size_t getStep() const;
+		//	FIXME: provisional implementation
+		bool isMonochrome() const noexcept;
 
 		//- Write image to disc
 		bool write(const std::string& filename) noexcept;

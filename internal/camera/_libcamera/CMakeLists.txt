@@ -19,10 +19,10 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	message(FATAL_ERROR "Camera support can only be built on Linux")
 endif()
 
-# install prefix
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
-endif()
+## install prefix
+#if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+#	set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
+#endif()
 
 # compiler settings
 set(CMAKE_CXX_STANDARD 17)
@@ -33,9 +33,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # compiler flags
 add_compile_options(
-		"-Wall" "-Wextra" "-Wshadow" "-pedantic"
-		"$<$<CONFIG:DEBUG>:-O0>"
-		"$<$<CONFIG:RELEASE>:-march=native>"
+	"-Wall" "-Wextra" "-Wshadow" "-pedantic"
+	"$<$<CONFIG:DEBUG>:-O0>"
+	"$<$<CONFIG:RELEASE>:-march=native>"
 )
 
 # output paths
@@ -51,7 +51,6 @@ set(CAMERA_LIBRARIES "")
 #include(FetchContent)
 
 # pylon
-set(pylon_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/pylon")
 find_package(pylon 7.5.0 REQUIRED)
 list(APPEND CAMERA_INCLUDE_DIRS ${pylon_INCLUDE_DIRS})
 list(APPEND CAMERA_LIBRARIES "pylon::pylon")
@@ -84,10 +83,10 @@ list(
 # main library target
 add_library (camera SHARED)
 set_target_properties(camera PROPERTIES
-    BUILD_WITH_INSTALL_RPATH FALSE
-    INSTALL_RPATH_USE_LINK_PATH TRUE
-	INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/share/lib/pylon")
-#	INTERPROCEDURAL_OPTIMIZATION TRUE)
+	#    BUILD_WITH_INSTALL_RPATH FALSE
+	#    INSTALL_RPATH_USE_LINK_PATH TRUE
+	#	INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/share/lib/pylon")
+	INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_include_directories(camera PUBLIC ${CAMERA_INCLUDE_DIRS})
 target_link_libraries(camera PUBLIC ${CAMERA_LIBRARIES})
 #target_link_options(camera
@@ -100,8 +99,8 @@ target_sources(camera PRIVATE ${CAMERA_SRC})
 target_sources(camera PUBLIC FILE_SET HEADERS FILES ${CAMERA_HDR})
 
 # install targets
-install(TARGETS camera LIBRARY DESTINATION "${PROJECT_SOURCE_DIR}/lib")
-install(FILES ${CAMERA_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include")
+install(TARGETS camera LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+install(FILES ${CAMERA_HDR} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/camera")
 
 # enable testing in debug mode
 if(CMAKE_BUILD_TYPE MATCHES Debug)

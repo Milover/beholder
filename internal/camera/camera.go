@@ -137,6 +137,7 @@ func (c Camera) Acquire() (*Image, error) {
 	img.Cols = int64(info.cols)
 	img.Rows = int64(info.rows)
 	img.Step = uint64(info.step)
+	img.Monochrome = bool(info.mono)
 	return &img, nil
 }
 
@@ -221,6 +222,23 @@ func (c Camera) StopAcquisition() {
 	C.Cam_StopAcquisition(c.p)
 }
 
+// Trigger executes a trigger.
+func (c Camera) Trigger() error {
+	if !bool(C.Cam_Trigger(c.p)) {
+		return errors.New("camera.Camera.Trigger: could not execute trigger")
+	}
+	return nil
+}
+
+// WaitAndTrigger waits for the camera to become ready to accept a trigger,
+// and then executes the trigger.
+func (c Camera) WaitAndTrigger(timeout time.Duration) error {
+	if !bool(C.Cam_WaitAndTrigger(c.p, C.size_t(timeout.Milliseconds()))) {
+		return errors.New("camera.Camera.WaitAndTrigger: could not execute trigger")
+	}
+	return nil
+}
+
 // Image is an image acquired from a camera device.
 // WARNING: Image holds a pointer to C-allocated memory,
 // so when it is no longer needed, Delete must be called to release
@@ -237,6 +255,8 @@ type Image struct {
 	Rows int64
 	// Step is the number of bytes each row occupies.
 	Step uint64
+	// Monochrome is true if the image is composed of one color.
+	Monochrome bool
 
 	p C.Img
 }

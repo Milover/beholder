@@ -42,6 +42,12 @@ SourceFiles
 namespace camera
 {
 
+enum class TriggerType
+{
+	Software,
+	Unknown = -1
+};
+
 /*---------------------------------------------------------------------------*\
                           Class Camera Declaration
 \*---------------------------------------------------------------------------*/
@@ -85,6 +91,9 @@ protected:
 			Nodemaps&... nodemaps
 		) const;
 
+		//- Execute a trigger.
+		bool triggerImpl(TriggerType typ);
+
 public:
 
 	// Constructors
@@ -122,7 +131,6 @@ public:
 		}
 #endif
 
-
 		//- Get camera parameters
 		ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite);
 
@@ -150,6 +158,17 @@ public:
 
 		//- Stop image acquisition
 		void stopAcquisition() noexcept;
+
+		//- Executes a trigger.
+		bool trigger(TriggerType typ = TriggerType::Software) noexcept;
+
+		//- Waits for the trigger to become ready and then executes the trigger.
+		template<typename Rep, typename Period = std::ratio<1>>
+		bool waitAndTrigger
+		(
+			const std::chrono::duration<Rep, Period>& timeout = std::chrono::seconds {0},
+			TriggerType typ = TriggerType::Software
+		) noexcept;
 
 	// Member operators
 
@@ -205,6 +224,47 @@ std::unique_ptr<Image> Camera::acquire
 		std::cerr << "acquisition timed out" << std::endl;
 	}
 	return nullptr;
+}
+
+template<typename Rep, typename Period>
+bool Camera::waitAndTrigger
+(
+	const std::chrono::duration<Rep, Period>& timeout,
+	TriggerType typ
+) noexcept
+{
+	try
+	{
+		if (!cam_.CanWaitForFrameTriggerReady())
+		{
+			std::cerr << "could not execute trigger: "
+					  << "camera device cannot wait for trigger" << std::endl;
+		}
+		if
+		(
+			cam_.WaitForFrameTriggerReady
+			(
+				std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count(),
+				Pylon::TimeoutHandling_Return
+			)
+		)
+		{
+			return triggerImpl(typ);
+		}
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not execute trigger: " << e.what() << std::endl;
+	}
+	catch(const Exception& e)
+	{
+		std::cerr << "could not execute trigger: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not execute trigger: " << std::endl;
+	}
+	return false;
 }
 
 // * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //

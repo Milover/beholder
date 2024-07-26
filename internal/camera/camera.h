@@ -36,12 +36,15 @@ Cam Cam_New();
 // TODO: bool Cam_SetParameters(Params p)
 bool Cam_StartAcquisition(Cam c);
 void Cam_StopAcquisition(Cam c);
+bool Cam_Trigger(Cam c);
+bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs);
 
 typedef struct {
 	size_t id;
 	size_t cols;
 	size_t rows;
 	size_t step;
+	bool mono;
 } ImgInfo;
 
 unsigned char* Img_Buffer(Img i);

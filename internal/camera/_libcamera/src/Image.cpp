@@ -46,7 +46,7 @@ unsigned char* Image::getBuffer() noexcept
 	return static_cast<unsigned char*>(img_.GetBuffer());
 }
 
-std::size_t Image::getStep() const
+std::size_t Image::getStep() const noexcept
 {
 	std::size_t step;
 	if (img_.GetStride(step))
@@ -54,6 +54,30 @@ std::size_t Image::getStep() const
 		return step;
 	}
 	return 0ul;
+}
+
+bool Image::isMonochrome() const noexcept
+{
+	switch (img_.GetPixelType())
+	{
+		case Pylon::PixelType_Mono1packed:
+		case Pylon::PixelType_Mono2packed:
+		case Pylon::PixelType_Mono4packed:
+		case Pylon::PixelType_Mono8:
+		case Pylon::PixelType_Mono8signed:
+		case Pylon::PixelType_Mono10:
+		case Pylon::PixelType_Mono10packed:
+		case Pylon::PixelType_Mono10p:
+		case Pylon::PixelType_Mono12:
+		case Pylon::PixelType_Mono12packed:
+		case Pylon::PixelType_Mono12p:
+		case Pylon::PixelType_Mono16:
+			return true;
+			break;
+		default:
+			return false;
+			break;
+	}
 }
 
 bool Image::write(const std::string& filename) noexcept
