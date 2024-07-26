@@ -45,6 +45,15 @@ ImageProcessor::~ImageProcessor()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+void ImageProcessor::copyBayerRGGB8(int rows, int cols, void* buf, size_t step)
+{
+	if (step < 1) {
+		step = cv::Mat::AUTO_STEP;
+	}
+	cv::Mat tmp {rows, cols, CV_8UC1, buf, step};
+	cv::cvtColor(tmp, *img_, cv::COLOR_BayerRGGB2BGR, 3);
+}
+
 bool ImageProcessor::decodeImage(void* buffer, int bufSize, int flags)
 {
 	*img_ = cv::Mat{1, bufSize, CV_8UC1, buffer};
@@ -88,13 +97,19 @@ bool ImageProcessor::preprocess()
 	return true;
 }
 
+void ImageProcessor::receiveMono8(int rows, int cols, void* buf, size_t step)
+{
+	if (step < 1) {
+		step = cv::Mat::AUTO_STEP;
+	}
+	*img_ = cv::Mat {rows, cols, CV_8UC1, buf, step};
+}
 
 bool ImageProcessor::readImage(const std::string& path, int flags)
 {
 	*img_ = cv::imread(path, flags);
 	return img_->data != NULL;
 }
-
 
 void ImageProcessor::showImage(const std::string& title) const
 {

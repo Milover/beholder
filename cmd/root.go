@@ -30,6 +30,7 @@ func init() {
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(camCmd) // TODO: remove
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

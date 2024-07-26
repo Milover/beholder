@@ -45,6 +45,23 @@ func NewImageProcessor() *ImageProcessor {
 	return &ImageProcessor{p: C.Proc_New()}
 }
 
+// CopyBayerRGGB8 takes raw bytes of a Bayer RGGB 8-bit encoded image,
+// and copies it to local storage.
+// The image is converted into a 3-channel 8-bit BGR color space.
+// TODO: generalize so that we can receive any pixel format.
+func (ip ImageProcessor) CopyBayerRGGB8(
+	buf unsafe.Pointer,
+	rows int64,
+	cols int64,
+	step uint64,
+) error {
+	ok := C.Proc_CopyBayerRGGB8(ip.p, C.int(rows), C.int(cols), buf, C.size_t(step))
+	if !ok {
+		return errors.New("ocr.ImageProcessor.CopyBayerRGGB8: could not copy image")
+	}
+	return nil
+}
+
 // DecodeImage decodes and stores an image from the provided buffer.
 // WARNING: the image buffer MUST be kept alive until the function returns.
 func (ip ImageProcessor) DecodeImage(buf []byte, readMode ImreadMode) error {
@@ -64,7 +81,7 @@ func (ip ImageProcessor) DecodeImage(buf []byte, readMode ImreadMode) error {
 }
 
 // Delete releases C-allocated memory. Once called, ip is no longer valid.
-func (ip ImageProcessor) Delete() {
+func (ip *ImageProcessor) Delete() {
 	C.Proc_Delete(ip.p)
 }
 
@@ -168,6 +185,23 @@ func (ip ImageProcessor) ReadImage(filename string, readMode ImreadMode) error {
 	return nil
 }
 
+// ReceiveMono8 takes raw bytes of an 8-bit monochrome image,
+// and stores a reference to it, to local storage.
+// WARNING: the sender retains ownership and must handle cleanup if necessary.
+// TODO: generalize so that we can receive any pixel format.
+func (ip ImageProcessor) ReceiveMono8(
+	buf unsafe.Pointer,
+	rows int64,
+	cols int64,
+	step uint64,
+) error {
+	ok := C.Proc_ReceiveMono8(ip.p, C.int(rows), C.int(cols), buf, C.size_t(step))
+	if !ok {
+		return errors.New("ocr.ImageProcessor.ReceiveMono8: could not receive image")
+	}
+	return nil
+}
+
 // ShowImage renders the current image in a new window and
 // waits for a key press.
 //
@@ -181,4 +215,16 @@ func (ip ImageProcessor) ShowImage(title string) {
 	cs := C.CString(title)
 	defer C.free(unsafe.Pointer(cs))
 	C.Proc_ShowImage(ip.p, cs)
+}
+
+// Write writes the currently held image to disc.
+// The format of the image is determined from the filename extension,
+// see OpenCV 'cv::imwrite' for supported formats.
+func (ip ImageProcessor) WriteImage(filename string) error {
+	cs := C.CString(filename)
+	defer C.free(unsafe.Pointer(cs))
+	if ok := C.Proc_WriteImage(ip.p, cs); !ok {
+		return errors.New("ocr.ImageProcessor.WriteImage: could not write image")
+	}
+	return nil
 }

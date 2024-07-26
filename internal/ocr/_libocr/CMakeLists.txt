@@ -17,9 +17,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # install prefix
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
-endif()
+#if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+#	set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
+#endif()
 
 # compiler settings
 set(CMAKE_CXX_STANDARD 17)
@@ -30,9 +30,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # compiler flags
 add_compile_options(
-		"-Wall" "-Wextra" "-Wshadow" "-pedantic"
-		"$<$<CONFIG:DEBUG>:-O0>"
-		"$<$<CONFIG:RELEASE>:-march=native>"
+	"-Wall" "-Wextra" "-Wshadow" "-pedantic"
+	"$<$<CONFIG:DEBUG>:-O0>"
+	"$<$<CONFIG:RELEASE>:-march=native>"
 )
 
 # output paths
@@ -47,15 +47,17 @@ set(OCR_LIBRARIES "")
 # FetchContent
 #include(FetchContent)
 
+# Leptonica
+find_package(Leptonica REQUIRED)
+list(APPEND OCR_INCLUDE_DIRS ${Leptonica_INCLUDE_DIRS})
+list(APPEND OCR_LIBRARIES ${Leptonica_LIBRARIES})
+
 # Tesseract
-set(Leptonica_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/leptonica")
-set(Tesseract_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/tesseract")
 find_package(Tesseract REQUIRED)
 list(APPEND OCR_INCLUDE_DIRS ${Tesseract_INCLUDE_DIRS})
 list(APPEND OCR_LIBRARIES "Tesseract::libtesseract")
 
 # OpenCV
-set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/opencv4")
 find_package(OpenCV REQUIRED)
 list(APPEND OCR_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND OCR_LIBRARIES ${OpenCV_LIBS})
@@ -89,28 +91,30 @@ list(
 	"${PROJECT_SOURCE_DIR}/src/ops")
 
 # main library target
-add_library (ocr STATIC)
-set_property(TARGET ocr
-	PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+add_library (ocr SHARED)
+set_target_properties(ocr PROPERTIES
+	#	BUILD_WITH_INSTALL_RPATH FALSE
+	#	INSTALL_RPATH_USE_LINK_PATH TRUE
+	#	INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/share/lib"
+	INTERPROCEDURAL_OPTIMIZATION TRUE)
 target_include_directories(ocr PUBLIC ${OCR_INCLUDE_DIRS})
-target_link_libraries(ocr PRIVATE ${OCR_LIBRARIES})
-target_link_options(ocr
-	PRIVATE
-	-Wl,--whole-archive
-	${OCR_LIBRARIES}
-	-Wl,--no-whole-archive
-	)
+target_link_libraries(ocr PUBLIC ${OCR_LIBRARIES})
+#target_link_options(ocr
+#	PRIVATE
+#	-Wl,--whole-archive
+#	${OCR_LIBRARIES}
+#	-Wl,--no-whole-archive
+#	)
 target_sources(ocr PRIVATE ${OCR_SRC})
 target_sources(ocr PUBLIC FILE_SET HEADERS FILES ${OCR_HDR})
 
 # install targets
-install(TARGETS ocr DESTINATION "${PROJECT_SOURCE_DIR}/lib")
-install(FILES ${OCR_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include")
+install(TARGETS ocr LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+install(FILES ${OCR_HDR} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/ocr")
 
-# enable testing
-include(CTest)
-
+# enable testing in debug mode
 if(CMAKE_BUILD_TYPE MATCHES Debug)
+	include(CTest)
 	add_subdirectory(test/src)
 endif()
 

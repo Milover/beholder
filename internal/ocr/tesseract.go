@@ -108,7 +108,7 @@ func NewTesseract() *Tesseract {
 }
 
 // Delete releases C-allocated memory. Once called, t is no longer valid.
-func (t Tesseract) Delete() {
+func (t *Tesseract) Delete() {
 	C.Tess_Delete(t.p)
 }
 

@@ -80,6 +80,10 @@ public:
 
 	// Member functions
 
+		//- Copy a Bayer RGGB 8-bit image locally and convert it into a
+		//	3-channel BGR image (OpenCV standard)
+		void copyBayerRGGB8(int rows, int cols, void* buf, size_t step);
+
 		//- Decode an image from a buffer.
 		//	The buffer is left unchanged and the data is copied into the
 		//	ImageProcessor. New memory is not allocated if the ImageProcessor
@@ -94,6 +98,11 @@ public:
 
 		//- Run post-OCR image processing
 		bool postprocess(const OcrResults& res);
+
+		//- Recieve a monochrome 8-bit image.
+		//	WARNING: the image is not copied, the sender retains ownership.
+		//	XXX: should it be copied though?
+		void receiveMono8(int rows, int cols, void* buf, size_t step);
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
