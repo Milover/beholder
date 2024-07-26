@@ -166,8 +166,8 @@ func TestPylon(t *testing.T) {
 
 				log.Println("writing...")
 				filename := fmt.Sprintf("img_%v_%v.png",
-					strconv.FormatUint(img.ID, 10),
-					img.Timestamp.Format("2006-01-02_15-04-05"))
+					img.Timestamp.Format("2006-01-02_15-04-05"),
+					strconv.FormatUint(img.ID, 10))
 				err = img.Write(path.Join(outDir, filename))
 				assert.Nil(err, err)
 
