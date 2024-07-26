@@ -13,58 +13,6 @@ import (
 	"unsafe"
 )
 
-// Pylon is a handle to the pylon API runtime resource manager.
-//
-// WARNING: a Pylon instance must be present before any calls to the
-// pylon-API.
-// WARNING: Pylon holds a pointer to C-allocated memory,
-// so when it is no longer needed, Delete must be called to release
-// the memory and clean up.
-type Pylon struct {
-	TL *TransportLayer `json:"transport_layer"`
-	C  *Camera         `json:"camera"`
-
-	p C.Pyl
-}
-
-// newPylon constructs (C call) a new pylon API manager.
-// WARNING: since Pylon's fields allocate C-memory,
-// Delete (or Finalize) must be called to release memory when no longer needed.
-func NewPylon() Pylon {
-	return Pylon{
-		TL: NewTransportLayer(),
-		C:  NewCamera(),
-		p:  C.Pyl_New(),
-	}
-}
-
-// Delete releases C-allocated memory by calling each field's Delete method.
-// Once called, the contents (fields) of p are no longer valid.
-func (p *Pylon) Delete() {
-	p.C.Delete()
-	p.TL.Delete()
-}
-
-// Finalize frees all of p's resources.
-// Once called, p is no longer valid.
-func (p *Pylon) Finalize() error {
-	p.Delete()
-	C.Pyl_Delete((*C.Pyl)(&p.p))
-	return nil
-}
-
-// Init initializes C-allocated APIs with configuration data by calling
-// each of p's fields Init method.
-func (p Pylon) Init() error {
-	if err := p.TL.Init(); err != nil {
-		return err
-	}
-	if err := p.C.Init(*p.TL); err != nil {
-		return err
-	}
-	return nil
-}
-
 var validMAC = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$|^([0-9A-Fa-f]{12})$`)
 
 // IsValidMAC verifies a MAC addresss.
@@ -81,6 +29,7 @@ type Parameter struct {
 }
 
 // Camera represents the physical camera device.
+//
 // WARNING: Camera holds a pointer to C-allocated memory,
 // so when it is no longer needed, Delete must be called to release
 // the memory and clean up.
@@ -240,6 +189,7 @@ func (c Camera) WaitAndTrigger(timeout time.Duration) error {
 }
 
 // Image is an image acquired from a camera device.
+//
 // WARNING: Image holds a pointer to C-allocated memory,
 // so when it is no longer needed, Delete must be called to release
 // the memory and clean up.
@@ -288,37 +238,4 @@ func (i Image) Write(filename string) error {
 		return errors.New("camera.Image.Write: could not write image")
 	}
 	return nil
-}
-
-// TransportLayer represents the transport layer used to communicate with
-// the camera.
-// WARNING: Camera depends on the TransportLayer being available to
-// function properly, so it must be available during it's lifetime.
-// TODO: fix the Camera lifetime dependency by setting a finalizer.
-// WARNING: TransportLayer holds a pointer to C-allocated memory,
-// so when it is no longer needed, Delete must be called to release
-// the memory and clean up.
-type TransportLayer struct {
-	p C.Trans
-}
-
-// NewTransportLayer constructs (C call) a new transport layer with sensible
-// defaults.
-// WARNING: Delete must be called to release the memory when no longer needed.
-func NewTransportLayer() *TransportLayer {
-	return &TransportLayer{
-		p: C.Trans_New(),
-	}
-}
-
-func (tl TransportLayer) Init() error {
-	if ok := C.Trans_Init(tl.p); !ok {
-		return errors.New("camera.TransportLayer.Init: could not initialize transport layer")
-	}
-	return nil
-}
-
-// Delete releases C-allocated memory. Once called, tl is no longer valid.
-func (tl *TransportLayer) Delete() {
-	C.Trans_Delete((*C.Trans)(&tl.p))
 }
