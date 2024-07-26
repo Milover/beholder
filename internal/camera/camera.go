@@ -277,6 +277,10 @@ func (i *Image) Delete() {
 }
 
 // Write writes the image to disc.
+// WARNING: this function is mostly for debugging and shouldn't be used.
+// It uses the pylon API for image output and format conversion which is limited
+// and seems to be fairly slow.
+// Use ocr.ImageProcessor for all image processing operations.
 func (i Image) Write(filename string) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
