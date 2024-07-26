@@ -45,6 +45,23 @@ func NewImageProcessor() *ImageProcessor {
 	return &ImageProcessor{p: C.Proc_New()}
 }
 
+// CopyBayerRGGB8 takes raw bytes of a Bayer RGGB 8-bit encoded image,
+// and copies it to local storage.
+// The image is converted into a 3-channel 8-bit BGR color space.
+// TODO: generalize so that we can receive any pixel format.
+func (ip ImageProcessor) CopyBayerRGGB8(
+	buf unsafe.Pointer,
+	rows int64,
+	cols int64,
+	step uint64,
+) error {
+	ok := C.Proc_CopyBayerRGGB8(ip.p, C.int(rows), C.int(cols), buf, C.size_t(step))
+	if !ok {
+		return errors.New("ocr.ImageProcessor.CopyBayerRGGB8: could not copy image")
+	}
+	return nil
+}
+
 // DecodeImage decodes and stores an image from the provided buffer.
 // WARNING: the image buffer MUST be kept alive until the function returns.
 func (ip ImageProcessor) DecodeImage(buf []byte, readMode ImreadMode) error {
@@ -168,19 +185,19 @@ func (ip ImageProcessor) ReadImage(filename string, readMode ImreadMode) error {
 	return nil
 }
 
-// CopyBayerRGGB8 takes raw bytes of a Bayer RGGB 8-bit encoded image,
-// and copies it to local storage.
-// The image is converted into a 3-channel 8-bit BGR color space.
+// ReceiveMono8 takes raw bytes of an 8-bit monochrome image,
+// and stores a reference to it, to local storage.
+// WARNING: the sender retains ownership and must handle cleanup if necessary.
 // TODO: generalize so that we can receive any pixel format.
-func (ip ImageProcessor) CopyBayerRGGB8(
+func (ip ImageProcessor) ReceiveMono8(
 	buf unsafe.Pointer,
 	rows int64,
 	cols int64,
 	step uint64,
 ) error {
-	ok := C.Proc_CopyBayerRGGB8(ip.p, C.int(rows), C.int(cols), buf, C.size_t(step))
+	ok := C.Proc_ReceiveMono8(ip.p, C.int(rows), C.int(cols), buf, C.size_t(step))
 	if !ok {
-		return errors.New("ocr.ImageProcessor.ReceiveImage: could not receive image")
+		return errors.New("ocr.ImageProcessor.ReceiveMono8: could not receive image")
 	}
 	return nil
 }

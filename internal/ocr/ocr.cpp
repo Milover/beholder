@@ -5,6 +5,17 @@
 #include "ocr.h"
 
 
+bool Proc_CopyBayerRGGB8(Proc p, int rows, int cols, void* buf, size_t step) {
+	if (!p) {
+		return false;
+	}
+	try {
+		p->copyBayerRGGB8(rows, cols, buf, step);
+		return true;
+	} catch(...) {}
+	return false;
+}
+
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags) {
 	if (!p) {
 		return false;
@@ -72,12 +83,12 @@ bool Proc_ReadImage(Proc p, const char* filename, int flags) {
 	return p->readImage(s, flags);
 }
 
-bool Proc_CopyBayerRGGB8(Proc p, int rows, int cols, void* buf, size_t step) {
+bool Proc_ReceiveMono8(Proc p, int rows, int cols, void* buf, size_t step) {
 	if (!p) {
 		return false;
 	}
 	try {
-		p->copyBayerRGGB8(rows, cols, buf, step);
+		p->receiveMono8(rows, cols, buf, step);
 		return true;
 	} catch(...) {}
 	return false;
