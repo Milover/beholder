@@ -49,6 +49,7 @@ func NewOutput() *Output {
 	return &Output{
 		Target: OTTNone,
 		Format: OFTNone,
+		o:      outNone{},
 	}
 }
 

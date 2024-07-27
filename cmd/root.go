@@ -9,9 +9,9 @@ import (
 var (
 	// rootCmd represents the base command when called without any subcommands
 	rootCmd = &cobra.Command{
-		Use:           "ocr",
-		Short:         "ocr for dot matrix fonts",
-		Long:          `ocr for dot matrix fonts`,
+		Use:           "beholder",
+		Short:         "A program for operating industrial vision systems",
+		Long:          `A program for operating industrial vision systems`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		//RunE: run,
@@ -29,8 +29,8 @@ func init() {
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rootCmd.AddCommand(runCmd)
-	rootCmd.AddCommand(camCmd) // TODO: remove
+	rootCmd.AddCommand(ocrCmd)
+	rootCmd.AddCommand(camCmd)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

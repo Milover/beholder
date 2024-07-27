@@ -20,7 +20,7 @@ bool Cam_Acquire(Cam c, Img* i, size_t timeoutMs) {
 		*i = nullptr;
 	}
 	try {
-		std::unique_ptr<camera::Image> img {
+		std::unique_ptr<beholder::Image> img {
 			c->acquire(std::chrono::milliseconds {timeoutMs})
 		};
 		if (img) {
@@ -29,7 +29,7 @@ bool Cam_Acquire(Cam c, Img* i, size_t timeoutMs) {
 		return true;
 	} catch(const Pylon::GenericException& e) {
 		std::cerr << "could not acquire image: " << e.what() << std::endl;
-	} catch(const camera::Exception& e) {
+	} catch(const beholder::Exception& e) {
 		std::cerr << "could not acquire image: " << e.what() << std::endl;
 	} catch(...) {
 		std::cerr << "could not acquire image" << std::endl;
@@ -71,7 +71,7 @@ bool Cam_Init(Cam c, const char* macAddr, Par* pars, size_t nPars, Trans t) {
 	}
 	// create device
 	Pylon::IPylonDevice* d {
-		t->createDevice(macAddr, camera::DeviceDesignator::MAC)
+		t->createDevice(macAddr, beholder::DeviceDesignator::MAC)
 	};
 	if (!d) {
 		return false;
@@ -81,7 +81,7 @@ bool Cam_Init(Cam c, const char* macAddr, Par* pars, size_t nPars, Trans t) {
 		return false;
 	}
 	// set params
-	camera::ParamList list;
+	beholder::ParamList list;
 	list.reserve(nPars);
 	for (auto i {0ul}; i < nPars; ++i) {
 		list.emplace_back(pars[i].name, pars[i].value);
@@ -91,7 +91,7 @@ bool Cam_Init(Cam c, const char* macAddr, Par* pars, size_t nPars, Trans t) {
 }
 
 Cam Cam_New() {
-	return new camera::Camera {};
+	return new beholder::Camera {};
 }
 
 bool Cam_Trigger(Cam c) {
@@ -154,7 +154,7 @@ bool Img_Write(Img i, const char* filename) {
 }
 
 Pyl Pyl_New() {
-	return new camera::PylonAPI {};
+	return new beholder::PylonAPI {};
 }
 
 void Pyl_Delete(Pyl* p) {
@@ -183,5 +183,5 @@ bool Trans_Init(Trans t) {
 }
 
 Trans Trans_New() {
-	return new camera::TransportLayer {};
+	return new beholder::TransportLayer {};
 }
