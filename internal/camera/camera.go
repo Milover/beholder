@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 	"unsafe"
+
+	"github.com/Milover/beholder/internal/chrono"
 )
 
 var validMAC = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$|^([0-9A-Fa-f]{12})$`)
@@ -37,11 +39,20 @@ type Camera struct {
 	// MAC is the MAC address of the physical camera device.
 	MAC string `json:"mac"`
 	// Timeout is the image acquisition timeout
-	AcquisitionTimeout time.Duration `json:"acquisition_timeout"`
+	AcquisitionTimeout chrono.Duration `json:"acquisition_timeout"`
 	// Params is a key-value map of GenICam parameters to be forwarded
 	// to the camera device.
 	// FIXME: no good, need a slice of JSON unmarshallable type which
 	Parameters []Parameter `json:"parameters"`
+	// Trigger is an optional field which defines if and when a software
+	// trigger signal should be sent to the camera device.
+	// Note that the camera device needs to be properly set up for the trigger
+	// signal to have an effect, for example:
+	//
+	//	TriggerSelector = FrameStart;
+	//	TriggerMode     = On;
+	//	TriggerSource   = Software;
+	Trigger *Trigger `json:"trigger"`
 
 	p C.Cam
 }
@@ -51,7 +62,7 @@ type Camera struct {
 func NewCamera() *Camera {
 	d, _ := time.ParseDuration("2s")
 	return &Camera{
-		AcquisitionTimeout: d,
+		AcquisitionTimeout: chrono.Duration{Duration: d},
 		p:                  C.Cam_New(),
 	}
 }
@@ -171,21 +182,14 @@ func (c Camera) StopAcquisition() {
 	C.Cam_StopAcquisition(c.p)
 }
 
-// Trigger executes a trigger.
-func (c Camera) Trigger() error {
-	if !bool(C.Cam_Trigger(c.p)) {
-		return errors.New("camera.Camera.Trigger: could not execute trigger")
+// TryTrigger will to execute a software trigger if it is available.
+// If no trigger is available (defined) returns nil immediately, otherwise
+// calls Trigger.Execute(...) and returns the result.
+func (c Camera) TryTrigger() error {
+	if c.Trigger == nil {
+		return nil
 	}
-	return nil
-}
-
-// WaitAndTrigger waits for the camera to become ready to accept a trigger,
-// and then executes the trigger.
-func (c Camera) WaitAndTrigger(timeout time.Duration) error {
-	if !bool(C.Cam_WaitAndTrigger(c.p, C.size_t(timeout.Milliseconds()))) {
-		return errors.New("camera.Camera.WaitAndTrigger: could not execute trigger")
-	}
-	return nil
+	return c.Trigger.Execute(c)
 }
 
 // Image is an image acquired from a camera device.
