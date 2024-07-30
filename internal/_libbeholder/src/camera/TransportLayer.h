@@ -59,6 +59,17 @@ private:
 
 	// Private Member functions
 
+protected:
+
+	// Protected member functions
+
+		//- Find and create a device with the provided designator.
+		Pylon::IPylonDevice* createDeviceImpl
+		(
+			const char* designator,
+			DeviceDesignator ddt = DeviceDesignator::MAC
+		) const noexcept;
+
 public:
 
 	//- Public data
@@ -79,14 +90,16 @@ public:
 		//- Initialize camera device
 		bool init(DeviceClass dc = DeviceClass::GigE) noexcept;
 
-		//- Enumerate and create a device with the provided designator.
+		//- Find and create a device with the provided designator.
+		//	NOTE: device reset is attempted during creation.
 		Pylon::IPylonDevice* createDevice
 		(
 			const std::string& designator,
 			DeviceDesignator ddt = DeviceDesignator::MAC
 		) const noexcept;
 
-		//- Enumerate and create a device with the provided designator.
+		//- Find and create a device with the provided designator.
+		//	NOTE: device reset is attempted during creation.
 		Pylon::IPylonDevice* createDevice
 		(
 			const char* designator,
