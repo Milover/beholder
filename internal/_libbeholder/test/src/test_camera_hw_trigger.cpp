@@ -112,13 +112,19 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		while (cam.isAcquiring())
 		{
 			std::cout << "Acquiring...\n";
-			if (!cam.acquire(ip, std::chrono::seconds {2}))
+			if (!cam.acquire(std::chrono::seconds {2}))
 			{
 				continue;
 			}
-			std::cout << "image id:   " << ip.getImageID() << '\n'
-					  << "image size: " << static_cast<double>(cam.getResultRef()->GetImageSize()) / 1000000.0 << "MB\n"
+			std::cout << "image id:   " << cam.getResult()->GetID() << '\n'
+					  << "image size: " << static_cast<double>(cam.getResult()->GetImageSize()) / 1000000.0 << "MB\n"
 					  << '\n';
+
+			if (!ip.receiveAcquisitionResult(cam.getResult()))
+			{
+				std::cerr << "failed to convert acquired image\n";
+				continue;
+			}
 			// write
 			if
 			(
@@ -132,7 +138,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			(
 				!ip.writeAcquisitionResult
 				(
-					cam.getResultRef(),
+					cam.getResult(),
 					std::string{"py_img_"} + std::to_string(ip.getImageID()) + ".png"
 				)
 			)
