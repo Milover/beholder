@@ -140,8 +140,7 @@ bool ImageProcessor::receiveAcquisitionResult(const Pylon::CGrabResultPtr& r)
 	}
 	else
 	{
-		// XXX: do we need to explicitly set channels for the output image?
-		cv::cvtColor(tmp, *img_, info.colorConvCode);
+		cv::cvtColor(tmp, *img_, info.colorConvCode, info.outChannels);
 	}
 	return true;
 }
