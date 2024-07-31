@@ -11,8 +11,8 @@ import (
 	"path"
 	"strconv"
 	"testing"
-	"time"
 
+	"github.com/Milover/beholder/internal/ocr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -68,6 +68,11 @@ var pylonTests = []pylonTest{
 {
 	"camera": {
 		"mac": "00:30:53:44:87:E9",
+		"acquisition_timeout": "2s",
+		"trigger": {
+			"timeout": "2s",
+			"period": "1s"
+		},
 		"parameters": [
 			{"name": "AcquisitionMode",    "value": "Continuous"},
 			{"name": "TriggerSelector",    "value": "FrameStart"},
@@ -141,6 +146,11 @@ func TestPylon(t *testing.T) {
 			err = p.Init()
 			assert.Nil(err, err)
 
+			// initialize the image processor
+			ip := ocr.NewImageProcessor()
+			err = ip.Init()
+			assert.Nil(err, err)
+
 			// try to acquire images
 			err = p.C.StartAcquisition()
 			assert.Nil(err, err)
@@ -149,29 +159,26 @@ func TestPylon(t *testing.T) {
 			var nAcquired uint64
 			for p.C.IsAcquiring() && nAcquired < nReqImgs {
 				if !tt.NeedsHwTrigger {
-					log.Println("triggering...")
-					triggerTimeout, _ := time.ParseDuration("0.25s")
-					err := p.C.WaitAndTrigger(triggerTimeout)
+					log.Println("waiting for trigger...")
+					err = p.C.TryTrigger()
 					assert.Nil(err, err)
+					log.Println("trigger fired")
 				}
-
 				log.Println("acquiring...")
-				img, err := p.C.Acquire()
+				err := p.C.Acquire()
 				assert.Nil(err, err)
-				if img == nil {
+				if p.C.Result.Value == nil {
 					continue
 				}
-				log.Println("img ID: ", img.ID)
 				nAcquired++
 
 				log.Println("writing...")
 				filename := fmt.Sprintf("img_%v_%v.png",
-					img.Timestamp.Format("2006-01-02_15-04-05"),
-					strconv.FormatUint(img.ID, 10))
-				err = img.Write(path.Join(outDir, filename))
+					p.C.Result.Timestamp.Format("2006-01-02_15-04-05"),
+					strconv.FormatUint(p.C.Result.ID, 10))
+				err = ip.WriteAcquisitionResult(p.C.Result.Value,
+					path.Join(outDir, filename))
 				assert.Nil(err, err)
-
-				img.Delete()
 			}
 
 			assert.ErrorIs(err, tt.Error, "unexpected error")

@@ -30,6 +30,16 @@ type Parameter struct {
 	Value string `json:"value"`
 }
 
+type Result struct {
+	// Value is the acquisition result value.
+	Value unsafe.Pointer
+	// ID is the acquisition result id as asigned by the camera device.
+	ID uint64
+	// Timestamp is the time at which the result was acquired, i.e.
+	// received by the host machine.
+	Timestamp time.Time
+}
+
 // Camera represents the physical camera device.
 //
 // WARNING: Camera holds a pointer to C-allocated memory,
@@ -53,6 +63,10 @@ type Camera struct {
 	//	TriggerMode     = On;
 	//	TriggerSource   = Software;
 	Trigger *Trigger `json:"trigger"`
+	// Result is the acquisition result.
+	// It is reset after each call to Acquire(), and has a non-nil Value only
+	// after successful acquisitions.
+	Result Result `json:"-"`
 
 	p C.Cam
 }
@@ -76,29 +90,19 @@ func NewCamera() *Camera {
 // to continue, eg. acquisition timeout or CRC check failure, while
 // an unrecoverable error is one which requires explicit handling,
 // eg. the camera device was detached.
-func (c Camera) Acquire() (*Image, error) {
-	var img Image
-	ok := C.Cam_Acquire(
-		c.p,
-		(*C.Img)(&img.p),
-		(C.size_t)(c.AcquisitionTimeout.Milliseconds()),
-	)
+func (c *Camera) Acquire() error {
+	c.Result = Result{}
+	ok := C.Cam_Acquire(c.p, (C.size_t)(c.AcquisitionTimeout.Milliseconds()))
 	if !ok {
-		// image deallocation is handled by C.Cam_Acquire()
-		return nil, errors.New("camera.Camera.Acquire: image acquisition failed")
+		return errors.New("camera.Camera.Acquire: image acquisition failed")
 	}
-	if img.p == (C.Img)(nil) {
-		return nil, nil
+	r := C.Cam_GetResult(c.p)
+	c.Result = Result{
+		Value:     unsafe.Pointer(r.ptr),
+		ID:        uint64(r.id),
+		Timestamp: time.Now(),
 	}
-	info := (*C.ImgInfo)(C.Img_Info(img.p))
-	defer C.free(unsafe.Pointer(info))
-	img.ID = uint64(info.id)
-	img.Timestamp = time.Now()
-	img.Cols = int64(info.cols)
-	img.Rows = int64(info.rows)
-	img.Step = uint64(info.step)
-	img.Monochrome = bool(info.mono)
-	return &img, nil
+	return nil
 }
 
 // Delete releases C-allocated memory. Once called, c is no longer valid.
@@ -190,56 +194,4 @@ func (c Camera) TryTrigger() error {
 		return nil
 	}
 	return c.Trigger.Execute(c)
-}
-
-// Image is an image acquired from a camera device.
-//
-// WARNING: Image holds a pointer to C-allocated memory,
-// so when it is no longer needed, Delete must be called to release
-// the memory and clean up.
-// TODO: check if we can call Img.Release() and use []byte for the image data.
-type Image struct {
-	// ID is the camera designated image id.
-	ID uint64
-	// Timestamp is the time at which the Image was received.
-	Timestamp time.Time
-	// Cols is the width of the image in pixels.
-	Cols int64
-	// Rows is the number of rows of the image.
-	Rows int64
-	// Step is the number of bytes each row occupies.
-	Step uint64
-	// Monochrome is true if the image is composed of one color.
-	Monochrome bool
-
-	p C.Img
-}
-
-// Buffer returns a (unsigned char) pointer to the underlying
-// raw image data (bytes).
-func (i Image) Buffer() unsafe.Pointer {
-	b := C.Img_Buffer(i.p)
-	if b == (*C.uchar)(nil) {
-		return nil
-	}
-	return unsafe.Pointer(b)
-}
-
-// Delete releases C-allocated memory. Once called, i is no longer valid.
-func (i *Image) Delete() {
-	C.Img_Delete(i.p)
-}
-
-// Write writes the image to disc.
-// WARNING: this function is mostly for debugging and shouldn't be used.
-// It uses the pylon API for image output and format conversion which is limited
-// and seems to be fairly slow.
-// Use ocr.ImageProcessor for all image processing operations.
-func (i Image) Write(filename string) error {
-	cs := C.CString(filename)
-	defer C.free(unsafe.Pointer(cs))
-	if ok := C.Img_Write(i.p, cs); !ok {
-		return errors.New("camera.Image.Write: could not write image")
-	}
-	return nil
 }
