@@ -8,12 +8,27 @@ import "C"
 import (
 	"errors"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/chrono"
 )
+
+// pylon is a handle to the pylon API runtime resource manager.
+//
+// The pylon runtime needs to be initialized before any calls to the API,
+// so this is ensured at the package level.
+var pylon unsafe.Pointer
+
+func init() {
+	pylon = unsafe.Pointer(C.Pyl_New())
+	// XXX: might leak or whatever, yolo
+	runtime.SetFinalizer(&pylon, func(p *unsafe.Pointer) {
+		C.Pyl_Delete((*C.Pyl)(p))
+	})
+}
 
 var validMAC = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$|^([0-9A-Fa-f]{12})$`)
 
