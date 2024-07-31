@@ -33,6 +33,7 @@ internal/_libbeholder/build/
 internal/_libbeholder/doc/
 internal/_libbeholder/vagrant/
 internal/_libbeholder/test/bin/
+internal/_libbeholder/third_party/archive
 internal/_libbeholder/third_party/opencv
 internal/_libbeholder/third_party/leptonica
 internal/_libbeholder/third_party/tesseract
