@@ -34,7 +34,7 @@ SourceFiles
 #include <pylon/Parameter.h>
 
 #include "Exception.h"
-#include "Image.h"
+#include "ImageProcessor.h"
 #include "ParamEntry.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -115,8 +115,9 @@ public:
 		//	acquisition can be stopped automatically, eg. when a certain
 		//	number of images has been acquired.
 		template<typename Rep, typename Period = std::ratio<1>>
-		std::unique_ptr<Image> acquire
+		bool acquire
 		(
+			ImageProcessor& ip,
 			const std::chrono::duration<Rep, Period>& timeout
 		);
 
@@ -180,8 +181,9 @@ public:
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<typename Rep, typename Period>
-std::unique_ptr<Image> Camera::acquire
+bool Camera::acquire
 (
+	ImageProcessor& ip,
 	const std::chrono::duration<Rep, Period>& timeout
 )
 {
@@ -210,8 +212,7 @@ std::unique_ptr<Image> Camera::acquire
 		}
 		else
 		{
-			std::unique_ptr<Image> img {new Image {res_}};
-			return img;
+			return ip.receiveAcquisitionResult(res_);
 		}
 	}
 	else if (success)
@@ -223,7 +224,7 @@ std::unique_ptr<Image> Camera::acquire
 	{
 		std::cerr << "acquisition timed out" << std::endl;
 	}
-	return nullptr;
+	return false;
 }
 
 template<typename Rep, typename Period>

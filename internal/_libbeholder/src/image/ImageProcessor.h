@@ -17,10 +17,13 @@ SourceFiles
 #ifndef BEHOLDER_IMAGE_PROCESSOR_H
 #define BEHOLDER_IMAGE_PROCESSOR_H
 
+#include <array>
 #include <cstddef>
-#include <vector>
+#include <utility>
 #include <string>
 #include <vector>
+
+#include <pylon/GrabResultPtr.h>
 
 #include "OcrResults.h"
 #include "ProcessingOp.h"
@@ -51,6 +54,10 @@ private:
 		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
 		cv::Mat* img_;
 
+		//- The camera assigned ID of the current image.
+		//	FIXME: only images received from a camera will have an ID.
+		std::size_t id_ {0};
+
 	// Private Member functions 
 
 public:
@@ -80,10 +87,6 @@ public:
 
 	// Member functions
 
-		//- Copy a Bayer RGGB 8-bit image locally and convert it into a
-		//	3-channel BGR image (OpenCV standard)
-		void copyBayerRGGB8(int rows, int cols, void* buf, size_t step);
-
 		//- Decode an image from a buffer.
 		//	The buffer is left unchanged and the data is copied into the
 		//	ImageProcessor. New memory is not allocated if the ImageProcessor
@@ -93,16 +96,21 @@ public:
 		//- Get the stored image
 		const cv::Mat& getImage() const;
 
+		//- Get the stored image ID.
+		//	NOTE: the image ID is assigned by a camera device, hence
+		//	only images received as acquisition results, i.e. as a result
+		//	of calling receiveAcquisitionResult(...), will have an ID.
+		std::size_t getImageID() const;
+
 		//- Run pre-OCR image processing
 		bool preprocess();
 
 		//- Run post-OCR image processing
 		bool postprocess(const OcrResults& res);
 
-		//- Recieve a monochrome 8-bit image.
-		//	WARNING: the image is not copied, the sender retains ownership.
-		//	XXX: should it be copied though?
-		void receiveMono8(int rows, int cols, void* buf, size_t step);
+		//- Recieve a (Pylon) camera acquisition result, and copy it locally.
+		//	Returns false if image conversion fails, and true otherwise.
+		bool receiveAcquisitionResult(const Pylon::CGrabResultPtr& r);
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
@@ -110,7 +118,17 @@ public:
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
 
+		//- Write a camera acquisition result to disc in PNG format.
+		//	NOTE: for debugging purposes only because it's
+		//	pretty slow and magical and the output format is hard-coded to PNG.
+		bool writeAcquisitionResult
+		(
+			const Pylon::CGrabResultPtr& r,
+			const std::string& filename = "img.png"
+		) const;
+
 		//- Write an image to disc
+		//	FIXME: hard-coded to use the lowest compression levels for PNG/JPEG.
 		bool writeImage(const std::string& filename = "img.png") const;
 
 

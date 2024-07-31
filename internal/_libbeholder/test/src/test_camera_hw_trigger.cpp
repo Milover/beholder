@@ -12,14 +12,12 @@ License
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <vector>
 
 #include <pylon/PylonIncludes.h>
 
 #include "Camera.h"
 #include "Exception.h"
-#include "Image.h"
+#include "ImageProcessor.h"
 #include "ParamEntry.h"
 #include "PylonAPI.h"
 #include "TransportLayer.h"
@@ -105,26 +103,41 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		//beholder::dumpParams(cam.getParams(beholder::ParamAccessMode::Read));
 		assert(cam.isInitialized());
 
+		// create the image processor
+		beholder::ImageProcessor ip {};
+
 		// Acquire image(s)
 		//cam.startAcquisition(beholder::CameraNImages);
 		cam.startAcquisition(1);
 		while (cam.isAcquiring())
 		{
 			std::cout << "Acquiring...\n";
-			std::unique_ptr<beholder::Image> img
-			{
-				cam.acquire(std::chrono::seconds {2})
-			};
-			if (!img)
+			if (!cam.acquire(ip, std::chrono::seconds {2}))
 			{
 				continue;
 			}
-			std::cout << "image id:   " << img->id << '\n'
-					  << "image size: " << static_cast<double>(img->getRef().GetImageSize()) / 1000000.0 << "MB\n"
+			std::cout << "image id:   " << ip.getImageID() << '\n'
+					  << "image size: " << static_cast<double>(cam.getResultRef()->GetImageSize()) / 1000000.0 << "MB\n"
 					  << '\n';
-			if (!img->write("image.png"))
+			// write
+			if
+			(
+				!ip.writeImage(std::string{"img_"} + std::to_string(ip.getImageID()) + ".png")
+			)
 			{
 				std::cerr << "failed to write image\n";
+			}
+			// write using the Pylon API
+			if
+			(
+				!ip.writeAcquisitionResult
+				(
+					cam.getResultRef(),
+					std::string{"py_img_"} + std::to_string(ip.getImageID()) + ".png"
+				)
+			)
+			{
+				std::cerr << "failed to write image with Pylon API\n";
 			}
 		}
 	}
