@@ -39,17 +39,12 @@ void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const
 	Pylon::CConfigurationHelper::DisableCompression(nodemap);
 	Pylon::CConfigurationHelper::DisableGenDC(nodemap);
 
-	// set pixel format to 8-bit single-channel
-	// FIXME: whatever is set here needs to be propagated to Go/OpenCV
-	// FIXME: wat do if neither can be set?
+	// set preferred pixel format (8-bit single-channel)
+	const char* formats[] {"BayerRG8", "Mono8"};
 	Pylon::CEnumParameter pixelFormat {nodemap, "PixelFormat"};
-	if (!pixelFormat.TrySetValue("BayerRG8"))
+	if (!pixelFormat.TrySetValue(formats))
 	{
-		std::cerr << "could not set pixel format to: BayerRG8" << std::endl;
-	}
-	else if (!pixelFormat.TrySetValue("Mono8"))
-	{
-		std::cerr << "could not set pixel format to: Mono8" << std::endl;
+		std::cerr << "could not set default pixel format" << std::endl;
 	}
 }
 
