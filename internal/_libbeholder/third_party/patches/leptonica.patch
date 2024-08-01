@@ -1,5 +1,18 @@
+diff --git a/lept.pc.cmake b/lept.pc.cmake
+index 3e19307..a6c73d5 100644
+--- a/lept.pc.cmake
++++ b/lept.pc.cmake
+@@ -6,7 +6,7 @@ includedir=${prefix}/include
+ Name: @leptonica_NAME@
+ Description: An open source C library for efficient image processing and image analysis operations
+ Version: @leptonica_VERSION@
+-Requires.private: @pkgs_private@
++#Requires.private: @pkgs_private@
+ Libs: -L${libdir} -l@leptonica_OUTPUT_NAME@
+ Libs.private: @libs_private@
+ Cflags: -I${includedir} -I${includedir}/leptonica
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 55007ff..dbe6738 100644
+index e8bf771..ae1f0a4 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
 @@ -33,7 +33,7 @@ endif()
