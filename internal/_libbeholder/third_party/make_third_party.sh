@@ -22,12 +22,26 @@ INSTALL_DIR="/usr/local"
 rm -f install_manifest.txt
 
 #------------------------------------------------------------------------------
+# clean the install manifest
+
+DOWNLOAD=false
+if [ ! -f "archive.tar.gz" ]; then
+	DOWNLOAD=true
+else
+	tar -xvzf archive.tar.gz
+fi
+
+#------------------------------------------------------------------------------
 # Build OpenCV
 
 if [ ! -d opencv ]; then
 	echo "setting up OpenCV"
 
-	git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git
+	if [ "$DOWNLOAD" = true ]; then
+		git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git
+	else
+		mv archive/opencv ./
+	fi
 	cd opencv
 	mkdir build
 	cd build
@@ -53,9 +67,13 @@ fi
 if [ ! -d leptonica ]; then
 	echo "setting up leptonica"
 
-	git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git
+	if [ "$DOWNLOAD" = true ]; then
+		git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git
+	else
+		mv archive/leptonica ./
+	fi
 	cd leptonica
-	git apply "../patches/leptonica.patch"
+	git apply "$THIRD_PARTY_DIR/patches/leptonica.patch"
 	mkdir build
 	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release \
@@ -96,7 +114,11 @@ fi
 if [ ! -d tesseract ]; then
 	echo "setting up tesseract"
 
-	git clone --depth=1 --branch "$TESSERACT_VERSION" https://github.com/tesseract-ocr/tesseract.git
+	if [ "$DOWNLOAD" = true ]; then
+		git clone --depth=1 --branch "$TESSERACT_VERSION" https://github.com/tesseract-ocr/tesseract.git
+	else
+		mv archive/tesseract ./
+	fi
 	cd tesseract
 	mkdir build
 	cd build
@@ -132,12 +154,16 @@ if [ "$OSTYPE" = "darwin" ]; then
 elif [ ! -d pylon ]; then
 	echo "setting up pylon"
 
-	mkdir -v pylon
+	if [ "$DOWNLOAD" = true ]; then
+		mkdir -v pylon
+		curl -O "https://www2.baslerweb.com/media/downloads/software/pylon_software/pylon-${PYLON_VERSION}_setup.tar.gz"
+		tar -xvf "pylon-${PYLON_VERSION}_setup.tar.gz"
+		tar -C pylon -xvf "pylon-${PYLON_VERSION}.tar.gz"
+		rm -vf "pylon-${PYLON_VERSION}*.tar.gz"
+	else
+		mv archive/pylon ./
+	fi
 	cd pylon
-	curl -O "https://www2.baslerweb.com/media/downloads/software/pylon_software/pylon-${PYLON_VERSION}_setup.tar.gz"
-	tar -xvf "pylon-${PYLON_VERSION}_setup.tar.gz"
-	tar -xvf "pylon-${PYLON_VERSION}.tar.gz"
-	rm -vf "pylon-${PYLON_VERSION}_setup.tar.gz"
 
 	# package and 'install' pylon
 	# patch cmake files
@@ -198,5 +224,10 @@ EOF
 else
 	echo "pylon already set up --- skipping"
 fi
+
+#------------------------------------------------------------------------------
+# cleanup
+
+rmdir archive
 
 #------------------------------------------------------------------------------
