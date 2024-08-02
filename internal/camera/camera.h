@@ -5,20 +5,22 @@
 #include <stdlib.h>
 
 #ifdef __cplusplus
+#include <pylon/GrabResultPtr.h>
+
 #include "libbeholder.h"
 extern "C" {
 #endif
 
 #ifdef __cplusplus
 typedef beholder::Camera* Cam;
-typedef beholder::Image* Img;
 typedef beholder::PylonAPI* Pyl;
 typedef beholder::TransportLayer* Trans;
+typedef const Pylon::CGrabResultPtr* Res;
 #else
 typedef void* Cam;
-typedef void* Img;
 typedef void* Pyl;
 typedef void* Trans;
+typedef const void* Res;
 #endif
 
 typedef struct {
@@ -26,8 +28,14 @@ typedef struct {
 	char* value;
 } Par;
 
-bool Cam_Acquire(Cam c, Img* i, size_t timeoutMs);
+typedef struct {
+	Res ptr;	// NOTE: weak pointer; no need to call free
+	size_t id;
+} Result;
+
+bool Cam_Acquire(Cam c, size_t timeoutMs);
 void Cam_Delete(Cam* c);
+Result Cam_GetResult(Cam c);
 bool Cam_IsAcquiring(Cam c);
 bool Cam_IsAttached(Cam c);
 bool Cam_IsInitialized(Cam c);
@@ -38,19 +46,6 @@ bool Cam_StartAcquisition(Cam c);
 void Cam_StopAcquisition(Cam c);
 bool Cam_Trigger(Cam c);
 bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs);
-
-typedef struct {
-	size_t id;
-	size_t cols;
-	size_t rows;
-	size_t step;
-	bool mono;
-} ImgInfo;
-
-unsigned char* Img_Buffer(Img i);
-void Img_Delete(Img i);
-bool Img_Write(Img i, const char* filename);
-ImgInfo* Img_Info(Img i);
 
 Pyl Pyl_New();
 void Pyl_Delete(Pyl* p);

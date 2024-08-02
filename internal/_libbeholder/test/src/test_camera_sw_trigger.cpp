@@ -12,14 +12,12 @@ License
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <vector>
 
 #include <pylon/PylonIncludes.h>
 
 #include "Camera.h"
 #include "Exception.h"
-#include "Image.h"
+#include "ImageProcessor.h"
 #include "ParamEntry.h"
 #include "PylonAPI.h"
 #include "TransportLayer.h"
@@ -32,18 +30,18 @@ namespace beholder
 {
 
 // acA2440-20gm
-//const std::string CameraSN {"24491241"};
-//const std::string CameraMAC {"0030534487E9"};
+const std::string CameraSN {"24491241"};
+const std::string CameraMAC {"0030534487E9"};
 
 // acA4024-8gc
-const std::string CameraSN {"23096460"};
-const std::string CameraMAC {"0030532F3F8C"};
+//const std::string CameraSN {"23096460"};
+//const std::string CameraMAC {"0030532F3F8C"};
 
 const std::string CameraSubnetMask {"255.255.255.0"};
 const std::string CameraGateway {"0.0.0.0"};
 const std::string CameraIP {"192.168.1.85"};	// the new IP
 
-const std::size_t CameraNImages {10};
+const std::size_t CameraNImages {3};
 
 const beholder::ParamList CameraParameters
 {
@@ -101,49 +99,69 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 		assert(cam.isInitialized());
 
+		// create the image processor
+		beholder::ImageProcessor ip {};
+
 		// Acquire image(s)
 		cam.startAcquisition(beholder::CameraNImages);
-
-		std::vector<std::unique_ptr<beholder::Image>> images;
-		images.reserve(beholder::CameraNImages);
-
-		Pylon::CInstantCamera& pyCam {cam.getRef()};
-		assert(pyCam.CanWaitForFrameTriggerReady());
 
 		for (auto i {0ul}; i < beholder::CameraNImages; ++i)
 		{
 			std::cout << "Triggering...";
 			auto start {std::chrono::system_clock::now()};
-			if (pyCam.WaitForFrameTriggerReady(500, Pylon::TimeoutHandling_Return))
+			if (!cam.waitAndTrigger(std::chrono::milliseconds {500}))
 			{
-				pyCam.ExecuteSoftwareTrigger();
-			}
-			else
-			{
-				std::cerr << "frame trigger error: timed-out\n";
 				continue;
 			}
 			std::cout << std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(std::chrono::system_clock::now() - start).count()
 					  << "ms\n";
 
 			std::cout << "Acquiring...\n";
-			std::unique_ptr<beholder::Image> img
-			{
-				cam.acquire(std::chrono::seconds {2})
-			};
-			if (!img)
+			if (!cam.acquire(std::chrono::seconds {2}))
 			{
 				continue;
 			}
-			std::cout << "image id:   " << img->id << '\n'
-					  << "image size: " << static_cast<double>(img->getRef().GetImageSize()) / 1000000.0 << "MB\n"
-					  << '\n';
-			images.emplace_back(img.release());
-		}
-		// Write image(s) to file(s)
-		for (auto& i : images)
-		{
-			i->write(std::string{"image_"} + std::to_string(i->id) + ".png");
+			std::cout << "image id:   " << cam.getResult()->GetID() << '\n'
+					  << "image size: " << static_cast<double>(cam.getResult()->GetImageSize()) / 1000000.0 << "MB\n";
+
+			if (!ip.receiveAcquisitionResult(cam.getResult()))
+			{
+				std::cerr << "failed to convert acquired image\n";
+				continue;
+			}
+			// write
+			std::cout << "Writing...\n";
+			if
+			(
+				!ip.writeImage(std::string{"img_"} + std::to_string(ip.getImageID()) + ".png")
+			)
+			{
+				std::cerr << "failed to write PNG image\n";
+			}
+			if
+			(
+				!ip.writeImage(std::string{"img_"} + std::to_string(ip.getImageID()) + ".jpeg")
+			)
+			{
+				std::cerr << "failed to write JPEG image\n";
+			}
+			// write using the Pylon API
+			if
+			(
+				!ip.writeAcquisitionResult
+				(
+					cam.getResult(),
+					std::string{"py_img_"} + std::to_string(ip.getImageID()) + ".png"
+				)
+			)
+			{
+				std::cerr << "failed to write image with Pylon API\n";
+			}
+
+			std::cout << "Waiting for 2s\n";
+			beholder::wait(std::chrono::seconds {2});
+
+			std::cout << std::endl;
 		}
 	}
 	catch(const Pylon::GenericException& e)

@@ -8,7 +8,12 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <iostream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <opencv2/core/mat.hpp>
@@ -17,6 +22,10 @@ License
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <pylon/GrabResultPtr.h>
+#include <pylon/ImagePersistence.h>
+
+#include "ConversionInfo.h"
 #include "ImageProcessor.h"
 #include "OcrResults.h"
 
@@ -45,15 +54,6 @@ ImageProcessor::~ImageProcessor()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void ImageProcessor::copyBayerRGGB8(int rows, int cols, void* buf, size_t step)
-{
-	if (step < 1) {
-		step = cv::Mat::AUTO_STEP;
-	}
-	cv::Mat tmp {rows, cols, CV_8UC1, buf, step};
-	cv::cvtColor(tmp, *img_, cv::COLOR_BayerRGGB2BGR, 3);
-}
-
 bool ImageProcessor::decodeImage(void* buffer, int bufSize, int flags)
 {
 	*img_ = cv::Mat{1, bufSize, CV_8UC1, buffer};
@@ -61,12 +61,15 @@ bool ImageProcessor::decodeImage(void* buffer, int bufSize, int flags)
 	return img_->data != NULL;
 }
 
-
 const cv::Mat& ImageProcessor::getImage() const
 {
 	return *img_;
 }
 
+std::size_t ImageProcessor::getImageID() const
+{
+	return id_;
+}
 
 bool ImageProcessor::postprocess(const OcrResults& res)
 {
@@ -82,7 +85,6 @@ bool ImageProcessor::postprocess(const OcrResults& res)
 	return true;
 }
 
-
 bool ImageProcessor::preprocess()
 {
 	for (const auto& o : preprocessing)
@@ -97,12 +99,50 @@ bool ImageProcessor::preprocess()
 	return true;
 }
 
-void ImageProcessor::receiveMono8(int rows, int cols, void* buf, size_t step)
+bool ImageProcessor::receiveAcquisitionResult(const Pylon::CGrabResultPtr& r)
 {
-	if (step < 1) {
-		step = cv::Mat::AUTO_STEP;
+	id_ = r->GetID();
+
+	// find the conversion table entry
+	Pylon::EPixelType pixelType {r->GetPixelType()};
+	auto found
+	{
+		std::find_if
+		(
+			ConversionInfoTable.begin(),
+			ConversionInfoTable.end(),
+			[pixelType](const auto& p) -> bool { return p.first == pixelType; }
+		)
+	};
+	if (found == ConversionInfoTable.end())
+	{
+		std::cerr << "could not receive acquisition result (ID: " << id_ << "): "
+				  << "unknown pixel type: " << pixelType << std::endl;
+		return false;
 	}
-	*img_ = cv::Mat {rows, cols, CV_8UC1, buf, step};
+	const ConversionInfo& info {found->second};
+
+	// assign the buffer
+	std::size_t step;
+	cv::Mat tmp
+	{
+		static_cast<int>(r->GetHeight()),
+		static_cast<int>(r->GetWidth()),
+		info.inputType,
+		r->GetBuffer(),
+		r->GetStride(step) ? step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+	};
+
+	// convert the color scheme if necessary
+	if (info.colorConvCode == -1)
+	{
+		tmp.copyTo(*img_);
+	}
+	else
+	{
+		cv::cvtColor(tmp, *img_, info.colorConvCode, info.outChannels);
+	}
+	return true;
 }
 
 bool ImageProcessor::readImage(const std::string& path, int flags)
@@ -117,10 +157,32 @@ void ImageProcessor::showImage(const std::string& title) const
 	cv::waitKey();
 }
 
+bool ImageProcessor::writeAcquisitionResult
+(
+	const Pylon::CGrabResultPtr& r,
+	const std::string& filename
+) const
+{
+	try
+	{
+		Pylon::CImagePersistence::Save
+		(
+			Pylon::ImageFileFormat_Png, filename.c_str(), r
+		);
+		return true;
+	}
+	catch(...) { }
+	return false;
+}
 
 bool ImageProcessor::writeImage(const std::string& filename) const
 {
-	return cv::imwrite(filename, *img_);
+	std::vector<int> flags
+	{
+		cv::IMWRITE_PNG_COMPRESSION, 0,				// lowest compression level
+		cv::IMWRITE_JPEG2000_COMPRESSION_X1000, 0	// lowest compression level
+	};
+	return cv::imwrite(filename, *img_, flags);
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //

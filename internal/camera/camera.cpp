@@ -6,27 +6,17 @@
 #include <vector>
 #include <string>
 
-#include <pylon/TypeMappings.h>
 #include <pylon/Device.h>
+#include <pylon/TypeMappings.h>
 
 #include "camera.h"
 
-bool Cam_Acquire(Cam c, Img* i, size_t timeoutMs) {
+bool Cam_Acquire(Cam c, size_t timeoutMs) {
 	if (!c) {
 		return false;
 	}
-	if (*i) {
-		delete (*i);
-		*i = nullptr;
-	}
 	try {
-		std::unique_ptr<beholder::Image> img {
-			c->acquire(std::chrono::milliseconds {timeoutMs})
-		};
-		if (img) {
-			*i = img.release();
-		}
-		return true;
+		return c->acquire(std::chrono::milliseconds {timeoutMs});
 	} catch(const Pylon::GenericException& e) {
 		std::cerr << "could not acquire image: " << e.what() << std::endl;
 	} catch(const beholder::Exception& e) {
@@ -42,6 +32,19 @@ void Cam_Delete(Cam* c) {
 		delete *c;
 		*c = nullptr;
 	}
+}
+
+Result Cam_GetResult(Cam c) {
+	if (!c) {
+		return Result {};
+	}
+	if (!c->getResult().IsValid()) {
+		return Result {};
+	}
+	return Result {
+		&c->getResult(),
+		static_cast<std::size_t>(c->getResult()->GetID())
+	};
 }
 
 bool Cam_IsAcquiring(Cam c) {
@@ -121,36 +124,6 @@ void Cam_StopAcquisition(Cam c) {
 	if (c) {
 		c->stopAcquisition();
 	}
-}
-
-unsigned char* Img_Buffer(Img i) {
-	if (!i) {
-		return nullptr;
-	}
-	return i->getBuffer();
-}
-
-ImgInfo* Img_Info(Img i) {
-	ImgInfo* info;
-	if (i) {
-		info = new ImgInfo {i->id, i->cols, i->rows, i->getStep(), i->isMonochrome()};
-	}
-	return info;
-}
-
-void Img_Delete(Img i) {
-	if (i) {
-		delete i;
-		i = nullptr;
-	}
-}
-
-bool Img_Write(Img i, const char* filename) {
-	if (!i) {
-		return false;
-	}
-	std::string s {filename};
-	return i->write(s);
 }
 
 Pyl Pyl_New() {

@@ -19,17 +19,20 @@ Description
 #include "Utility.h"
 #include "Rectangle.h"
 
+// image
+#include "ConversionInfo.h"
 #include "ImageProcessor.h"
 #include "Ops.h"
 
+// camera
 #include "Camera.h"
 #include "DefaultConfigurator.h"
 #include "Exception.h"
-#include "Image.h"
 #include "ParamEntry.h"
 #include "PylonAPI.h"
 #include "TransportLayer.h"
 
+// ocr
 #include "OcrResults.h"
 #include "Tesseract.h"
 

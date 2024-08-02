@@ -23,7 +23,6 @@ SourceFiles
 #include <iostream>
 #include <memory>
 #include <ratio>
-#include <utility>
 
 #include <GenApi/Container.h>
 #include <GenApi/INode.h>
@@ -34,7 +33,6 @@ SourceFiles
 #include <pylon/Parameter.h>
 
 #include "Exception.h"
-#include "Image.h"
 #include "ParamEntry.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -115,21 +113,18 @@ public:
 		//	acquisition can be stopped automatically, eg. when a certain
 		//	number of images has been acquired.
 		template<typename Rep, typename Period = std::ratio<1>>
-		std::unique_ptr<Image> acquire
-		(
-			const std::chrono::duration<Rep, Period>& timeout
-		);
+		bool acquire(const std::chrono::duration<Rep, Period>& timeout);
 
 #ifndef NDEBUG
 		//- Get reference to the underlying pylon camera
 		Pylon::CInstantCamera& getRef() noexcept;
+#endif
 
-		//- Get reference to the underlying pylon camera
-		Pylon::CGrabResultPtr& getResultRef() noexcept
+		//- Get reference to the acquired result
+		const Pylon::CGrabResultPtr& getResult() noexcept
 		{
 			return res_;
 		}
-#endif
 
 		//- Get camera parameters
 		ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite);
@@ -180,10 +175,7 @@ public:
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<typename Rep, typename Period>
-std::unique_ptr<Image> Camera::acquire
-(
-	const std::chrono::duration<Rep, Period>& timeout
-)
+bool Camera::acquire(const std::chrono::duration<Rep, Period>& timeout)
 {
 	if (!isAttached())
 	{
@@ -210,8 +202,7 @@ std::unique_ptr<Image> Camera::acquire
 		}
 		else
 		{
-			std::unique_ptr<Image> img {new Image {res_}};
-			return img;
+			return true;
 		}
 	}
 	else if (success)
@@ -223,7 +214,7 @@ std::unique_ptr<Image> Camera::acquire
 	{
 		std::cerr << "acquisition timed out" << std::endl;
 	}
-	return nullptr;
+	return false;
 }
 
 template<typename Rep, typename Period>
