@@ -125,16 +125,20 @@ bool TransportLayer::init(DeviceClass dc) noexcept
 			case DeviceClass::GigE:
 			{
 				tl_ = factory.CreateTl(Pylon::BaslerGigEDeviceClass);
-				return true;
+				break;
+			}
+			case DeviceClass::Emulated:
+			{
+				tl_ = factory.CreateTl(Pylon::BaslerCamEmuDeviceClass);
 				break;
 			}
 			case DeviceClass::Unknown:
 			{
 				tl_ = nullptr;
-				return false;
 				break;
 			}
 		}
+		return static_cast<bool>(tl_);
 	}
 	catch(const Pylon::GenericException& e)
 	{
@@ -171,11 +175,14 @@ Pylon::IPylonDevice* TransportLayer::createDevice
 	// reboot the device to clear any errors and purge the buffers
 	try
 	{
-		std::cout << "trying to reset device (" << designator << ")" << std::endl;
+		std::cout << "trying to reset device: "
+				  << formatDeviceDesignator(ddt) << " : "
+				  << designator << std::endl;
 		if (!Pylon::CCommandParameter(d->GetNodeMap(), "DeviceReset").TryExecute())
 		{
-			std::cerr << "could not reset device (" << designator << "); "
-					  << "continuing without reset" << std::endl;
+		std::cout << "could not reset device: "
+				  << formatDeviceDesignator(ddt) << " : " << designator
+				  << "; continuing without reset" << std::endl;
 			return d;
 		}
 		tl_->DestroyDevice(d);
@@ -207,7 +214,51 @@ Pylon::IPylonDevice* TransportLayer::createDevice
 	return nullptr;
 }
 
+std::string TransportLayer::getFirstSN() const noexcept
+{
+	try
+	{
+		Pylon::DeviceInfoList_t devices {};
+		if (auto ptr {dynamic_cast<Pylon::IGigETransportLayer*>(tl_)}; ptr)
+		{
+			ptr->EnumerateAllDevices(devices);
+		}
+		else
+		{
+			tl_->EnumerateDevices(devices);
+		}
+		if (devices.empty())
+		{
+			std::cerr << "could not find a device: "
+					  << "no devices available" << std::endl;
+			return {};
+		}
+		return devices.front().GetSerialNumber().c_str();
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not find a device: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not find a device" << std::endl;
+	}
+	return {};
+
+}
+
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+std::string formatDeviceDesignator(DeviceDesignator ddt)
+{
+	switch (ddt)
+	{
+		case DeviceDesignator::MAC:		return "MAC";
+		case DeviceDesignator::SN:		return "S/N";
+		case DeviceDesignator::Unknown:	return "unknown";
+	}
+	return "unknown";
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

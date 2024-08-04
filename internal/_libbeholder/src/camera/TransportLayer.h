@@ -27,20 +27,21 @@ SourceFiles
 namespace beholder
 {
 
-//- Transport layer device classes
-enum class DeviceClass
+//- Transport layer types (device classes)
+enum class DeviceClass : int
 {
 	GigE,
+	Emulated,
 	//USB,
 	Unknown = -1
 };
 
 //- Types of device designators
-enum class DeviceDesignator
+enum class DeviceDesignator : int
 {
-	MAC,	// device MAC address
-	SN,		// device serial number
-	//IP,	// device IP address
+	MAC,			// device MAC address
+	SN,				// device serial number
+	//IP,			// device IP address
 	Unknown = -1
 };
 
@@ -67,7 +68,7 @@ protected:
 		Pylon::IPylonDevice* createDeviceImpl
 		(
 			const char* designator,
-			DeviceDesignator ddt = DeviceDesignator::MAC
+			DeviceDesignator ddt = DeviceDesignator::SN
 		) const noexcept;
 
 public:
@@ -95,7 +96,7 @@ public:
 		Pylon::IPylonDevice* createDevice
 		(
 			const std::string& designator,
-			DeviceDesignator ddt = DeviceDesignator::MAC
+			DeviceDesignator ddt = DeviceDesignator::SN
 		) const noexcept;
 
 		//- Find and create a device with the provided designator.
@@ -103,8 +104,19 @@ public:
 		Pylon::IPylonDevice* createDevice
 		(
 			const char* designator,
-			DeviceDesignator ddt = DeviceDesignator::MAC
+			DeviceDesignator ddt = DeviceDesignator::SN
 		) const noexcept;
+
+		//- Get the serial number of the first device found
+		std::string getFirstSN() const noexcept;
+
+#ifndef NDEBUG
+		//- Return the underlying pointer
+		Pylon::ITransportLayer* getPtr() const noexcept
+		{
+			return tl_;
+		}
+#endif
 
 
 	// Member operators
@@ -113,6 +125,11 @@ public:
 		TransportLayer& operator=(const TransportLayer&) = delete;
 
 };
+
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+//- Return a formatted string of the device designator
+std::string formatDeviceDesignator(DeviceDesignator ddt);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
