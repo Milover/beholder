@@ -42,7 +42,8 @@ const (
 
 // Camera represents the physical camera device.
 //
-// The camera needs to be initialized before use.
+// Camera needs to be initialized before use, after which point it should
+// not be copied.
 // WARNING: Camera holds a pointer to C-allocated memory,
 // so when it is no longer needed, Delete must be called to release
 // the memory and clean up.
@@ -69,6 +70,9 @@ type Camera struct {
 	// SN can be set to a special value "pick-first", in which case, the
 	// first device found will be attached. If no devices are found,
 	// initialization will fail.
+	// WARNING: this will not work properly when multiple cameras
+	// of the same Type are used (the first device will be attached to
+	// multiple Cameras), and is primarily meant to be used during testing.
 	SN string `json:"serial_number"`
 
 	// AcquisitionTimeout is the duration in which an image must be received
@@ -97,14 +101,12 @@ type Camera struct {
 	p C.Cam
 }
 
-// NewCamera constructs (C call) a new camera device with sensible defaults.
-// WARNING: Delete must be called to release the memory when no longer needed.
+// NewCamera constructs a new Camera with sensible defaults.
 func NewCamera() *Camera {
 	d, _ := time.ParseDuration("2s")
 	return &Camera{
 		Type:               GigE,
 		AcquisitionTimeout: chrono.Duration{Duration: d},
-		p:                  C.Cam_New(),
 	}
 }
 
@@ -157,9 +159,6 @@ func (c Camera) IsInitialized() bool {
 
 // IsValid is function used as an assertion that c is able to be initialized.
 func (c Camera) IsValid() error {
-	if c.p == (C.Cam)(nil) {
-		return errors.New("camera.Camera.IsValid: nil camera pointer")
-	}
 	if err := c.Type.IsValid(); err != nil {
 		return fmt.Errorf("camera.Camera.IsValid: %w", err)
 	}
@@ -173,16 +172,27 @@ func (c Camera) IsValid() error {
 	return nil
 }
 
-// Init initializes (C call) the camera device with the configuration data,
+// Init initializes (C call) the camera device with configuration data,
 // if c is valid.
+//
+// Once initialized, c should not be copied.
+//
+// WARNING: Delete must be called to release the memory when no longer needed.
 func (c *Camera) Init() error {
 	if err := c.IsValid(); err != nil {
 		return err
 	}
+	// get the transport layer
 	tl, err := getTransportLayer(c.Type)
 	if err != nil {
 		return err
 	}
+	// allocate C-memory for the camera
+	c.p = C.Cam_New()
+	if c.p == (C.Cam)(nil) {
+		return errors.New("camera.Camera.Init: could not allocate C-memory")
+	}
+
 	// handle SN
 	if c.SN == SNPickFirst {
 		sn := C.Trans_GetFirstSN(tl.p)

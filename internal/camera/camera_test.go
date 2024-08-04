@@ -2,9 +2,7 @@ package camera
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
-	"os"
 	"path"
 	"strconv"
 	"testing"
@@ -13,58 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// A hack to enable camera emulation during testing.
-//
-// This variable is evaluated before any init() functions are run, and thus
-// ensures that PYLON_CAMEMU is present in the environment before
-// the pylon API is initialized.
-var _ = func() (_ struct{}) {
-	if err := os.Setenv("PYLON_CAMEMU", "3"); err != nil {
-		panic("could not set 'PYLON_CAMEMU'")
-	}
-	return
-}()
-
-// Command line flags for the camera tests.
-var (
-	// serialNo is the serial number of the camera which is used for testing.
-	// If it is not supplied as a command line flag, the one defined in
-	// the test configuration is used.
-	serialNo string
-	// emuOnly determines whether to only run tests which use an emulated
-	// camera device.
-	// Only tests using an emulated camera device are run by default.
-	emuOnly bool
-	// hwTriggering determines whether to run tests which use
-	// hardware triggering for image acquisition.
-	// Hardware triggering tests are skipped by default.
-	hwTriggering bool
-	// nReqImgs determines how many images need to be successfully acquired
-	// before a test completes.
-	// Tests complete after 3 images are succesfully acquired by default.
-	nReqImgs uint64
-	// cleanUp determines whether to delete images written during a test
-	// after the test completes.
-	// Written images are deleted after a test completes by default.
-	cleanUp bool
-)
-
-func init() {
-	flag.StringVar(&serialNo, "sn", "", "serial number of camera used in tests")
-	flag.BoolVar(&emuOnly, "emu-only", true, "only run tests using an emulated camera device")
-	flag.BoolVar(&hwTriggering, "hw-trigger", false, "run tests which use hardware triggering")
-	flag.Uint64Var(&nReqImgs, "n-img", 3, "number of successful image acquisitions needed to complete a test")
-	flag.BoolVar(&cleanUp, "cleanup", true, "delete images after a test completes")
-}
-
-// TestMain parses command line flags for the tests.
-func TestMain(m *testing.M) {
-	flag.Parse()
-	code := m.Run()
-	os.Exit(code)
-}
-
-// Test image acquisition pipeline.
 type cameraTest struct {
 	Name           string
 	Error          error
@@ -185,7 +131,14 @@ var cameraTests = []cameraTest{
 	},
 }
 
-// TestCamera tests
+// TestCamera tests image acquisition with a single camera.
+//
+// This test supports the following command line flags:
+//   - sn
+//   - emu-only
+//   - hw-trigger
+//   - n-img
+//   - cleanup
 func TestCamera(t *testing.T) {
 	for _, tt := range cameraTests {
 		t.Run(tt.Name, func(t *testing.T) {
