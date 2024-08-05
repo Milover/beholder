@@ -25,6 +25,9 @@ type Parameter struct {
 // Result represents the result of an image acquisition process.
 type Result struct {
 	// Value is the acquired image buffer.
+	//
+	// Value is a non-owning pointer to the buffer and does not require
+	// explicit deallocation, it is managed by C.
 	Value unsafe.Pointer
 	// ID is the acquisition result id as asigned by the camera device.
 	ID uint64
