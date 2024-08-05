@@ -13,6 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/enumutils"
+	"github.com/Milover/beholder/internal/mem"
 	"github.com/Milover/beholder/internal/ocr/model"
 )
 
@@ -145,10 +146,11 @@ func (t Tesseract) Init() error {
 		defer os.Remove(patternsFile) // this could fail, but we don't care
 	}
 
+	ar := &mem.Arena{}
+	defer ar.Free()
+
 	// allocate the struct and handle the easy stuff (ints, strings...)
-	// NOTE: C.malloc guarantees never to return nil, no need to check
-	in := (*C.TInit)(C.malloc(C.sizeof_TInit))
-	defer C.free(unsafe.Pointer(in))
+	in := (*C.TInit)(ar.Malloc(C.sizeof_TInit))
 
 	// set the page segmentation mode
 	in.psMode = C.int(t.PageSegMode)
@@ -159,33 +161,25 @@ func (t Tesseract) Init() error {
 		return err
 	}
 	defer remover() // this could fail, but we don't care
-	in.modelPath = C.CString(path.Dir(mfn))
-	defer C.free(unsafe.Pointer(in.modelPath))
-	in.model = C.CString(strings.TrimSuffix(path.Base(mfn), ".traineddata"))
-	defer C.free(unsafe.Pointer(in.model))
+	in.modelPath = (*C.char)(ar.CopyStr(path.Dir(mfn)))
+	in.model = (*C.char)(ar.CopyStr(strings.TrimSuffix(path.Base(mfn), ".traineddata")))
 
 	// handle configuration file names
-	chPtrSize := unsafe.Sizeof((*C.char)(nil))
 	in.nCfgs = C.size_t(len(t.ConfigPaths))
-	in.cfgs = (**C.char)(C.malloc(in.nCfgs * C.size_t(chPtrSize)))
-	defer C.free(unsafe.Pointer(in.cfgs))
-	cfgsSlice := unsafe.Slice(in.cfgs, int(in.nCfgs))
+	in.cfgs = (**C.char)(ar.Malloc((uint64(in.nCfgs) * uint64(unsafe.Sizeof((*C.char)(nil))))))
+	cfgsSlice := unsafe.Slice(in.cfgs, uint64(in.nCfgs))
 	for i, p := range t.ConfigPaths {
-		cfgsSlice[i] = C.CString(p)
-		defer C.free(unsafe.Pointer(cfgsSlice[i]))
+		cfgsSlice[i] = (*C.char)(ar.CopyStr(p))
 	}
+
 	// handle variables
-	kvSize := unsafe.Sizeof(C.KeyVal{})
 	in.nVars = C.size_t(len(t.Variables))
-	in.vars = (*C.KeyVal)(C.malloc(in.nVars * C.size_t(kvSize)))
-	defer C.free(unsafe.Pointer(in.vars))
-	varsSlice := unsafe.Slice(in.vars, int(in.nVars))
+	in.vars = (*C.KeyVal)(ar.Malloc(uint64(in.nVars) * uint64(unsafe.Sizeof(C.KeyVal{}))))
+	varsSlice := unsafe.Slice(in.vars, uint64(in.nVars))
 	iVar := 0
 	for key, val := range t.Variables {
-		varsSlice[iVar].key = C.CString(key)
-		defer C.free(unsafe.Pointer(varsSlice[iVar].key))
-		varsSlice[iVar].value = C.CString(val)
-		defer C.free(unsafe.Pointer(varsSlice[iVar].value))
+		varsSlice[iVar].key = (*C.char)(ar.CopyStr(key))
+		varsSlice[iVar].value = (*C.char)(ar.CopyStr(val))
 		iVar++
 	}
 

@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/chrono"
+	"github.com/Milover/beholder/internal/mem"
 )
 
 // Parameter is a GenICam parameter.
@@ -195,34 +196,28 @@ func (c *Camera) Init() error {
 	if c.p == (C.Cam)(nil) {
 		return errors.New("camera.Camera.Init: could not allocate C-memory")
 	}
+	ar := &mem.Arena{}
+	defer ar.Free()
 
 	// handle SN
 	if c.SN == SNPickFirst {
-		sn := C.Trans_GetFirstSN(tl.p)
-		defer C.free(unsafe.Pointer(sn))
-		if unsafe.Pointer(sn) == nil {
+		sn := ar.Store(unsafe.Pointer(C.Trans_GetFirstSN(tl.p)))
+		if sn == nil {
 			return errors.New("camera.Camera.Init: could not find a camera device")
 		}
-		c.SN = C.GoString(sn)
+		c.SN = C.GoString((*C.char)(sn))
 	}
-	sn := C.CString(c.SN)
-	defer C.free(unsafe.Pointer(sn))
+	sn := (*C.char)(ar.CopyStr(c.SN))
 
 	// handle parameters
-	parSize := unsafe.Sizeof(C.Par{})
-	nPars := C.size_t(len(c.Parameters))
-	pars := (*C.Par)(C.malloc(nPars * C.size_t(parSize)))
-	defer C.free(unsafe.Pointer(pars))
-	parsSlice := unsafe.Slice(pars, int(nPars))
-	iPar := 0
-	for _, p := range c.Parameters {
-		parsSlice[iPar].name = C.CString(p.Name)
-		defer C.free(unsafe.Pointer(parsSlice[iPar].name))
-		parsSlice[iPar].value = C.CString(p.Value)
-		defer C.free(unsafe.Pointer(parsSlice[iPar].value))
-		iPar++
+	nPars := uint64(len(c.Parameters))
+	pars := (*C.Par)(ar.Malloc(nPars * uint64(unsafe.Sizeof(C.Par{}))))
+	parsSlice := unsafe.Slice(pars, nPars)
+	for i, p := range c.Parameters {
+		parsSlice[i].name = (*C.char)(ar.CopyStr(p.Name))
+		parsSlice[i].value = (*C.char)(ar.CopyStr(p.Value))
 	}
-	if ok := C.Cam_Init(c.p, sn, pars, nPars, tl.p); !ok {
+	if ok := C.Cam_Init(c.p, sn, pars, C.size_t(nPars), tl.p); !ok {
 		return errors.New("camera.Camera.Init: could not initialize camera")
 	}
 	return nil
