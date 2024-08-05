@@ -34,6 +34,16 @@ void Cam_Delete(Cam* c) {
 	}
 }
 
+char* Trans_GetFirstSN(Trans t) {
+	if (!t) {
+		return nullptr;
+	}
+	std::string d {t->getFirstSN()};
+	char* sn {new char[d.size() + 1]};
+	std::strcpy(sn, d.c_str());
+	return sn;
+}
+
 Result Cam_GetResult(Cam c) {
 	if (!c) {
 		return Result {};
@@ -68,23 +78,20 @@ bool Cam_IsInitialized(Cam c) {
 	return false;
 }
 
-bool Cam_Init(Cam c, const char* macAddr, Par* pars, size_t nPars, Trans t) {
+bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t) {
 	if (!c || !t) {
 		return false;
 	}
 	// create device
 	Pylon::IPylonDevice* d {
-		t->createDevice(macAddr, beholder::DeviceDesignator::MAC)
+		t->createDevice(sn, beholder::DeviceDesignator::SN)
 	};
-	if (!d) {
-		return false;
-	}
 	// initialize
-	if (!c->init(d)) {
+	if (!d || !c->init(d)) {
 		return false;
 	}
 	// set params
-	beholder::ParamList list;
+	beholder::ParamList list;	// OPTIMIZE: could avoid copying here
 	list.reserve(nPars);
 	for (auto i {0ul}; i < nPars; ++i) {
 		list.emplace_back(pars[i].name, pars[i].value);
@@ -148,11 +155,11 @@ void Trans_Delete(Trans* t) {
 	}
 }
 
-bool Trans_Init(Trans t) {
+bool Trans_Init(Trans t, int dTyp) {
 	if (!t) {
 		return false;
 	}
-	return t->init();
+	return t->init(static_cast<beholder::DeviceClass>(dTyp));
 }
 
 Trans Trans_New() {

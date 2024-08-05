@@ -39,7 +39,7 @@ Result Cam_GetResult(Cam c);
 bool Cam_IsAcquiring(Cam c);
 bool Cam_IsAttached(Cam c);
 bool Cam_IsInitialized(Cam c);
-bool Cam_Init(Cam c, const char* macAddr, Par* pars, size_t nPars, Trans t);
+bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t);
 Cam Cam_New();
 // TODO: bool Cam_SetParameters(Params p)
 bool Cam_StartAcquisition(Cam c);
@@ -51,7 +51,8 @@ Pyl Pyl_New();
 void Pyl_Delete(Pyl* p);
 
 void Trans_Delete(Trans* t);
-bool Trans_Init(Trans t);
+char* Trans_GetFirstSN(Trans t);
+bool Trans_Init(Trans t, int dTyp);
 Trans Trans_New();
 
 #ifdef __cplusplus
