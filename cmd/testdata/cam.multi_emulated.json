@@ -1,0 +1,56 @@
+{
+	"filename": {
+		"f_string": "img_%v_%v.png",
+		"fields": [
+			"Timestamp",
+			"ID"
+		]
+	},
+	"cameras": [
+		{
+			"type": "emulated",
+			"serial_number": "0815-0000",
+			"acquisition_timeout": "2s",
+			"trigger": {
+				"timeout": "2s",
+				"period": "0.5s"
+			},
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Software"}
+			]
+		},
+		{
+			"type": "emulated",
+			"serial_number": "0815-0001",
+			"acquisition_timeout": "2s",
+			"trigger": {
+				"timeout": "2s",
+				"period": "0.5s"
+			},
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Software"}
+			]
+		},
+		{
+			"type": "emulated",
+			"serial_number": "0815-0001",
+			"acquisition_timeout": "2s",
+			"trigger": {
+				"timeout": "2s",
+				"period": "0.5s"
+			},
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Software"}
+			]
+		}
+	]
+}

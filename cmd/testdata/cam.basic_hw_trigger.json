@@ -1,0 +1,24 @@
+{
+	"cameras": [
+		{
+			"type": "gige",
+			"serial_number": "24491241",
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Line1"},
+				{"name": "TriggerActivation",  "value": "RisingEdge"},
+				{"name": "LineSelector",       "value": "Line2"},
+				{"name": "LineMode",           "value": "Output"},
+				{"name": "LineSource",         "value": "FrameTriggerWait"},
+				{"name": "LineInverter",       "value": "true"},
+				{"name": "ExposureMode",       "value": "Timed"},
+				{"name": "ExposureTimeAbs",    "value": "10000"},
+				{"name": "ChunkModeActive",    "value": "true"},
+				{"name": "ChunkSelector",      "value": "PayloadCRC16"},
+				{"name": "ChunkEnable",        "value": "true"}
+			]
+		}
+	]
+}

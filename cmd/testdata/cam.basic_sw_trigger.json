@@ -1,0 +1,31 @@
+{
+	"filename": {
+		"f_string": "img_%v_%v.png",
+		"fields": [
+			"Timestamp",
+			"ID"
+		]
+	},
+	"cameras": [
+		{
+			"type": "gige",
+			"serial_number": "24491241",
+			"acquisition_timeout": "3s",
+			"trigger": {
+				"timeout": "3s",
+				"period": "3s"
+			},
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Software"},
+				{"name": "ExposureMode",       "value": "Timed"},
+				{"name": "ExposureTimeAbs",    "value": "10000"},
+				{"name": "ChunkModeActive",    "value": "true"},
+				{"name": "ChunkSelector",      "value": "PayloadCRC16"},
+				{"name": "ChunkEnable",        "value": "true"}
+			]
+		}
+	]
+}
