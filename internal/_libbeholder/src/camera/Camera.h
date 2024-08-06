@@ -115,6 +115,26 @@ public:
 		template<typename Rep, typename Period = std::ratio<1>>
 		bool acquire(const std::chrono::duration<Rep, Period>& timeout);
 
+		//- Execute a GenICam command on the camera device.
+		//  Returns false if there was an error.
+		//
+		//  WARNING: does not check whether the command was executed or
+		//  whether execution was successful.
+		bool cmdExecute(const std::string& cmd) noexcept;
+
+		//- Execute a GenICam command on the camera device
+		//  Returns false if there was an error.
+		//
+		//  WARNING: does not check whether the command was executed or
+		//  whether execution was successful.
+		bool cmdExecute(const char* cmd) noexcept;
+
+		//- Report if command execution finished
+		bool cmdIsDone(const std::string& cmd) noexcept;
+
+		//- Report if command execution finished
+		bool cmdIsDone(const char* cmd) noexcept;
+
 #ifndef NDEBUG
 		//- Get reference to the underlying pylon camera
 		Pylon::CInstantCamera& getRef() noexcept;

@@ -8,6 +8,9 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 	"unsafe"
 
@@ -21,6 +24,26 @@ type Parameter struct {
 	Name string `json:"name"`
 	// Value of the parameter.
 	Value string `json:"value"`
+}
+
+// Parameters is a helper type representing a set of (GenICam) parameters.
+type Parameters []Parameter
+
+// makeCPars creates a C-array of parameters using ar for memory management.
+//
+// All C-memory allocated by makeCPars is stored into ar, including pars, i.e.
+// the caller does not need to call [mem.Arena.Store] for pars.
+// When the caller calls [mem.Arena.Free] on ar, all memory
+// allocated by makeCPars is released.
+func (p Parameters) makeCPars(ar *mem.Arena) (pars unsafe.Pointer, nPars uint64) {
+	nPars = uint64(len(p))
+	pars = ar.Malloc(nPars * uint64(unsafe.Sizeof(C.Par{})))
+	parsSlice := unsafe.Slice((*C.Par)(pars), nPars)
+	for i, par := range p {
+		parsSlice[i].name = (*C.char)(ar.CopyStr(par.Name))
+		parsSlice[i].value = (*C.char)(ar.CopyStr(par.Value))
+	}
+	return pars, nPars
 }
 
 // Result represents the result of an image acquisition process.
@@ -42,6 +65,10 @@ const (
 	// [Camera] should attach (connect to) the first camera device found
 	// during initialization, instead of a specific one.
 	SNPickFirst string = "pick-first"
+)
+
+var (
+	ErrAcquisition = errors.New("image acquisition error")
 )
 
 // Camera represents the physical camera device.
@@ -85,7 +112,7 @@ type Camera struct {
 
 	// Parameters is a key-value map of GenICam parameters to be forwarded
 	// to the camera device.
-	Parameters []Parameter `json:"parameters"`
+	Parameters Parameters `json:"parameters"`
 
 	// Trigger is an optional field which defines if and when a software
 	// trigger signal should be sent to the camera device.
@@ -127,7 +154,7 @@ func (c *Camera) Acquire() error {
 	c.Result = Result{}
 	ok := C.Cam_Acquire(c.p, (C.size_t)(c.AcquisitionTimeout.Milliseconds()))
 	if !ok {
-		return errors.New("camera.Camera.Acquire: image acquisition failed")
+		return fmt.Errorf("camera.Camera.Acquire: %w", ErrAcquisition)
 	}
 	r := C.Cam_GetResult(c.p)
 	c.Result = Result{
@@ -136,6 +163,29 @@ func (c *Camera) Acquire() error {
 		Timestamp: time.Now(),
 	}
 	return nil
+}
+
+// CmdExecute tries to execute a (GenICam) command.
+//
+// A non-nil error does not guarantee that a command was executed or that
+// execution was successful.
+func (c Camera) CmdExecute(command string) error {
+	cmd := C.CString(command)
+	defer C.free(unsafe.Pointer(cmd))
+	if ok := C.Cam_CmdExecute(c.p, cmd); !ok {
+		return fmt.Errorf("camera.Camera.CmdExecute: could not execute command: %q", command)
+	}
+	return nil
+}
+
+// CmdIsDone reports if a (GenICam) command finished executing.
+//
+// FIXME: we cannot differentiate between an error, eg. command unavailable,
+// and execution not finishing.
+func (c Camera) CmdIsDone(command string) bool {
+	cmd := C.CString(command)
+	defer C.free(unsafe.Pointer(cmd))
+	return bool(C.Cam_CmdIsDone(c.p, cmd))
 }
 
 // Delete releases C-allocated memory. Once called, c is no longer valid.
@@ -210,15 +260,83 @@ func (c *Camera) Init() error {
 	sn := (*C.char)(ar.CopyStr(c.SN))
 
 	// handle parameters
-	nPars := uint64(len(c.Parameters))
-	pars := (*C.Par)(ar.Malloc(nPars * uint64(unsafe.Sizeof(C.Par{}))))
-	parsSlice := unsafe.Slice(pars, nPars)
-	for i, p := range c.Parameters {
-		parsSlice[i].name = (*C.char)(ar.CopyStr(p.Name))
-		parsSlice[i].value = (*C.char)(ar.CopyStr(p.Value))
-	}
-	if ok := C.Cam_Init(c.p, sn, pars, C.size_t(nPars), tl.p); !ok {
+	pars, nPars := c.Parameters.makeCPars(ar)
+
+	if ok := C.Cam_Init(c.p, sn, (*C.Par)(pars), C.size_t(nPars), tl.p); !ok {
 		return errors.New("camera.Camera.Init: could not initialize camera")
+	}
+	return nil
+}
+
+// SetParams sets (GenICam) parameters on the camera device.
+func (c Camera) SetParameters(params Parameters) error {
+	ar := &mem.Arena{}
+	defer ar.Free()
+	pars, nPars := params.makeCPars(ar)
+
+	if ok := C.Cam_SetParameters(c.p, (*C.Par)(pars), C.size_t(nPars)); !ok {
+		return errors.New("camera.Camera.SetParameters: could not set parameters")
+	}
+	return nil
+}
+
+// TstFailBuffers simulates a bad camera connection by generating
+// failed buffers on an emulated camera device.
+//
+// The camera must be acquiring before calling TstFailBuffers.
+//
+// NOTE: this function works only with emulated cameras and
+// is for internal use only.
+func (c Camera) TstFailBuffers(count uint64) error {
+	if c.Type != Emulated {
+		return fmt.Errorf("camera.Camera.TstFailBuffers: non-emulated camera type: %q", c.Type)
+	}
+	if !c.IsAcquiring() {
+		return errors.New("camera.Camera.TstFailBuffers: camera not acquiring")
+	}
+	err := c.SetParameters(Parameters{
+		Parameter{Name: "ForceFailedBufferCount", Value: strconv.FormatUint(count, 10)},
+	})
+	if err != nil {
+		return fmt.Errorf("camera.Camera.TstFailBuffers: %w", err)
+	}
+	if err := c.CmdExecute("ForceFailedBuffer"); err != nil {
+		return fmt.Errorf("camera.Camera.TstFailBuffers: %w", err)
+	}
+	return nil
+}
+
+// TstSetImage sets the image file returned by an emulated camera device
+// during acquisition.
+//
+// path can be a relative or absolute path to an image file or a directory
+// containing image files, in which case the directory should only contain
+// image files and no subdirectories.
+//
+// The image format must be either PNG or TIF. This is a limitation imposed by
+// pylon.
+//
+// NOTE: this function works only with emulated cameras and
+// is for internal use only.
+func (c Camera) TstSetImage(path string) error {
+	if c.Type != Emulated {
+		return fmt.Errorf("camera.Camera.TstSetImage: non-emulated camera type: %q", c.Type)
+	}
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return fmt.Errorf("camera.Camera.TstSetImage: %w", err)
+	}
+	if _, err := os.Stat(absPath); err != nil {
+		return fmt.Errorf("camera.Camera.TstSetImage: %w", err)
+	}
+	// TODO: could check for subdirectories and/or image formats
+	err = c.SetParameters(Parameters{
+		Parameter{Name: "TestImageSelector", Value: "Off"}, // disable standard test images
+		Parameter{Name: "ImageFileMode", Value: "On"},      // enable custom test images
+		Parameter{Name: "ImageFilename", Value: absPath},   // load custom image(s) from disc
+	})
+	if err != nil {
+		return fmt.Errorf("camera.Camera.TstSetImage: %w", err)
 	}
 	return nil
 }

@@ -27,21 +27,25 @@ bool Cam_Acquire(Cam c, size_t timeoutMs) {
 	return false;
 }
 
+bool Cam_CmdExecute(Cam c, const char* cmd) {
+	if (!c) {
+		return false;
+	}
+	return c->cmdExecute(cmd);
+}
+
+bool Cam_CmdIsDone(Cam c, const char* cmd) {
+	if (!c) {
+		return false;
+	}
+	return c->cmdIsDone(cmd);
+}
+
 void Cam_Delete(Cam* c) {
 	if (*c) {
 		delete *c;
 		*c = nullptr;
 	}
-}
-
-char* Trans_GetFirstSN(Trans t) {
-	if (!t) {
-		return nullptr;
-	}
-	std::string d {t->getFirstSN()};
-	char* sn {new char[d.size() + 1]};
-	std::strcpy(sn, d.c_str());
-	return sn;
 }
 
 Result Cam_GetResult(Cam c) {
@@ -104,21 +108,19 @@ Cam Cam_New() {
 	return new beholder::Camera {};
 }
 
-bool Cam_Trigger(Cam c) {
+bool Cam_SetParameters(Cam c, Par* pars, size_t nPars) {
 	if (!c) {
 		return false;
 	}
-	return c->trigger();
-}
-
-bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs) {
-	if (!c) {
-		return false;
+	// set params
+	beholder::ParamList list;	// OPTIMIZE: could avoid copying here
+	list.reserve(nPars);
+	for (auto i {0ul}; i < nPars; ++i) {
+		list.emplace_back(pars[i].name, pars[i].value);
 	}
-	return c->waitAndTrigger(std::chrono::milliseconds {timeoutMs});
+	// NOTE: we don't technically have to fail
+	return c->setParams(list);
 }
-
-// TODO: bool Cam_SetParameters(Params p)
 
 bool Cam_StartAcquisition(Cam c) {
 	if (c) {
@@ -131,6 +133,20 @@ void Cam_StopAcquisition(Cam c) {
 	if (c) {
 		c->stopAcquisition();
 	}
+}
+
+bool Cam_Trigger(Cam c) {
+	if (!c) {
+		return false;
+	}
+	return c->trigger();
+}
+
+bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs) {
+	if (!c) {
+		return false;
+	}
+	return c->waitAndTrigger(std::chrono::milliseconds {timeoutMs});
 }
 
 Pyl Pyl_New() {
@@ -153,6 +169,16 @@ void Trans_Delete(Trans* t) {
 			// XXX: ignore exceptions?
 		}
 	}
+}
+
+char* Trans_GetFirstSN(Trans t) {
+	if (!t) {
+		return nullptr;
+	}
+	std::string d {t->getFirstSN()};
+	char* sn {new char[d.size() + 1]};
+	std::strcpy(sn, d.c_str());
+	return sn;
 }
 
 bool Trans_Init(Trans t, int dTyp) {

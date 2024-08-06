@@ -2,6 +2,7 @@ package camera
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/Milover/beholder/internal/ocr"
@@ -122,24 +123,22 @@ func TestArray(t *testing.T) {
 			assert.Nil(err, err)
 			defer p.Cs.StopAcquisition() // happens automatically
 
-			var nAcquired uint64
-			for p.Cs.IsAcquiring() && nAcquired < nReqImgs {
+			for i := uint64(0); i < nImgs && p.Cs.IsAcquiring(); i++ {
+				var err error
+
 				t.Log("waiting for trigger...")
-				err = p.Cs.TryTrigger()
-				assert.Nil(err, err)
+				err = errors.Join(err, p.Cs.TryTrigger())
 				t.Log("trigger fired")
 
 				t.Log("acquiring...")
-				err := p.Cs.Acquire()
-				assert.Nil(err, err)
+				err = errors.Join(err, p.Cs.Acquire())
 				for _, cam := range p.Cs {
 					if cam.Result.Value != nil {
-						nAcquired++
+						// wat do?
 					}
 				}
+				assert.ErrorIs(err, tt.Error, "unexpected error")
 			}
-
-			assert.ErrorIs(err, tt.Error, "unexpected error")
 		})
 	}
 }

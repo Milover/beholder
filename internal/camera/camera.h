@@ -34,6 +34,8 @@ typedef struct {
 } Result;
 
 bool Cam_Acquire(Cam c, size_t timeoutMs);
+bool Cam_CmdExecute(Cam c, const char* cmd);
+bool Cam_CmdIsDone(Cam c, const char* cmd);
 void Cam_Delete(Cam* c);
 Result Cam_GetResult(Cam c);
 bool Cam_IsAcquiring(Cam c);
@@ -41,7 +43,7 @@ bool Cam_IsAttached(Cam c);
 bool Cam_IsInitialized(Cam c);
 bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t);
 Cam Cam_New();
-// TODO: bool Cam_SetParameters(Params p)
+bool Cam_SetParameters(Cam c, Par* pars, size_t nPars);
 bool Cam_StartAcquisition(Cam c);
 void Cam_StopAcquisition(Cam c);
 bool Cam_Trigger(Cam c);

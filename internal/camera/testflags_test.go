@@ -39,10 +39,10 @@ var (
 	// hardware triggering for image acquisition.
 	// Hardware triggering tests are skipped by default.
 	hwTriggering bool
-	// nReqImgs determines how many images need to be successfully acquired
-	// before a test completes.
-	// Tests complete after 3 images are succesfully acquired by default.
-	nReqImgs uint64
+	// nImgs determines how many image acquisition attempts should be made
+	// for a test to complete.
+	// Tests complete after 3 acquisition attempts by default.
+	nImgs uint64
 	// cleanUp determines whether to delete images written during a test
 	// after the test completes.
 	// Written images are deleted after a test completes by default.
@@ -53,7 +53,7 @@ func init() {
 	flag.StringVar(&serialNo, "sn", "", "serial number of camera used in tests")
 	flag.BoolVar(&emuOnly, "emu-only", true, "only run tests using an emulated camera device")
 	flag.BoolVar(&hwTriggering, "hw-trigger", false, "run tests which use hardware triggering")
-	flag.Uint64Var(&nReqImgs, "n-img", 3, "number of successful image acquisitions needed to complete a test")
+	flag.Uint64Var(&nImgs, "n-img", 3, "number of image acquisition attempts for test completion")
 	flag.BoolVar(&cleanUp, "cleanup", true, "delete images after a test completes")
 }
 

@@ -72,6 +72,52 @@ Camera::~Camera() noexcept
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+bool Camera::cmdExecute(const std::string& cmd) noexcept
+{
+	return cmdExecute(cmd.c_str());
+}
+
+bool Camera::cmdExecute(const char* cmd) noexcept
+{
+	try
+	{
+		Pylon::CCommandParameter(cam_.GetNodeMap(), cmd).Execute();
+		return true;
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not execute command: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not execute command" << std::endl;
+	}
+	return false;
+}
+
+bool Camera::cmdIsDone(const std::string& cmd) noexcept
+{
+	return cmdIsDone(cmd.c_str());
+}
+
+bool Camera::cmdIsDone(const char* cmd) noexcept
+{
+	try
+	{
+		return Pylon::CCommandParameter(cam_.GetNodeMap(), cmd).IsDone();
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could not check command execution status: "
+				  << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could not check command execution status: " << std::endl;
+	}
+	return false;
+}
+
 #ifndef NDEBUG
 Pylon::CInstantCamera& Camera::getRef() noexcept
 {

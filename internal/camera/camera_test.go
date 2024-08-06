@@ -2,6 +2,7 @@ package camera
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path"
 	"strconv"
@@ -17,6 +18,7 @@ type cameraTest struct {
 	Config         string
 	NeedsHwTrigger bool // does the test need a hardware trigger?
 	NonEmulated    bool // does the test use a physical camera device?
+	FailBuffers    uint64
 }
 
 var cameraTests = []cameraTest{
@@ -37,9 +39,31 @@ var cameraTests = []cameraTest{
 			{"name": "AcquisitionMode",    "value": "Continuous"},
 			{"name": "TriggerSelector",    "value": "FrameStart"},
 			{"name": "TriggerMode",        "value": "On"},
-			{"name": "TriggerSource",      "value": "Software"},
-			{"name": "ExposureMode",       "value": "Timed"},
-			{"name": "ExposureTimeAbs",    "value": "10000"}
+			{"name": "TriggerSource",      "value": "Software"}
+		]
+	}
+}
+`,
+	},
+	{
+		Name:        "pick-first-emulated-w/-software-trigger-failed-buffers",
+		Error:       ErrAcquisition,
+		FailBuffers: uint64(50),
+		Config: `
+{
+	"camera": {
+		"type": "emulated",
+		"serial_number": "pick-first",
+		"acquisition_timeout": "1s",
+		"trigger": {
+			"timeout": "1s",
+			"period": "0.5s"
+		},
+		"parameters": [
+			{"name": "AcquisitionMode",    "value": "Continuous"},
+			{"name": "TriggerSelector",    "value": "FrameStart"},
+			{"name": "TriggerMode",        "value": "On"},
+			{"name": "TriggerSource",      "value": "Software"}
 		]
 	}
 }
@@ -192,33 +216,37 @@ func TestCamera(t *testing.T) {
 			assert.Nil(err, err)
 			defer p.C.StopAcquisition() // happens automatically
 
-			var nAcquired uint64
-			for p.C.IsAcquiring() && nAcquired < nReqImgs {
-				if !tt.NeedsHwTrigger {
-					t.Log("waiting for trigger...")
-					err = p.C.TryTrigger()
-					assert.Nil(err, err)
-					t.Log("trigger fired")
-				}
-				t.Log("acquiring...")
-				err := p.C.Acquire()
-				assert.Nil(err, err)
-				if p.C.Result.Value == nil {
-					continue
-				}
-				nAcquired++
-
-				// TODO: should be in a separate test probably
-				t.Log("writing...")
-				filename := fmt.Sprintf("img_%v_%v.png",
-					p.C.Result.Timestamp.Format("2006-01-02_15-04-05"),
-					strconv.FormatUint(p.C.Result.ID, 10))
-				err = p.IP.WriteAcquisitionResult(p.C.Result.Value,
-					path.Join(outDir, filename))
+			// generate acquisition errors
+			if !tt.NonEmulated && tt.FailBuffers > uint64(0) {
+				err = p.C.TstFailBuffers(tt.FailBuffers)
 				assert.Nil(err, err)
 			}
 
-			assert.ErrorIs(err, tt.Error, "unexpected error")
+			for i := uint64(0); i < nImgs && p.C.IsAcquiring(); i++ {
+				var err error
+
+				if !tt.NeedsHwTrigger {
+					t.Log("waiting for trigger...")
+					err = errors.Join(err, p.C.TryTrigger())
+					t.Log("trigger fired")
+				}
+				t.Log("acquiring...")
+				err = errors.Join(err, p.C.Acquire())
+
+				// TODO: should be in a separate test probably
+				if p.C.Result.Value != nil {
+					t.Log("writing...")
+					filename := fmt.Sprintf("img_%v_%v.png",
+						p.C.Result.Timestamp.Format("2006-01-02_15-04-05"),
+						strconv.FormatUint(p.C.Result.ID, 10))
+					err = errors.Join(
+						err,
+						p.IP.WriteAcquisitionResult(
+							p.C.Result.Value, path.Join(outDir, filename),
+						))
+				}
+				assert.ErrorIs(err, tt.Error, "unexpected error")
+			}
 		})
 	}
 }
