@@ -1,0 +1,21 @@
+# beholder service file
+#
+# WARNING: software (package) installation not implemented, so treat
+# this file as a stub, which needs to be adjusted before starting the service.
+# The service also needs to be installed and enabled manually.
+
+[Unit]
+Description=beholder is a program for operating industrial vision systems
+Documentation=
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/beholder /etc/beholder.json
+TimeoutStartSec=10
+RestartSec=30
+Restart=on-failure
+RestartForceExitStatus=255
+
+[Install]
+WantedBy=default.target
