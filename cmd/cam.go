@@ -44,8 +44,7 @@ var (
 // CamApp represents a program for acquiring and outputing images from
 // a camera device.
 type CamApp struct {
-	TL *camera.TransportLayer  `json:"transport_layer"`
-	C  *camera.Camera          `json:"camera"`
+	Cs camera.Array            `json:"cameras"`
 	IP *ocr.ImageProcessor     `json:"image_processing"`
 	F  Filename[camera.Result] `json:"filename"`
 }
@@ -53,8 +52,6 @@ type CamApp struct {
 // NewCamApp creates a new camera app.
 func NewCamApp() *CamApp {
 	return &CamApp{
-		TL: camera.NewTransportLayer(),
-		C:  camera.NewCamera(),
 		IP: ocr.NewImageProcessor(),
 		F: Filename[camera.Result]{
 			FString: "img_%v_%v.png",
@@ -68,17 +65,13 @@ func NewCamApp() *CamApp {
 
 // Finalize releases resources held by the camera app.
 func (app *CamApp) Finalize() {
-	app.TL.Delete()
-	app.C.Delete()
+	app.Cs.Delete()
 	app.IP.Delete()
 }
 
 // Init initializes the camera app by applying the configuration.
 func (app *CamApp) Init() error {
-	if err := app.TL.Init(); err != nil {
-		return err
-	}
-	if err := app.C.Init(*app.TL); err != nil {
+	if err := app.Cs.Init(); err != nil {
 		return err
 	}
 	if err := app.IP.Init(); err != nil {
@@ -109,39 +102,41 @@ func cam(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Println("starting acquisition")
-	if err := app.C.StartAcquisition(); err != nil {
+	if err := app.Cs.StartAcquisition(); err != nil {
 		return err
 	}
-	defer app.C.StopAcquisition() // technically happens automatically
+	defer app.Cs.StopAcquisition() // technically happens automatically
 
 	var acquired uint64
-	for app.C.IsAcquiring() && acquired < nReqAcquired {
+	for app.Cs.IsAcquiring() && acquired < nReqAcquired {
 		// use the trigger if it's defined
-		if err := app.C.TryTrigger(); err != nil {
+		if err := app.Cs.TryTrigger(); err != nil {
 			return err // FIXME: should probably handle timeouts gracefully
 		}
 		log.Println("acquiring...")
-		err := app.C.Acquire()
-		if err != nil {
-			return err
-		}
-		if app.C.Result.Value == nil {
-			continue
-		}
-		acquired++
-
-		if err := app.IP.ReceiveAcquisitionResult(app.C.Result.Value); err != nil {
+		if err := app.Cs.Acquire(); err != nil {
 			return err
 		}
 		// FIXME: output/processing should not block acquisition
-		log.Println("writing image with ID: ", app.C.Result.ID)
-		var fname string
-		if fname, err = app.F.Get(&app.C.Result); err != nil {
-			log.Println("could not generate image filename: ", err.Error())
-			continue
-		}
-		if err := app.IP.WriteImage(fname); err != nil {
-			log.Println("failed to write image: ", err.Error())
+		for _, cam := range app.Cs {
+			if cam.Result.Value == nil {
+				continue
+			}
+			acquired++
+
+			// FIXME: the image processor shouldn't own the image
+			if err := app.IP.ReceiveAcquisitionResult(cam.Result.Value); err != nil {
+				return err
+			}
+			log.Println("writing image with ID: ", cam.Result.ID)
+			var fname string
+			if fname, err = app.F.Get(&cam.Result); err != nil {
+				log.Println("could not generate image filename: ", err.Error())
+				continue
+			}
+			if err := app.IP.WriteImage(fname); err != nil {
+				log.Println("failed to write image: ", err.Error())
+			}
 		}
 	}
 	return nil
