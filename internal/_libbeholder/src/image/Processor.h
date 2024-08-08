@@ -10,12 +10,12 @@ Description
 	A wrapper class for image processing functions.
 
 SourceFiles
-	ImageProcessor.cpp
+	Processor.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_IMAGE_PROCESSOR_H
-#define BEHOLDER_IMAGE_PROCESSOR_H
+#ifndef BEHOLDER_PROCESSOR_H
+#define BEHOLDER_PROCESSOR_H
 
 #include <array>
 #include <cstddef>
@@ -25,7 +25,7 @@ SourceFiles
 
 #include <pylon/GrabResultPtr.h>
 
-#include "OcrResults.h"
+#include "Result.h"
 #include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
@@ -41,10 +41,10 @@ namespace beholder
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class ImageProcessor Declaration
+                         Class Processor Declaration
 \*---------------------------------------------------------------------------*/
 
-class ImageProcessor
+class Processor
 {
 private:
 
@@ -74,22 +74,22 @@ public:
 	// Constructors
 
 		//- Default constructor
-		ImageProcessor();
+		Processor();
 
 		//- Disable copy constructor
-		ImageProcessor(const ImageProcessor&) = delete;
+		Processor(const Processor&) = delete;
 
 		//- Disable move constructor
-		ImageProcessor(ImageProcessor&&) = delete;
+		Processor(Processor&&) = delete;
 
 	//- Destructor
-	~ImageProcessor();
+	~Processor();
 
 	// Member functions
 
 		//- Decode an image from a buffer.
 		//	The buffer is left unchanged and the data is copied into the
-		//	ImageProcessor. New memory is not allocated if the ImageProcessor
+		//	Processor. New memory is not allocated if the Processor
 		//	has enough space to hold the decoded image.
 		bool decodeImage(void* buffer, int bufSize, int flags);
 
@@ -103,10 +103,12 @@ public:
 		std::size_t getImageID() const;
 
 		//- Run pre-OCR image processing
+		//	FIXME: this should take an Image
 		bool preprocess();
 
 		//- Run post-OCR image processing
-		bool postprocess(const OcrResults& res);
+		//	FIXME: this should take an Image
+		bool postprocess(const Result& res);
 
 		//- Recieve a (Pylon) camera acquisition result, and copy it locally.
 		//	Returns false if image conversion fails, and true otherwise.
@@ -135,10 +137,10 @@ public:
 	// Member operators
 
 		//- Disable copy assignment
-		ImageProcessor& operator=(const ImageProcessor&) = delete;
+		Processor& operator=(const Processor&) = delete;
 
 		//- Disable move assignment
-		ImageProcessor& operator=(ImageProcessor&&) = delete;
+		Processor& operator=(Processor&&) = delete;
 
 };
 

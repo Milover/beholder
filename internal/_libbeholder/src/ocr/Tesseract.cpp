@@ -18,9 +18,9 @@ License
 #include <opencv2/core/types.hpp>
 #include <tesseract/baseapi.h>
 
-#include "ImageProcessor.h"
-#include "OcrResults.h"
+#include "Processor.h"
 #include "Rectangle.h"
+#include "Result.h"
 #include "Tesseract.h"
 #include "Utility.h"
 
@@ -50,19 +50,17 @@ Tesseract::~Tesseract()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-// FIXME: should clear results
 void Tesseract::clear()
 {
 	p_->Clear();
-	res_.text.clear();
-	res_.textBoxes.clear();
+	res_.tags.clear();
+	res_.boundingBoxes.clear();
 }
 
-
-// FIXME: should also grab other result data (eg. certanties)
+// FIXME: should also grab other result data (eg. confidence)
 bool Tesseract::detectText()
 {
-	res_.textBoxes.clear();
+	res_.boundingBoxes.clear();
 
 	std::unique_ptr<tesseract::PageIterator> iter {p_->AnalyseLayout()};
 	if (!iter)
@@ -72,17 +70,17 @@ bool Tesseract::detectText()
 	tesseract::PageIteratorLevel level {tesseract::RIL_TEXTLINE};
 
 	// construct text boxes
-	res_.textBoxes.reserve(5);		// FIXME: guesstimate
+	res_.boundingBoxes.reserve(5);		// FIXME: guesstimate
 	do
 	{
 		Rectangle r;
 		if (iter->BoundingBox(level, &r.left, &r.top, &r.right, &r.bottom))
 		{
-			res_.textBoxes.emplace_back(std::move(r));
+			res_.boundingBoxes.emplace_back(std::move(r));
 		}
 	} while(iter->Next(level));
 	
-	return !res_.textBoxes.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
+	return !res_.boundingBoxes.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
 }
 
 void Tesseract::dumpVariables() const
@@ -95,11 +93,10 @@ int Tesseract::getNoDawgs() const
 	return p_->NumDawgs();
 }
 
-const OcrResults& Tesseract::getResults() const
+const Result& Tesseract::getResults() const
 {
 	return res_;
 }
-
 
 bool Tesseract::init()
 {
@@ -145,24 +142,22 @@ bool Tesseract::init()
 	return success;
 }
 
-
 bool Tesseract::recognizeText()
 {
+	// TODO: would be nice to get text per bounding box
 	char* c {p_->GetUTF8Text()};
-	res_.text = c;
+	res_.tags.emplace_back(c);
 	delete[] c;
 
-	return !res_.text.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
+	return !res_.tags.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
 }
-
 
 bool Tesseract::detectAndRecognize()
 {
 	return detectText() && recognizeText();
 }
 
-
-void Tesseract::setImage(const ImageProcessor& ip, int bytesPerPixel)
+void Tesseract::setImage(const Processor& ip, int bytesPerPixel)
 {
 	const cv::Mat& im {ip.getImage()};
 	p_->SetImage(im.data, im.cols, im.rows, bytesPerPixel, im.step);

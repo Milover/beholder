@@ -15,7 +15,7 @@ License
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "ImageProcessor.h"
+#include "Processor.h"
 #include "Ops.h"
 #include "Tesseract.h"
 #include "Utility.h"
@@ -30,7 +30,7 @@ namespace beholder
 // the internal/ocr directory
 const std::filesystem::path internalDir
 {
-	"../../../"
+	std::filesystem::path {__FILE__}.parent_path() / "../../../ocr/"
 };
 
 const std::string testImage
@@ -43,7 +43,7 @@ const std::string testImage
 	//"testdata/images/neograf/imagefile_18.bmp"
 };
 
-const std::string expected
+const std::vector<std::string> expected
 {
 	"V20000229"
 };
@@ -79,7 +79,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	std::cout << "No dawgs: " << t.getNoDawgs() << '\n';
 
 	// setup image processor
-	beholder::ImageProcessor ip {};
+	beholder::Processor ip {};
 	// preprocessin
 	ip.preprocessing.emplace_back(new beholder::AutoCrop {35, 50.0, 50.0, 10.0});
 	ip.preprocessing.emplace_back(new beholder::Resize {205, 34});
@@ -89,7 +89,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ip.preprocessing.emplace_back(new beholder::EqualizeHistogram {});
 	ip.preprocessing.emplace_back(new beholder::Morphology {cv::MORPH_RECT, 3, 3, cv::MORPH_DILATE, 1});
 	// postprocessing
-	ip.postprocessing.emplace_back(new beholder::DrawTextBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
+	ip.postprocessing.emplace_back(new beholder::DrawBoundingBoxes {std::array<float, 4>{0, 0, 0, 0}, 3});
 
 	// read/load an image
 	ip.readImage(beholder::testImage, cv::IMREAD_GRAYSCALE);
@@ -107,19 +107,34 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		std::cerr << "Could not detect/recognize text.\n";
 		return 1;
 	}
-	std::string txt {t.getResults().text};
-	beholder::trimWhiteLR(txt);
 
 	// postprocess
 	ip.postprocess(t.getResults());
 
 	// show results
-	std::string expectedStr {beholder::expected};
-	std::cout << "Expected output:  " << expectedStr << '\n';
-	std::cout << "OCR output:       " << txt  << '\n';
+	std::vector<std::string> txts;
+	txts.reserve(t.getResults().tags.size());
+	for (const auto& tag : t.getResults().tags)
+	{
+		txts.emplace_back(tag);
+		beholder::trimWhiteLR(txts.back());
+	}
+	std::cout << "Expected output:  " << beholder::inlineStrings(beholder::expected) << '\n';
+	std::cout << "OCR output:       " << beholder::inlineStrings(txts) << '\n';
 	//ip.showImage();
 
-	if (expectedStr != txt)
+	if (txts.size() != beholder::expected.size())
+	{
+		std::cerr << "expected size: " << beholder::expected.size()
+				  << ", but got size: " << txts.size() << '\n';
+		return 1;
+	}
+	bool ok {true};
+	for (auto i {0ul}; i < txts.size(); ++i)
+	{
+		ok = ok && txts[i] == beholder::expected[i];
+	}
+	if (!ok)
 	{
 		return 1;
 	}

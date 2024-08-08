@@ -14,9 +14,9 @@ License
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "DrawTextBoxes.h"
-#include "OcrResults.h"
+#include "DrawBoundingBoxes.h"
 #include "ProcessingOp.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -28,22 +28,22 @@ namespace beholder
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool DrawTextBoxes::execute(const cv::Mat&, cv::Mat&) const
+bool DrawBoundingBoxes::execute(const cv::Mat&, cv::Mat&) const
 {
 	// can't really do anything without the BEHOLDER results
 	return true;
 }
 
-bool DrawTextBoxes::execute
+bool DrawBoundingBoxes::execute
 (
 	const cv::Mat&,
 	cv::Mat& out,
-	const OcrResults& res
+	const Result& res
 ) const
 {
 	cv::Scalar c {color[0], color[1], color[2], color[3]};
 	cv::Rect rect {};
-	for (const auto& r : res.textBoxes)
+	for (const auto& r : res.boundingBoxes)
 	{
 		rect.x = r.left;
 		rect.y = r.top;

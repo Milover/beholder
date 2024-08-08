@@ -23,7 +23,7 @@ SourceFiles
 #include <vector>
 #include <functional>
 
-#include "OcrResults.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -60,7 +60,7 @@ protected:
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
-			const OcrResults& res
+			const Result& res
 		) const = 0;
 
 public:
@@ -99,7 +99,7 @@ public:
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
-			const OcrResults& res
+			const Result& res
 		) const;
 
 		//- Default copy assignment

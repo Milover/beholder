@@ -17,8 +17,8 @@ License
 
 #include "Camera.h"
 #include "Exception.h"
-#include "ImageProcessor.h"
 #include "ParamEntry.h"
+#include "Processor.h"
 #include "PylonAPI.h"
 #include "TransportLayer.h"
 
@@ -87,7 +87,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 		assert(cam.isInitialized());
 
 		// create the image processor
-		beholder::ImageProcessor ip {};
+		beholder::Processor ip {};
 
 		// Acquire image(s)
 		cam.startAcquisition(beholder::CameraNImages);

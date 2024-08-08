@@ -21,8 +21,9 @@ Description
 
 // image
 #include "ConversionInfo.h"
-#include "ImageProcessor.h"
 #include "Ops.h"
+#include "Processor.h"
+#include "Result.h"
 
 // camera
 #include "Camera.h"
@@ -33,7 +34,6 @@ Description
 #include "TransportLayer.h"
 
 // ocr
-#include "OcrResults.h"
 #include "Tesseract.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

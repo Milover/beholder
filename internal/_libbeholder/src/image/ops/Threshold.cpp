@@ -11,7 +11,7 @@ License
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "OcrResults.h"
+#include "Result.h"
 #include "ProcessingOp.h"
 #include "Threshold.h"
 
@@ -35,7 +35,7 @@ bool Threshold::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults&
+	const Result&
 ) const
 {
 	cv::threshold(in, out, threshold, maxValue, type);

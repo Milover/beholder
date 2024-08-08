@@ -26,8 +26,8 @@ License
 #include <pylon/ImagePersistence.h>
 
 #include "ConversionInfo.h"
-#include "ImageProcessor.h"
-#include "OcrResults.h"
+#include "Processor.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -40,38 +40,38 @@ namespace beholder
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
-ImageProcessor::ImageProcessor()
+Processor::Processor()
 :
 	img_ {new cv::Mat{}}
 {}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-ImageProcessor::~ImageProcessor()
+Processor::~Processor()
 {
 	delete img_;
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-bool ImageProcessor::decodeImage(void* buffer, int bufSize, int flags)
+bool Processor::decodeImage(void* buffer, int bufSize, int flags)
 {
 	*img_ = cv::Mat{1, bufSize, CV_8UC1, buffer};
 	cv::imdecode(*img_, flags, img_);	// yolo
 	return img_->data != NULL;
 }
 
-const cv::Mat& ImageProcessor::getImage() const
+const cv::Mat& Processor::getImage() const
 {
 	return *img_;
 }
 
-std::size_t ImageProcessor::getImageID() const
+std::size_t Processor::getImageID() const
 {
 	return id_;
 }
 
-bool ImageProcessor::postprocess(const OcrResults& res)
+bool Processor::postprocess(const Result& res)
 {
 	for (const auto& o : postprocessing)
 	{
@@ -85,7 +85,7 @@ bool ImageProcessor::postprocess(const OcrResults& res)
 	return true;
 }
 
-bool ImageProcessor::preprocess()
+bool Processor::preprocess()
 {
 	for (const auto& o : preprocessing)
 	{
@@ -99,7 +99,7 @@ bool ImageProcessor::preprocess()
 	return true;
 }
 
-bool ImageProcessor::receiveAcquisitionResult(const Pylon::CGrabResultPtr& r)
+bool Processor::receiveAcquisitionResult(const Pylon::CGrabResultPtr& r)
 {
 	id_ = r->GetID();
 
@@ -145,19 +145,19 @@ bool ImageProcessor::receiveAcquisitionResult(const Pylon::CGrabResultPtr& r)
 	return true;
 }
 
-bool ImageProcessor::readImage(const std::string& path, int flags)
+bool Processor::readImage(const std::string& path, int flags)
 {
 	*img_ = cv::imread(path, flags);
 	return img_->data != NULL;
 }
 
-void ImageProcessor::showImage(const std::string& title) const
+void Processor::showImage(const std::string& title) const
 {
 	cv::imshow(title, *img_);
 	cv::waitKey();
 }
 
-bool ImageProcessor::writeAcquisitionResult
+bool Processor::writeAcquisitionResult
 (
 	const Pylon::CGrabResultPtr& r,
 	const std::string& filename
@@ -175,7 +175,7 @@ bool ImageProcessor::writeAcquisitionResult
 	return false;
 }
 
-bool ImageProcessor::writeImage(const std::string& filename) const
+bool Processor::writeImage(const std::string& filename) const
 {
 	std::vector<int> flags
 	{

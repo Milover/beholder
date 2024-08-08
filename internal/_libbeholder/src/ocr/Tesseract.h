@@ -21,8 +21,8 @@ SourceFiles
 #include <utility>
 #include <vector>
 
-#include "ImageProcessor.h"
-#include "OcrResults.h"
+#include "Processor.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -51,7 +51,8 @@ private:
 		tesseract::TessBaseAPI* p_;
 
 		//- OCR results
-		OcrResults res_;
+		//	FIXME: should be a std::vector<Result>
+		Result res_;
 
 public:
 
@@ -102,7 +103,7 @@ public:
 		int getNoDawgs() const;
 
 		//- Get a const reference to the OCR results
-		const OcrResults& getResults() const;
+		const Result& getResults() const;
 
 		//- Initialize Tesseract
 		bool init();
@@ -114,7 +115,8 @@ public:
 		bool detectAndRecognize();
 
 		//- Set image for recognition
-		void setImage(const ImageProcessor& ip, int bytesPerPixel = 1);
+		//	FIXME: this should take an Image
+		void setImage(const Processor& ip, int bytesPerPixel = 1);
 
 
 	// Member operators

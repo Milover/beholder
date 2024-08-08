@@ -15,6 +15,7 @@ Description
 #define BEHOLDER_TEST_H
 
 #include <chrono>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <thread>
@@ -50,6 +51,22 @@ void dumpParams(const ParamList& list)
 	{
 		std::cout << l.name << '\t' << l.value << '\n';
 	}
+}
+
+//- Return a vector of strings as a single string, by quoting and appending
+//	each string from the vector, using ',' as the separator.
+std::string inlineStrings(const std::vector<std::string> strs)
+{
+	std::stringstream ss;
+	for (auto i {0ul}; i < strs.size(); ++i)
+	{
+		ss << std::quoted(strs[i]);
+		if (i != strs.size() - 1)
+		{
+			ss << ", ";
+		}
+	}
+	return ss.str();
 }
 
 //- Write parameters to file

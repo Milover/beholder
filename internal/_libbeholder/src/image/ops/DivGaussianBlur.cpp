@@ -14,7 +14,7 @@ License
 
 #include "DivGaussianBlur.h"
 #include "GaussianBlur.h"
-#include "OcrResults.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -38,7 +38,7 @@ bool DivGaussianBlur::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults&
+	const Result&
 ) const
 {
 	return execute(in, out);

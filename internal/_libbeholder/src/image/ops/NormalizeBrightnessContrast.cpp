@@ -36,7 +36,7 @@ bool NormalizeBrightnessContrast::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults&
+	const Result&
 ) const
 {
 	return execute(in, out);

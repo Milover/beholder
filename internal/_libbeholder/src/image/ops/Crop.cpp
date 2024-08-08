@@ -12,7 +12,7 @@ License
 #include <opencv2/core/mat.hpp>
 
 #include "Crop.h"
-#include "OcrResults.h"
+#include "Result.h"
 #include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -45,7 +45,7 @@ bool Crop::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults&
+	const Result&
 ) const
 {
 	return execute(in, out);

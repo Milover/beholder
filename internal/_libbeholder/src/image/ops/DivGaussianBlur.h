@@ -51,7 +51,7 @@ protected:
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
-			const OcrResults&
+			const Result&
 		) const override;
 
 public:

@@ -17,8 +17,8 @@ License
 
 #include "Camera.h"
 #include "Exception.h"
-#include "ImageProcessor.h"
 #include "ParamEntry.h"
+#include "Processor.h"
 #include "PylonAPI.h"
 #include "TransportLayer.h"
 

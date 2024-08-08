@@ -13,7 +13,7 @@ License
 #include <opencv2/imgproc.hpp>
 
 #include "Morphology.h"
-#include "OcrResults.h"
+#include "Result.h"
 #include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -40,7 +40,7 @@ bool Morphology::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults&
+	const Result&
 ) const
 {
 	return execute(in, out);

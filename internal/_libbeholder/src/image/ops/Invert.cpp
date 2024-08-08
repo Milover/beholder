@@ -12,7 +12,7 @@ License
 #include <opencv2/core/mat.hpp>
 
 #include "Invert.h"
-#include "OcrResults.h"
+#include "Result.h"
 #include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -35,7 +35,7 @@ bool Invert::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults&
+	const Result&
 ) const
 {
 	return execute(in, out);

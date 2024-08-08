@@ -16,7 +16,7 @@ License
 #include <opencv2/core/mat.hpp>
 
 #include "ProcessingOp.h"
-#include "OcrResults.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,7 +45,7 @@ bool ProcessingOp::operator()
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const OcrResults& res
+	const Result& res
 ) const
 {
 	return execute(in, out, res);

@@ -10,12 +10,12 @@ Description
 	An image brightness and contrast normalization operation.
 
 SourceFiles
-	DrawTextBoxes.cpp
+	DrawBoundingBoxes.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_DRAW_TEXT_BOXES_OP_H
-#define BEHOLDER_DRAW_TEXT_BOXES_OP_H
+#ifndef BEHOLDER_DRAW_BOUNDING_BOXES_OP_H
+#define BEHOLDER_DRAW_BOUNDING_BOXES_OP_H
 
 #include <array>
 
@@ -34,10 +34,10 @@ namespace beholder
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class DrawTextBoxes Declaration
+                    Class DrawBoundingBoxes Declaration
 \*---------------------------------------------------------------------------*/
 
-class DrawTextBoxes
+class DrawBoundingBoxes
 :
 	public ProcessingOp
 {
@@ -53,7 +53,7 @@ protected:
 		(
 			const cv::Mat&,
 			cv::Mat& out,
-			const OcrResults& res
+			const Result& res
 		) const override;
 
 public:
@@ -62,19 +62,19 @@ public:
 
 	//- Public data
 
-		//- Text box border color
+		//- Bounding box border color
 		Color color {0.0, 0.0, 0.0, 0.0};
 
-		//- Text box border thickness
+		//- Bounding box border thickness
 		int thickness {2};
 
 	//- Constructors
 
 		//- Default constructor
-		DrawTextBoxes() = default;
+		DrawBoundingBoxes() = default;
 
 		//- Default constructor
-		DrawTextBoxes(const Color& c, int t)
+		DrawBoundingBoxes(const Color& c, int t)
 		:
 			ProcessingOp(),
 			color {c},

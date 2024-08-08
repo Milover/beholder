@@ -21,7 +21,7 @@ Description
 #include "CLAHE.h"
 #include "Crop.h"
 #include "DivGaussianBlur.h"
-#include "DrawTextBoxes.h"
+#include "DrawBoundingBoxes.h"
 #include "EqualizeHistogram.h"
 #include "GaussianBlur.h"
 #include "Invert.h"
