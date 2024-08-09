@@ -24,6 +24,7 @@ Description
 #include <pylon/PylonIncludes.h>
 
 #include "ParamEntry.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,15 +54,23 @@ void dumpParams(const ParamList& list)
 	}
 }
 
-//- Return a vector of strings as a single string, by quoting and appending
-//	each string from the vector, using ',' as the separator.
-std::string inlineStrings(const std::vector<std::string> strs)
+//- Return a vector of T as a single string, by optionally quoting and appending
+//	each T from the vector, using ',' as the separator.
+template<typename T>
+std::string inlineStrings(const std::vector<T> vec)
 {
 	std::stringstream ss;
-	for (auto i {0ul}; i < strs.size(); ++i)
+	for (auto i {0ul}; i < vec.size(); ++i)
 	{
-		ss << std::quoted(strs[i]);
-		if (i != strs.size() - 1)
+		if constexpr (std::is_same_v<T, std::string>)
+		{
+			ss << std::quoted(vec[i]);
+		}
+		else
+		{
+			ss << vec[i];
+		}
+		if (i != vec.size() - 1)
 		{
 			ss << ", ";
 		}
@@ -144,6 +153,41 @@ void printDevices(const Pylon::DeviceInfoList_t& devices)
 			d.IsAutoIpSupported()
 		);
 	}
+}
+
+int checkOCRResults
+(
+	const std::vector<Result>& res,
+	const std::vector<std::string>& expected
+)
+{
+	std::vector<std::string> text;
+	std::vector<double> conf;
+	text.reserve(res.size());
+	conf.reserve(res.size());
+	for (const auto& r : res)
+	{
+		text.emplace_back(r.text);
+		conf.emplace_back(r.confidence);
+	}
+	std::cout << "Expected output:  " << inlineStrings(expected) << '\n';
+	std::cout << "OCR output:       " << inlineStrings(text) << '\n';
+	std::cout << "OCR confidences:  " << inlineStrings(conf) << '\n';
+
+	bool ok {text.size() == expected.size()};
+	if (ok)
+	{
+		for (auto i {0ul}; i < text.size(); ++i)
+		{
+			ok = ok && text[i] == expected[i];
+		}
+	}
+	else
+	{
+		std::cerr << "expected size: " << expected.size()
+				  << ", but got size: " << text.size() << '\n';
+	}
+	return ok ? 0 : 1;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

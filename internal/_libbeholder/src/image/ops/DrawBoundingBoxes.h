@@ -18,6 +18,7 @@ SourceFiles
 #define BEHOLDER_DRAW_BOUNDING_BOXES_OP_H
 
 #include <array>
+#include <vector>
 
 #include "ProcessingOp.h"
 
@@ -53,7 +54,7 @@ protected:
 		(
 			const cv::Mat&,
 			cv::Mat& out,
-			const Result& res
+			const std::vector<Result>& res
 		) const override;
 
 public:

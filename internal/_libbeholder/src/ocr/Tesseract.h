@@ -52,7 +52,7 @@ private:
 
 		//- OCR results
 		//	FIXME: should be a std::vector<Result>
-		Result res_;
+		std::vector<Result> res_;
 
 public:
 
@@ -103,18 +103,19 @@ public:
 		int getNoDawgs() const;
 
 		//- Get a const reference to the OCR results
-		const Result& getResults() const;
+		const std::vector<Result>& getResults() const;
 
 		//- Initialize Tesseract
 		bool init();
 
-		//- Run text recognition and store the results
+		//- Run text detection if necessary, then run text recognition
+		//	and store the results.
+		//
+		//	Leading and trailing white space is trimmed from
+		//	the recognized text.
 		bool recognizeText();
 
-		//- Run text detection and recognition and store the results
-		bool detectAndRecognize();
-
-		//- Set image for recognition
+		//- Set image for detection/recognition and clear all results.
 		//	FIXME: this should take an Image
 		void setImage(const Processor& ip, int bytesPerPixel = 1);
 

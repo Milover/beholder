@@ -12,6 +12,7 @@ License
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <opencv2/core/mat.hpp>
 
@@ -45,7 +46,7 @@ bool ProcessingOp::operator()
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const Result& res
+	const std::vector<Result>& res
 ) const
 {
 	return execute(in, out, res);

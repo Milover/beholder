@@ -15,7 +15,6 @@ Description
 #define BEHOLDER_RESULT_H
 
 #include <string>
-#include <vector>
 
 #include "Rectangle.h"
 
@@ -35,14 +34,15 @@ public:
 	// Public data
 
 		// TODO: should we hold an image or a reference to an image?
-		// TODO: should have confidences also
-		// TODO: should have simple values and then use as std::vector<Result>
 
 		//- Recognized/detected text
-		std::vector<std::string> tags;
+		std::string text;
 
 		//- Bounding boxes detected by algorithms and/or NNs
-		std::vector<Rectangle> boundingBoxes;
+		Rectangle box;
+
+		//- Confidence of the result
+		double confidence;
 
 };
 

@@ -8,6 +8,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <vector>
+
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 
@@ -35,7 +37,7 @@ bool Invert::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const Result&
+	const std::vector<Result>&
 ) const
 {
 	return execute(in, out);

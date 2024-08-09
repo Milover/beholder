@@ -60,7 +60,7 @@ protected:
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
-			const Result& res
+			const std::vector<Result>& res
 		) const = 0;
 
 public:
@@ -99,7 +99,7 @@ public:
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
-			const Result& res
+			const std::vector<Result>& res
 		) const;
 
 		//- Default copy assignment

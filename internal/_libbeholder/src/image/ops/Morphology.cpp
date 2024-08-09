@@ -8,6 +8,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <vector>
+
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
@@ -40,7 +42,7 @@ bool Morphology::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const Result&
+	const std::vector<Result>&
 ) const
 {
 	return execute(in, out);

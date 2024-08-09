@@ -17,6 +17,8 @@ SourceFiles
 #ifndef BEHOLDER_CLAHE_OP_H
 #define BEHOLDER_CLAHE_OP_H
 
+#include <vector>
+
 #include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
@@ -51,7 +53,7 @@ protected:
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
-			const Result&
+			const std::vector<Result>&
 		) const override;
 
 public:

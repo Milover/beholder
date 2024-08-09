@@ -9,6 +9,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include <array>
+#include <vector>
 
 #include <opencv2/core/types.hpp>
 #include <opencv2/core/mat.hpp>
@@ -38,17 +39,17 @@ bool DrawBoundingBoxes::execute
 (
 	const cv::Mat&,
 	cv::Mat& out,
-	const Result& res
+	const std::vector<Result>& res
 ) const
 {
 	cv::Scalar c {color[0], color[1], color[2], color[3]};
 	cv::Rect rect {};
-	for (const auto& r : res.boundingBoxes)
+	for (const auto& r : res)
 	{
-		rect.x = r.left;
-		rect.y = r.top;
-		rect.width = r.right - r.left;
-		rect.height = r.bottom - r.top;	// because we measure from the top left
+		rect.x = r.box.left;
+		rect.y = r.box.top;
+		rect.width = r.box.right - r.box.left;
+		rect.height = r.box.bottom - r.box.top;	// because we measure from the top left
 		cv::rectangle(out, rect, c, thickness);
 	}
 	return true;

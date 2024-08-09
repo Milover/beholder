@@ -36,7 +36,7 @@ bool NormalizeBrightnessContrast::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const Result&
+	const std::vector<Result>&
 ) const
 {
 	return execute(in, out);

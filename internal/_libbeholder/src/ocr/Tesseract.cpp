@@ -53,14 +53,12 @@ Tesseract::~Tesseract()
 void Tesseract::clear()
 {
 	p_->Clear();
-	res_.tags.clear();
-	res_.boundingBoxes.clear();
+	res_.clear();
 }
 
-// FIXME: should also grab other result data (eg. confidence)
 bool Tesseract::detectText()
 {
-	res_.boundingBoxes.clear();
+	res_.clear();
 
 	std::unique_ptr<tesseract::PageIterator> iter {p_->AnalyseLayout()};
 	if (!iter)
@@ -70,17 +68,18 @@ bool Tesseract::detectText()
 	tesseract::PageIteratorLevel level {tesseract::RIL_TEXTLINE};
 
 	// construct text boxes
-	res_.boundingBoxes.reserve(5);		// FIXME: guesstimate
+	res_.reserve(5);		// FIXME: guesstimate
 	do
 	{
-		Rectangle r;
-		if (iter->BoundingBox(level, &r.left, &r.top, &r.right, &r.bottom))
+		Result r {};
+		if (iter->BoundingBox(level, &r.box.left, &r.box.top, &r.box.right, &r.box.bottom))
 		{
-			res_.boundingBoxes.emplace_back(std::move(r));
+			res_.emplace_back(std::move(r));
 		}
 	} while(iter->Next(level));
-	
-	return !res_.boundingBoxes.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
+	// XXX: should we do further check to see if analysis succeeded, or is
+	// checking iter enough?
+	return !res_.empty();
 }
 
 void Tesseract::dumpVariables() const
@@ -93,7 +92,7 @@ int Tesseract::getNoDawgs() const
 	return p_->NumDawgs();
 }
 
-const Result& Tesseract::getResults() const
+const std::vector<Result>& Tesseract::getResults() const
 {
 	return res_;
 }
@@ -144,23 +143,44 @@ bool Tesseract::init()
 
 bool Tesseract::recognizeText()
 {
-	// TODO: would be nice to get text per bounding box
-	char* c {p_->GetUTF8Text()};
-	res_.tags.emplace_back(c);
-	delete[] c;
+	// run detection first if necessary
+	if (res_.empty() && !detectText())
+	{
+		return false;
+	}
+	// XXX: does it make sense to do p_->SetRectangle(...), or should we
+	// handle this with image processing?
+	if (p_->Recognize(nullptr) != 0)
+	{
+		return false;
+	}
+	std::unique_ptr<tesseract::ResultIterator> iter {p_->GetIterator()};
+	tesseract::PageIteratorLevel level {tesseract::RIL_TEXTLINE};
 
-	return !res_.tags.empty();	// FIXME: we should ask TessBaseAPI if this succeeded
-}
+	// get recognition results
+	auto count {0ul};
+	do
+	{
+		char* ch {iter->GetUTF8Text(level)};
+		res_[count].text = ch;
+		trimWhiteLR(res_[count].text);
+		delete[] ch;
 
-bool Tesseract::detectAndRecognize()
-{
-	return detectText() && recognizeText();
+		res_[count].confidence = iter->Confidence(level);
+
+		++count;
+	} while(iter->Next(level));
+	// XXX: should we do further checks to see if recognition suceeded, or is
+	// checking p_->Recognize() enough?
+	return true;
 }
 
 void Tesseract::setImage(const Processor& ip, int bytesPerPixel)
 {
 	const cv::Mat& im {ip.getImage()};
 	p_->SetImage(im.data, im.cols, im.rows, bytesPerPixel, im.step);
+
+	res_.clear();
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //

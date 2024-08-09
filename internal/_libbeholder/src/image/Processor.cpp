@@ -71,7 +71,7 @@ std::size_t Processor::getImageID() const
 	return id_;
 }
 
-bool Processor::postprocess(const Result& res)
+bool Processor::postprocess(const std::vector<Result>& res)
 {
 	for (const auto& o : postprocessing)
 	{

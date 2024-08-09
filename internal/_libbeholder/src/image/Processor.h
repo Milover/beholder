@@ -108,7 +108,7 @@ public:
 
 		//- Run post-OCR image processing
 		//	FIXME: this should take an Image
-		bool postprocess(const Result& res);
+		bool postprocess(const std::vector<Result>& res);
 
 		//- Recieve a (Pylon) camera acquisition result, and copy it locally.
 		//	Returns false if image conversion fails, and true otherwise.

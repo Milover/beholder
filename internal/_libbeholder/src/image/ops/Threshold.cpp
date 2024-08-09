@@ -8,6 +8,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <vector>
+
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -35,7 +37,7 @@ bool Threshold::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	const Result&
+	const std::vector<Result>&
 ) const
 {
 	cv::threshold(in, out, threshold, maxValue, type);

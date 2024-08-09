@@ -40,7 +40,8 @@ const std::string testImage
 
 const std::vector<std::string> expected
 {
-	"15.11.2023.\n11:57"
+	"15.11.2023.",
+	"11:57"
 };
 
 } // end namespace beholder
@@ -151,9 +152,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	//ip.writeImage();
 	//ip.showImage();
 
-	// NOTE: the analysis (seemingly) isn't being re-run
 	// run ocr
-	if (!t.detectAndRecognize())
+	if (!t.recognizeText())
 	{
 		std::cerr << "Could not detect/recognize text.\n";
 		return 1;
@@ -162,34 +162,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// postprocess
 	ip.postprocess(t.getResults());
 
-	// show results
-	std::vector<std::string> txts;
-	txts.reserve(t.getResults().tags.size());
-	for (const auto& tag : t.getResults().tags)
-	{
-		txts.emplace_back(tag);
-		beholder::trimWhiteLR(txts.back());
-	}
-	std::cout << "Expected output:  " << beholder::inlineStrings(beholder::expected) << '\n';
-	std::cout << "OCR output:       " << beholder::inlineStrings(txts) << '\n';
-	//ip.showImage();
-
-	if (txts.size() != beholder::expected.size())
-	{
-		std::cerr << "expected size: " << beholder::expected.size()
-				  << ", but got size: " << txts.size() << '\n';
-		return 1;
-	}
-	bool ok {true};
-	for (auto i {0ul}; i < txts.size(); ++i)
-	{
-		ok = ok && txts[i] == beholder::expected[i];
-	}
-	if (!ok)
-	{
-		return 1;
-	}
-	return 0;
+	return beholder::checkOCRResults(t.getResults(), beholder::expected);
 }
 
 // ************************************************************************* //
