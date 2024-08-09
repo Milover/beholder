@@ -86,7 +86,24 @@ public:
 			padding {pad}
 		{}
 
+		//- Default copy constructor
+		AutoCrop(const AutoCrop&) = default;
+
+		//- Default move constructor
+		AutoCrop(AutoCrop&&) = default;
+
+	//- Destructor
+	virtual ~AutoCrop() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		AutoCrop& operator=(const AutoCrop&) = default;
+
+		//- Default move assignment
+		AutoCrop& operator=(AutoCrop&&) = default;
 
 };
 

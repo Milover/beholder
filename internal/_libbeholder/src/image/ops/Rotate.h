@@ -75,7 +75,24 @@ public:
 			angle {ang}
 		{}
 
+		//- Default copy constructor
+		Rotate(const Rotate&) = default;
+
+		//- Default move constructor
+		Rotate(Rotate&&) = default;
+
+	//- Destructor
+	virtual ~Rotate() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		Rotate& operator=(const Rotate&) = default;
+
+		//- Default move assignment
+		Rotate& operator=(Rotate&&) = default;
 
 };
 

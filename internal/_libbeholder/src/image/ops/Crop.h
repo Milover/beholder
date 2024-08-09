@@ -81,7 +81,24 @@ public:
 			height {h}
 		{}
 
+		//- Default copy constructor
+		Crop(const Crop&) = default;
+
+		//- Default move constructor
+		Crop(Crop&&) = default;
+
+	//- Destructor
+	virtual ~Crop() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		Crop& operator=(const Crop&) = default;
+
+		//- Default move assignment
+		Crop& operator=(Crop&&) = default;
 
 };
 

@@ -85,7 +85,24 @@ public:
 			iterations {iter}
 		{}
 
+		//- Default copy constructor
+		Morphology(const Morphology&) = default;
+
+		//- Default move constructor
+		Morphology(Morphology&&) = default;
+
+	//- Destructor
+	virtual ~Morphology() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		Morphology& operator=(const Morphology&) = default;
+
+		//- Default move assignment
+		Morphology& operator=(Morphology&&) = default;
 
 };
 

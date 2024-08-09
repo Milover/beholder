@@ -82,7 +82,24 @@ public:
 			thickness {t}
 		{}
 
+		//- Default copy constructor
+		DrawBoundingBoxes(const DrawBoundingBoxes&) = default;
+
+		//- Default move constructor
+		DrawBoundingBoxes(DrawBoundingBoxes&&) = default;
+
+	//- Destructor
+	virtual ~DrawBoundingBoxes() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		DrawBoundingBoxes& operator=(const DrawBoundingBoxes&) = default;
+
+		//- Default move assignment
+		DrawBoundingBoxes& operator=(DrawBoundingBoxes&&) = default;
 
 };
 

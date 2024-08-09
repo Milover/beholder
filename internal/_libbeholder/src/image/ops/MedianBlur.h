@@ -75,7 +75,24 @@ public:
 			kernelSize {ksize}
 		{}
 
+		//- Default copy constructor
+		MedianBlur(const MedianBlur&) = default;
+
+		//- Default move constructor
+		MedianBlur(MedianBlur&&) = default;
+
+	//- Destructor
+	virtual ~MedianBlur() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		MedianBlur& operator=(const MedianBlur&) = default;
+
+		//- Default move assignment
+		MedianBlur& operator=(MedianBlur&&) = default;
 
 };
 

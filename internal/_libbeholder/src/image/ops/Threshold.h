@@ -81,7 +81,24 @@ public:
 			type {typ}
 		{}
 
+		//- Default copy constructor
+		Threshold(const Threshold&) = default;
+
+		//- Default move constructor
+		Threshold(Threshold&&) = default;
+
+	//- Destructor
+	virtual ~Threshold() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		Threshold& operator=(const Threshold&) = default;
+
+		//- Default move assignment
+		Threshold& operator=(Threshold&&) = default;
 
 };
 

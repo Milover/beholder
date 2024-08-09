@@ -75,7 +75,24 @@ public:
 			padding {pad}
 		{}
 
+		//- Default copy constructor
+		AddPadding(const AddPadding&) = default;
+
+		//- Default move constructor
+		AddPadding(AddPadding&&) = default;
+
+	//- Destructor
+	virtual ~AddPadding() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		AddPadding& operator=(const AddPadding&) = default;
+
+		//- Default move assignment
+		AddPadding& operator=(AddPadding&&) = default;
 
 };
 

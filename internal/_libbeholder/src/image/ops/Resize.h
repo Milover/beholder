@@ -77,7 +77,24 @@ public:
 			height {h}
 		{}
 
+		//- Default copy constructor
+		Resize(const Resize&) = default;
+
+		//- Default move constructor
+		Resize(Resize&&) = default;
+
+	//- Destructor
+	virtual ~Resize() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		Resize& operator=(const Resize&) = default;
+
+		//- Default move assignment
+		Resize& operator=(Resize&&) = default;
 
 };
 

@@ -81,7 +81,24 @@ public:
 			tileColumns {tC}
 		{}
 
+		//- Default copy constructor
+		CLAHE(const CLAHE&) = default;
+
+		//- Default move constructor
+		CLAHE(CLAHE&&) = default;
+
+	//- Destructor
+	virtual ~CLAHE() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		CLAHE& operator=(const CLAHE&) = default;
+
+		//- Default move assignment
+		CLAHE& operator=(CLAHE&&) = default;
 
 };
 

@@ -65,7 +65,24 @@ public:
 		//- Default constructor
 		EqualizeHistogram() = default;
 
+		//- Default copy constructor
+		EqualizeHistogram(const EqualizeHistogram&) = default;
+
+		//- Default move constructor
+		EqualizeHistogram(EqualizeHistogram&&) = default;
+
+	//- Destructor
+	virtual ~EqualizeHistogram() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		EqualizeHistogram& operator=(const EqualizeHistogram&) = default;
+
+		//- Default move assignment
+		EqualizeHistogram& operator=(EqualizeHistogram&&) = default;
 
 };
 

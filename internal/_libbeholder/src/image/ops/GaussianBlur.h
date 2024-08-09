@@ -82,7 +82,24 @@ public:
 			sigmaY {sY}
 		{}
 
+		//- Default copy constructor
+		GaussianBlur(const GaussianBlur&) = default;
+
+		//- Default move constructor
+		GaussianBlur(GaussianBlur&&) = default;
+
+	//- Destructor
+	virtual ~GaussianBlur() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		GaussianBlur& operator=(const GaussianBlur&) = default;
+
+		//- Default move assignment
+		GaussianBlur& operator=(GaussianBlur&&) = default;
 
 };
 

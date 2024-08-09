@@ -60,7 +60,27 @@ public:
 
 	//- Public data
 
+		//- Default constructor
+		Invert() = default;
+
+		//- Default copy constructor
+		Invert(const Invert&) = default;
+
+		//- Default move constructor
+		Invert(Invert&&) = default;
+
+	//- Destructor
+	virtual ~Invert() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		Invert& operator=(const Invert&) = default;
+
+		//- Default move assignment
+		Invert& operator=(Invert&&) = default;
 
 };
 

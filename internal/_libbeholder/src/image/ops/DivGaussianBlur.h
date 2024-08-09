@@ -82,7 +82,24 @@ public:
 			scaleFactor {scale}
 		{}
 
+		//- Default copy constructor
+		DivGaussianBlur(const DivGaussianBlur&) = default;
+
+		//- Default move constructor
+		DivGaussianBlur(DivGaussianBlur&&) = default;
+
+	//- Destructor
+	virtual ~DivGaussianBlur() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		DivGaussianBlur& operator=(const DivGaussianBlur&) = default;
+
+		//- Default move assignment
+		DivGaussianBlur& operator=(DivGaussianBlur&&) = default;
 
 };
 

@@ -75,7 +75,24 @@ public:
 			clipPct {cPct}
 		{}
 
+		//- Default copy constructor
+		NormalizeBrightnessContrast(const NormalizeBrightnessContrast&) = default;
+
+		//- Default move constructor
+		NormalizeBrightnessContrast(NormalizeBrightnessContrast&&) = default;
+
+	//- Destructor
+	virtual ~NormalizeBrightnessContrast() = default;
+
 	//- Member functions
+
+	//- Member operators
+
+		//- Default copy assignment
+		NormalizeBrightnessContrast& operator=(const NormalizeBrightnessContrast&) = default;
+
+		//- Default move assignment
+		NormalizeBrightnessContrast& operator=(NormalizeBrightnessContrast&&) = default;
 
 };
 
