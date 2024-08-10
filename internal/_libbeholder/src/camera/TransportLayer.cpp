@@ -178,30 +178,40 @@ Pylon::IPylonDevice* TransportLayer::createDevice
 		std::cout << "trying to reset device: "
 				  << formatDeviceDesignator(ddt) << " : "
 				  << designator << std::endl;
-		if (!Pylon::CCommandParameter(d->GetNodeMap(), "DeviceReset").TryExecute())
+		// no try-catch here because if we throw, we have actual issues
+		d->Open();
+		bool reset
 		{
-		std::cout << "could not reset device: "
-				  << formatDeviceDesignator(ddt) << " : " << designator
-				  << "; continuing without reset" << std::endl;
-			return d;
-		}
+			Pylon::CCommandParameter(d->GetNodeMap(), "DeviceReset").TryExecute()
+		};
+		// probably unnecessary, but just in case the device is
+		// in an invalid state
 		tl_->DestroyDevice(d);
 		d = nullptr;
-
-		// FIXME: 'retries' and 'waitTime' should be adjustable
-		std::cout << "waiting for device on-line" << std::endl;
-		auto waitTime {std::chrono::seconds{3}};
-		auto nRetries {5ul};
-		for (auto i {0ul}; i < nRetries; ++i)
+		if (reset)
 		{
-			std::this_thread::sleep_for(waitTime);
-			if ((d = createDeviceImpl(designator, ddt)))
+			// FIXME: 'retries' and 'waitTime' should be adjustable
+			std::cout << "waiting for device on-line" << std::endl;
+			auto waitTime {std::chrono::seconds{3}};
+			auto nRetries {5ul};
+			for (auto i {0ul}; i < nRetries; ++i)
 			{
-				return d;
+				std::this_thread::sleep_for(waitTime);
+				if (d = createDeviceImpl(designator, ddt); d)
+				{
+					return d;
+				}
 			}
+			std::cerr << "could not create device: "
+					  << "retry limit reached after reset" << std::endl;
 		}
-		std::cerr << "could not create device: "
-				  << "retry limit reached after reset" << std::endl;
+		else
+		{
+			std::cerr << "could not reset device: "
+					  << formatDeviceDesignator(ddt) << " : " << designator
+					  << "; continuing without reset" << std::endl;
+			return createDeviceImpl(designator, ddt);
+		}
 	}
 	catch(const Pylon::GenericException& e)
 	{
