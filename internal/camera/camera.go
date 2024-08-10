@@ -251,11 +251,11 @@ func (c *Camera) Init() error {
 
 	// handle SN
 	if c.SN == SNPickFirst {
-		sn := ar.Store(unsafe.Pointer(C.Trans_GetFirstSN(tl.p)))
-		if sn == nil {
+		sn := ar.StoreCStrConv(unsafe.Pointer(C.Trans_GetFirstSN(tl.p)))
+		if len(sn) == 0 {
 			return errors.New("camera.Camera.Init: could not find a camera device")
 		}
-		c.SN = C.GoString((*C.char)(sn))
+		c.SN = sn
 	}
 	sn := (*C.char)(ar.CopyStr(c.SN))
 

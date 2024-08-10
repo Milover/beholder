@@ -7,14 +7,21 @@ package ocr
 import "C"
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/enumutils"
+	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/mem"
 	"github.com/Milover/beholder/internal/ocr/model"
+)
+
+var (
+	ErrRecognition = errors.New("could not detect/recognize text")
 )
 
 // PSegMode represents available page segmentation modes.
@@ -120,18 +127,48 @@ func (t Tesseract) Clear() {
 	C.Tess_Clear(t.p)
 }
 
-// DetectAndRecognize runs a new detect/recognize job on the current image.
-// Note that before calling DetectAndRecognize, t should be initialized,
-// via the Init function, and have an image set via SetImage.
-// Note that Clear should be called before each new DetectAndRecognize call.
-func (t Tesseract) DetectAndRecognize() (string, error) {
-	ch := (*C.char)(C.Tess_DetectAndRecognize(t.p))
-	defer C.free(unsafe.Pointer(ch))
-	str := strings.TrimSpace(C.GoString(ch))
-	if len(str) == 0 {
-		return str, errors.New("ocr.Tesseract.DetectAndRecognize: could not detect/recognize text")
+// Recognize runs a new detect/recognize job on the current image.
+// Before calling Recognize, t should be initialized with [Tesseract.Init], and
+// have an image set with [Tesseract.SetImage].
+//
+// [Tesseract.Clear] should be called before each new Recognize call, however
+// [Tesseract.SetImage] also clears previous results.
+func (t Tesseract) Recognize(res *Result) error {
+	ar := &mem.Arena{}
+	defer ar.Free()
+
+	results := (*C.ResArr)(ar.Store(
+		unsafe.Pointer(C.Tess_Recognize(t.p)),
+		unsafe.Pointer(C.ResArr_Delete)),
+	)
+	if unsafe.Pointer(results) == nil {
+		return fmt.Errorf("ocr.Tesseract.Recognize: %w", ErrRecognition)
 	}
-	return str, nil
+	// allocate and reset if necessary
+	nLines := uint64(results.count)
+	if uint64(cap(res.Text)) < nLines {
+		diff := int(nLines - uint64(cap(res.Text)))
+		slices.Grow(res.Text, diff)
+		slices.Grow(res.Confidence, diff)
+		slices.Grow(res.Boxes, diff)
+	}
+	// FIXME: we probably shouldn't do this here
+	res.Text = res.Text[:0]
+	res.Confidence = res.Confidence[:0]
+	res.Boxes = res.Boxes[:0]
+	// populate the result
+	resultsSl := unsafe.Slice(results.array, nLines)
+	for _, r := range resultsSl {
+		res.Text = append(res.Text, C.GoString(r.text))
+		res.Confidence = append(res.Confidence, float64(r.conf))
+		res.Boxes = append(res.Boxes, image.Rectangle{
+			Left:   int64(r.box.left),
+			Top:    int64(r.box.top),
+			Right:  int64(r.box.right),
+			Bottom: int64(r.box.bottom),
+		})
+	}
+	return nil
 }
 
 // Init initializes the C-allocated API with the configuration data,
@@ -150,7 +187,8 @@ func (t Tesseract) Init() error {
 	defer ar.Free()
 
 	// allocate the struct and handle the easy stuff (ints, strings...)
-	in := (*C.TInit)(ar.Malloc(C.sizeof_TInit))
+	//in := (*C.TInit)(ar.Malloc(C.sizeof_TInit))
+	in := C.TInit{}
 
 	// set the page segmentation mode
 	in.psMode = C.int(t.PageSegMode)
@@ -183,7 +221,7 @@ func (t Tesseract) Init() error {
 		iVar++
 	}
 
-	if ok := C.Tess_Init(t.p, in); !ok {
+	if ok := C.Tess_Init(t.p, (*C.TInit)(unsafe.Pointer(&in))); !ok {
 		return errors.New("ocr.Tesseract.Init: could not initialize tesseract")
 	}
 	return nil
@@ -205,11 +243,18 @@ func (t Tesseract) IsValid() error {
 	return nil
 }
 
+// Ptr returns a pointer to the underlying C-API.
+// FIXME: nope --- remove this
+func (t Tesseract) Ptr() unsafe.Pointer {
+	return unsafe.Pointer(t.p)
+}
+
 // SetImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
 // FIXME: bytesPerPixel should be automatically determined.
-func (t Tesseract) SetImage(ip ImageProcessor, bytesPerPixel int) {
-	C.Tess_SetImage(t.p, ip.p, C.int(bytesPerPixel))
+// FIXME: this shouldn't need a Processor, it should take an image.Image
+func (t Tesseract) SetImage(proc unsafe.Pointer, bytesPerPixel int) {
+	C.Tess_SetImage(t.p, C.Proc(proc), C.int(bytesPerPixel))
 }
 
 // setPatterns sets up the stuff necessary for Tesseract

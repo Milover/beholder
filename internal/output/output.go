@@ -1,14 +1,16 @@
-package ocr
+package output
 
 import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
 	"github.com/Milover/beholder/internal/enumutils"
+	"github.com/Milover/beholder/internal/ocr"
 )
 
 var (
@@ -20,7 +22,7 @@ var (
 // ResultWriter is a buffered Result writer.
 // It writes a formatted Results to an underlying output target (io.WriteCloser).
 type ResultWriter interface {
-	Write(*Result) error
+	Write(*ocr.Result) error
 	Flush() error
 }
 
@@ -79,7 +81,7 @@ func (o *Output) Init() error {
 
 // Write writes a Result to the underlying output target using the
 // underlying Outputer.
-func (o *Output) Write(r *Result) error {
+func (o *Output) Write(r *ocr.Result) error {
 	return o.o.Write(r)
 }
 
@@ -134,7 +136,7 @@ func newOutputer(o OutFmtType, wc io.WriteCloser) (Outputer, error) {
 // outNone is a dummy Outputer.
 type outNone struct{}
 
-func (o outNone) Write(*Result) error {
+func (o outNone) Write(*ocr.Result) error {
 	return nil
 }
 
@@ -160,29 +162,33 @@ type outCSV struct {
 	hdr bool
 }
 
-func (o *outCSV) Write(r *Result) error {
+func (o *outCSV) Write(r *ocr.Result) error {
+	nLines := len(r.Text)
+	record := make([]string, 0, 2+2*nLines)
 	if !o.hdr {
-		err := o.w.Write([]string{
-			"timestamp",
-			"expected",
-			"result",
-			"status",
-		})
-		if err != nil {
+		record = append(record, "timestamp")
+		for i := range nLines {
+			record = append(record, fmt.Sprintf("expected_l%d", i))
+			record = append(record, fmt.Sprintf("result_l%d", i))
+		}
+		record = append(record, "status")
+		if err := o.w.Write(record); err != nil {
 			return err
 		}
+		record = record[:0]
 		o.hdr = true
 	}
 	ts, err := r.TimeStamp.MarshalText()
 	if err != nil {
 		return err
 	}
-	return o.w.Write([]string{
-		string(ts),
-		r.Expected,
-		r.Text,
-		r.Status.String(),
-	})
+	record = append(record, string(ts))
+	for i := range nLines {
+		record = append(record, r.Expected[i])
+		record = append(record, r.Text[i])
+	}
+	record = append(record, r.Status.String())
+	return o.w.Write(record)
 }
 
 func (o outCSV) Close() error {
@@ -210,7 +216,7 @@ type outJSON struct {
 	b *bufio.Writer
 }
 
-func (o outJSON) Write(r *Result) error {
+func (o outJSON) Write(r *ocr.Result) error {
 	return o.w.Encode(r)
 }
 

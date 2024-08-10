@@ -25,9 +25,10 @@ type Pointer struct {
 // Delete frees resources held by p by calling it's deleter.
 func (p *Pointer) Delete() {
 	if p.Del != nil {
-		C.Mem_Delete((*C.Ptr)(&p.Ptr), C.Deleter(p.Del))
+		C.Mem_Delete(C.Ptr(unsafe.Pointer(&p.Ptr)), C.Deleter(p.Del))
 	} else {
 		C.free(p.Ptr)
+		p.Ptr = nil
 	}
 }
 
@@ -108,7 +109,7 @@ func (ar *Arena) StoreArray(p, delP, delEl unsafe.Pointer, count uint64) unsafe.
 }
 
 // StoreCStr stores the C-string (*C.char) cstr into ar, which then assumes
-// owhership of cstr. cstre is freed as if though it were allocated
+// owhership of cstr. cstr is freed as if though it were allocated
 // by calling new[].
 //
 // cstr is returned for convenience.
@@ -117,10 +118,46 @@ func (ar *Arena) StoreCStr(cstr unsafe.Pointer) unsafe.Pointer {
 }
 
 // StoreCStrConv stores the C-string (*C.char) cstr into ar, which then assumes
-// owhership of cstr. cstre is freed as if though it were allocated
+// owhership of cstr. cstr is freed as if though it were allocated
 // by calling new[].
 //
 // A Go string is returned for convenience.
 func (ar *Arena) StoreCStrConv(cstr unsafe.Pointer) string {
 	return C.GoString((*C.char)(ar.StoreCStr(cstr)))
+}
+
+// StoreCStrArray stores the C-string array (**C.char) cstr into ar, which
+// then assumes owhership of cstr. cstr is freed as if though it were allocated
+// by calling new[].
+//
+// cstr is returned for convenience.
+func (ar *Arena) StoreCStrArray(cstr unsafe.Pointer, count uint64) unsafe.Pointer {
+	return ar.StoreArray(
+		cstr,
+		unsafe.Pointer(C.Mem_DeleteCharPtrArr),
+		unsafe.Pointer(C.Mem_DeleteCharPtr),
+		count,
+	)
+}
+
+// StoreCStrArrayConv stores the C-string array (**C.char) cstr of size count
+// into ar, which then assumes owhership of cstr. cstr and all it's elements
+// are freed as if though they were allocated by calling new[].
+//
+// A slice of Go strings is returned for convenience.
+func (ar *Arena) StoreCStrArrayConv(cstr unsafe.Pointer, count uint64) []string {
+	strs := make([]string, 0, count)
+	chs := unsafe.Slice((**C.char)(cstr), count)
+	for _, ptr := range chs {
+		*ar = append(*ar, Pointer{
+			Ptr: unsafe.Pointer(ptr),
+			Del: unsafe.Pointer(C.Mem_DeleteCharPtr),
+		})
+		strs = append(strs, C.GoString(ptr))
+	}
+	*ar = append(*ar, Pointer{
+		Ptr: cstr,
+		Del: unsafe.Pointer(C.Mem_DeleteCharPtrArr),
+	})
+	return strs
 }

@@ -3,13 +3,18 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/Milover/beholder/internal/chrono"
+	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/output"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
 )
@@ -26,20 +31,157 @@ var (
 	}
 )
 
+// OcrApp represents a program for running an OCR pipeline on an image or
+// a set of images read from disc.
+type OCRApp struct {
+	T *ocr.Tesseract   `json:"tesseract"`
+	P *image.Processor `json:"image_processing"`
+	O *output.Output   `json:"output"`
+}
+
+// NewOCRApp creates a new OCR app.
+func NewOCRApp() *OCRApp {
+	return &OCRApp{
+		T: ocr.NewTesseract(),
+		P: image.NewProcessor(),
+		O: output.NewOutput(),
+	}
+}
+
+// Finalize releases resources held by the OCR app, flushes all buffer,
+// closes all files and/or connections.
+func (app *OCRApp) Finalize() error {
+	app.T.Delete()
+	app.P.Delete()
+	return app.O.Close()
+}
+
+// Init initializes the OCR app by applying the configuration.
+func (app *OCRApp) Init() error {
+	if err := app.T.Init(); err != nil {
+		return err
+	}
+	if err := app.P.Init(); err != nil {
+		return err
+	}
+	if err := app.O.Init(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Run is a function that runs the OCR pipeline for a single image file:
+// reading, preprocessing, recognition and postprocessing.
+func (app *OCRApp) Run(filename string, res *ocr.Result) error {
+	sw := stopwatch.New()
+	res.Reset()
+	res.TimeStamp = sw.Start
+
+	img, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer img.Close()
+
+	// run OCR
+	// FIXME: this should probably happen in a different goroutine
+	buf, err := io.ReadAll(img)
+	if err != nil {
+		return err
+	}
+	res.Timings.Set("read", sw.Lap())
+
+	// FIXME: the read mode shouldn't be hardcoded
+	if err = app.P.DecodeImage(buf, image.RMGrayscale); err != nil {
+		return err
+	}
+	res.Timings.Set("decode", sw.Lap())
+
+	if err := app.P.Preprocess(); err != nil {
+		return err
+	}
+	app.T.SetImage(app.P.Ptr(), 1)
+	res.Timings.Set("preprocess", sw.Lap())
+
+	if err = app.T.Recognize(res); err != nil {
+		return err
+	}
+	res.Timings.Set("ocr", sw.Lap())
+
+	if err = app.P.Postprocess(app.T.Ptr()); err != nil {
+		return err
+	}
+	res.Timings.Set("postprocess", sw.Lap())
+
+	// output results
+	// FIXME: writes should happen in a different goroutine, since we don't
+	// want the output to block pipeline execution
+	if err := app.O.Write(res); err != nil {
+		return err
+	}
+	// FIXME: this is only temporary, usually we don't want to flush after
+	// each write, but it makes the output nicer
+	if err := app.O.Flush(); err != nil {
+		return err
+	}
+	res.Timings.Set("output", sw.Lap())
+
+	res.Timings.Set("total", sw.Total())
+	return nil
+}
+
 // Stats holds various program statistics.
 type Stats struct {
-	OCRResult ocr.Result
+	Result *ocr.Result
+	// AvgTimings is a map of averaged [ocr.Result.Timings]
+	AvgTimings chrono.Timings
 	// InitDuration is the time elapsed while initializing the OCR pipeline.
 	InitDuration time.Duration
 	// ExecDuration is the total time elapsed while running the program.
 	ExecDuration time.Duration
 }
 
+// NewStats creates a new ready to use Stats.
+func NewStats() *Stats {
+	return &Stats{
+		Result: ocr.NewResult(),
+	}
+}
+
+// Accumulate is a function which accumulates timings.
+func (s *Stats) Accumulate(ts chrono.Timings) {
+	if len(s.AvgTimings) == 0 {
+		s.AvgTimings = make([]chrono.Timing, 0, len(ts))
+		s.AvgTimings = append(s.AvgTimings, ts...)
+	} else {
+		for i := range ts {
+			s.AvgTimings[i].Value += ts[i].Value
+		}
+	}
+}
+
+// Average is a function which computes timing averages for count timings.
+func (s *Stats) Average(count int64) {
+	for i := range s.AvgTimings {
+		s.AvgTimings[i].Value /= time.Duration(count)
+	}
+}
+
+func (s *Stats) String() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%v\ninit: %v\nexec: %v\n",
+		s.AvgTimings,
+		s.InitDuration,
+		s.ExecDuration,
+	)
+	return b.String()
+}
+
 func runOCR(cmd *cobra.Command, args []string) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	var stats Stats
+	stats := NewStats()
 	sw := stopwatch.New()
 
 	// read config
@@ -48,13 +190,17 @@ func runOCR(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	// setup OCR
-	o := ocr.NewOCR()
-	defer o.Finalize()
+	app := NewOCRApp()
+	defer func() {
+		if err := app.Finalize(); err != nil {
+			log.Println("OCR app finalization error: ", err)
+		}
+	}()
 	// unmarshall
-	if err := json.Unmarshal(cfg, &o); err != nil {
+	if err := json.Unmarshal(cfg, &app); err != nil {
 		return err
 	}
-	if err := o.Init(); err != nil {
+	if err := app.Init(); err != nil {
 		return err
 	}
 	stats.InitDuration = sw.Lap()
@@ -65,11 +211,14 @@ func runOCR(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	count := int64(0) // No. results to average
 	switch {
 	case info.Mode().IsRegular():
-		if stats.OCRResult, err = runOCRPipeline(cliFile, o); err != nil {
+		if err = app.Run(cliFile, stats.Result); err != nil {
 			return err
 		}
+		stats.Accumulate(stats.Result.Timings)
+		count++
 	case info.Mode().IsDir():
 		dir, err := os.Open(cliFile)
 		if err != nil {
@@ -81,85 +230,20 @@ func runOCR(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		results := make([]ocr.Result, len(filenames))
 		for _, filename := range filenames {
-			res, err := runOCRPipeline(path.Join(dir.Name(), filename), o)
-			if err != nil {
+			if err := app.Run(path.Join(dir.Name(), filename), stats.Result); err != nil {
 				return err
 			}
-			results = append(results, res)
+			stats.Accumulate(stats.Result.Timings)
+			count++
 		}
-		stats.OCRResult = averageOCRTimings(results)
 	default:
 		return fmt.Errorf("bad file: %v", info.Name())
 	}
+	stats.Average(count)
 	stats.ExecDuration = sw.Total()
 
-	//o.P.ShowImage("result")
-	log.Printf(`timings
-initialize  : %v
-read        : %v
-decode      : %v
-preprocess  : %v
-ocr         : %v
-postprocess : %v
-total       : %v
-execution   : %v`,
-		stats.InitDuration.String(),
-		stats.OCRResult.ReadDuration.String(),
-		stats.OCRResult.DecodeDuration.String(),
-		stats.OCRResult.PreprocDuration.String(),
-		stats.OCRResult.OCRDuration.String(),
-		stats.OCRResult.PostprocDuration.String(),
-		stats.OCRResult.RunDuration.String(),
-		stats.ExecDuration.String(),
-	)
+	//app.P.ShowImage("result")
+	fmt.Println(stats)
 	return nil
-}
-
-// runOCRPipeline runs the OCR pipeline on a single image file.
-func runOCRPipeline(filename string, o ocr.OCR) (ocr.Result, error) {
-	img, err := os.Open(filename)
-	if err != nil {
-		return ocr.Result{}, err
-	}
-	defer img.Close()
-
-	res, err := o.Run(img)
-	if err != nil {
-		return res, err
-	}
-	// FIXME: writes should happen in a different goroutine, since we don't
-	// want the output to block pipeline execution
-	if err := o.O.Write(&res); err != nil {
-		return res, err
-	}
-	// FIXME: this is only temporary, usually we don't want to flush after
-	// each write, but it makes the output nicer
-	if err := o.O.Flush(); err != nil {
-		return res, err
-	}
-	return res, nil
-}
-
-// averageOCRTimings computes average OCR operation timings from the provided
-// slice of OCR results.
-func averageOCRTimings(rs []ocr.Result) ocr.Result {
-	var res ocr.Result
-	for _, r := range rs {
-		res.RunDuration += r.RunDuration
-		res.ReadDuration += r.ReadDuration
-		res.DecodeDuration += r.DecodeDuration
-		res.PreprocDuration += r.PreprocDuration
-		res.OCRDuration += r.OCRDuration
-		res.PostprocDuration += r.PostprocDuration
-	}
-	res.RunDuration /= time.Duration(len(rs))
-	res.ReadDuration /= time.Duration(len(rs))
-	res.DecodeDuration /= time.Duration(len(rs))
-	res.PreprocDuration /= time.Duration(len(rs))
-	res.OCRDuration /= time.Duration(len(rs))
-	res.PostprocDuration /= time.Duration(len(rs))
-
-	return res
 }

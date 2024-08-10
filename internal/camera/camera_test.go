@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/image"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -182,11 +182,11 @@ func TestCamera(t *testing.T) {
 
 			// setup
 			p := struct {
-				C  *Camera             `json:"camera"`
-				IP *ocr.ImageProcessor `json:"image_processor"`
+				C  *Camera          `json:"camera"`
+				IP *image.Processor `json:"image_processor"`
 			}{
 				C:  NewCamera(),
-				IP: ocr.NewImageProcessor(),
+				IP: image.NewProcessor(),
 			}
 			defer func() {
 				p.C.Delete()

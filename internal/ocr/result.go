@@ -3,26 +3,43 @@ package ocr
 import (
 	"time"
 
+	"github.com/Milover/beholder/internal/chrono"
 	"github.com/Milover/beholder/internal/enumutils"
+	"github.com/Milover/beholder/internal/image"
 )
 
 // Result holds the OCR pipeline results and statistics.
 type Result struct {
-	// Text is the text recognized by the OCR.
-	Text string `json:"result"`
-	// Expected is the expected result of the OCR pipeline.
-	Expected string `json:"expected"`
+	// Text is a line-by-line list of text recognized by the OCR.
+	Text []string `json:"result"`
+	// Expected is a line-by-line list of expected text results of the OCR.
+	Expected []string `json:"expected"`
+	// Confidence is a list of confidences for the text recognized by the OCR.
+	Confidence []float64 `json:"confidence"`
+	// Boxes is a list of text bounding boxes detected by the OCR.
+	Boxes []image.Rectangle `json:"boxes"`
 	// Status is the final status of the result.
 	Status ResultStatus `json:"status"`
 	// TimeStamp is the time at which the OCR pipeline started.
 	TimeStamp time.Time `json:"timestamp"`
-	// RunDuration is the time elapsed from start to finish of the OCR pipeline.
-	RunDuration      time.Duration `json:"-"`
-	ReadDuration     time.Duration `json:"-"`
-	DecodeDuration   time.Duration `json:"-"`
-	PreprocDuration  time.Duration `json:"-"`
-	OCRDuration      time.Duration `json:"-"`
-	PostprocDuration time.Duration `json:"-"`
+	// Timings are the named durations of various parts of the OCR process.
+	Timings chrono.Timings `json:"-"`
+}
+
+// NewResult creates a new ready to use Result.
+func NewResult() *Result {
+	return &Result{}
+}
+
+// Reset resets all fields of r, but retains allocated memory.
+func (r *Result) Reset() {
+	r.Text = r.Text[:0]
+	r.Expected = r.Expected[:0]
+	r.Confidence = r.Confidence[:0]
+	r.Boxes = r.Boxes[:0]
+	r.Status = RSNone
+	r.TimeStamp = time.Time{}
+	r.Timings.Reset()
 }
 
 // ResultStatus designates whether the result of the OCR pipeline is

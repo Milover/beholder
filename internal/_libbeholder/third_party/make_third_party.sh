@@ -8,13 +8,16 @@ set -e
 
 #------------------------------------------------------------------------------
 
-OPENCV_VERSION="4.9.0"
+OPENCV_VERSION="4.10.0"
 LEPTONICA_VERSION="1.84.1"
-TESSERACT_VERSION="5.3.4"
+TESSERACT_VERSION="5.4.1"
 PYLON_VERSION="7.5.0.15658_linux-x86_64"
 
 THIRD_PARTY_DIR="$PWD"
 INSTALL_DIR="/usr/local"
+
+#CC_FLAGS="-march=native -O2"
+CC_FLAGS=
 
 #------------------------------------------------------------------------------
 # clean the install manifest
@@ -22,14 +25,31 @@ INSTALL_DIR="/usr/local"
 rm -f install_manifest.txt
 
 #------------------------------------------------------------------------------
-# clean the install manifest
+# download sources and build archive if necessary
 
-DOWNLOAD=false
 if [ ! -f "archive.tar.gz" ]; then
-	DOWNLOAD=true
-else
-	tar -xvzf archive.tar.gz
+	mkdir archive
+	cd archive
+
+	git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git
+	git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git
+	git clone --depth=1 --branch "$TESSERACT_VERSION" https://github.com/tesseract-ocr/tesseract.git
+
+	mkdir -v pylon
+	curl -O "https://www2.baslerweb.com/media/downloads/software/pylon_software/pylon-${PYLON_VERSION}_setup.tar.gz"
+	tar -xvf "pylon-${PYLON_VERSION}_setup.tar.gz"
+	tar -C pylon -xvf "pylon-${PYLON_VERSION}.tar.gz"
+	rm -vf "pylon-${PYLON_VERSION}.tar.gz" \
+		   "pylon-${PYLON_VERSION}_setup.tar.gz" \
+		   INSTALL
+
+	cd "$THIRD_PARTY_DIR"
+
+	tar -cvzf archive.tar.gz archive
+	rm -r archive
 fi
+
+tar -xvzf archive.tar.gz
 
 #------------------------------------------------------------------------------
 # Build OpenCV
@@ -37,16 +57,13 @@ fi
 if [ ! -d opencv ]; then
 	echo "setting up OpenCV"
 
-	if [ "$DOWNLOAD" = true ]; then
-		git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git
-	else
-		mv archive/opencv ./
-	fi
-	cd opencv
-	mkdir build
-	cd build
+	mv archive/opencv ./
+	mkdir opencv/build
+	cd opencv/build
 	cmake -DCMAKE_BUILD_TYPE=Release \
 		  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
+		  -DCMAKE_CXX_FLAGS="$CC_FLAGS" \
 		  -DOPENCV_GENERATE_PKGCONFIG=ON \
 		  -DOPENCV_FORCE_3RDPARTY_BUILD=ON \
 		  ../
@@ -67,17 +84,14 @@ fi
 if [ ! -d leptonica ]; then
 	echo "setting up leptonica"
 
-	if [ "$DOWNLOAD" = true ]; then
-		git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git
-	else
-		mv archive/leptonica ./
-	fi
+	mv archive/leptonica ./
 	cd leptonica
 	git apply "$THIRD_PARTY_DIR/patches/leptonica.patch"
 	mkdir build
 	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release \
 		  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
 		  -DBUILD_SHARED_LIBS=ON \
 		  -DPNG_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibpng.a" \
 		  -DPNG_PNG_INCLUDE_DIR="$THIRD_PARTY_DIR/opencv/3rdparty/libpng" \
@@ -99,6 +113,7 @@ if [ ! -d leptonica ]; then
 	make install
 
 	mv /usr/local/lib/pkgconfig/lept_Release.pc /usr/local/lib/pkgconfig/lept.pc
+	sed -i -e 's/lept_Release\.pc/lept.pc/g' install_manifest.txt
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
 	echo "" >> "$THIRD_PARTY_DIR/install_manifest.txt"
@@ -114,16 +129,13 @@ fi
 if [ ! -d tesseract ]; then
 	echo "setting up tesseract"
 
-	if [ "$DOWNLOAD" = true ]; then
-		git clone --depth=1 --branch "$TESSERACT_VERSION" https://github.com/tesseract-ocr/tesseract.git
-	else
-		mv archive/tesseract ./
-	fi
-	cd tesseract
-	mkdir build
-	cd build
+	mv archive/tesseract ./
+	mkdir tesseract/build
+	cd tesseract/build
 	cmake -DCMAKE_BUILD_TYPE=Release \
 		  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
+		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
+		  -DCMAKE_CXX_FLAGS="$CC_FLAGS" \
 		  -DBUILD_SHARED_LIBS=ON \
 		  -DINSTALL_CONFIGS=OFF \
 		  -DBUILD_TRAINING_TOOLS=OFF \
@@ -154,15 +166,7 @@ if [ "$OSTYPE" = "darwin" ]; then
 elif [ ! -d pylon ]; then
 	echo "setting up pylon"
 
-	if [ "$DOWNLOAD" = true ]; then
-		mkdir -v pylon
-		curl -O "https://www2.baslerweb.com/media/downloads/software/pylon_software/pylon-${PYLON_VERSION}_setup.tar.gz"
-		tar -xvf "pylon-${PYLON_VERSION}_setup.tar.gz"
-		tar -C pylon -xvf "pylon-${PYLON_VERSION}.tar.gz"
-		rm -vf "pylon-${PYLON_VERSION}*.tar.gz"
-	else
-		mv archive/pylon ./
-	fi
+	mv archive/pylon ./
 	cd pylon
 
 	# package and 'install' pylon
@@ -174,9 +178,11 @@ elif [ ! -d pylon ]; then
 
 	# move cmake files
 	mv -v share/pylon/cmake "$INSTALL_DIR/lib/cmake/pylon"
+	tree --prune --noreport -f -i "$INSTALL_DIR/lib/cmake/pylon" | sed -e 's/ -> .*//g' | tee -a install_manifest.txt
 
 	# move headers
 	mv -v include "$INSTALL_DIR/include/pylon"
+	tree --prune --noreport -f -i "$INSTALL_DIR/include/pylon" | sed -e 's/ -> .*//g' | tee -a install_manifest.txt
 
 	# move libraries
 	mv -v lib/libpylonbase.so* \
@@ -187,18 +193,21 @@ elif [ ! -d pylon ]; then
 		  lib/libLog_gcc_v3_1_Basler_pylon.so* \
 		  lib/liblog4cpp_gcc_v3_1_Basler_pylon.so* \
 		  lib/libMathParser_gcc_v3_1_Basler_pylon.so* \
-		  lib/libXmlParser_gcc_v3_1_Basler_pylon.so* \
 		  lib/libNodeMapData_gcc_v3_1_Basler_pylon.so* \
+		  lib/libXmlParser_gcc_v3_1_Basler_pylon.so* \
 		  lib/libgxapi.so* \
-		  lib/libpylon_TL_gige.so* \
 		  lib/libuxapi.so* \
-		  lib/pylon-libusb-1.0.so* \
+		  lib/libpylon_TL_gige.so* \
+		  lib/libpylon_TL_camemu.so* \
 		  lib/libpylon_TL_usb.so* \
+		  lib/pylon-libusb-1.0.so* \
 		  lib/gentlproducer \
 		  "$INSTALL_DIR/lib/"
+	tree --prune --noreport -f -i "$INSTALL_DIR" | sed -e 's/ -> .*//g' | grep -e 'pylon' -e 'gentlproducer' -e 'Basler' -e 'libgxapi' -e 'libuxapi' | tee -a install_manifest.txt
 
 	# move licenses
 	mv -v share/pylon/licenses "$INSTALL_DIR/share/licenses/pylon"
+	tree --prune --noreport -f -i "$INSTALL_DIR/share/licences/pylon" | sed -e 's/ -> .*//g' | tee -a install_manifest.txt
 
 	# make pkg-config file
 	tee pylon.pc << EOF
@@ -215,10 +224,11 @@ Libs.private: -lLog_gcc_v3_1_Basler_pylon -lMathParser_gcc_v3_1_Basler_pylon -lX
 Cflags: -I\${includedir}
 EOF
 	mv -v pylon.pc "$INSTALL_DIR/lib/pkgconfig/"
+	echo "$INSTALL_DIR/lib/pkgconfig/pylon.pc" | tee -a install_manifest.txt
 
-	# make install manifest
-	tree --prune --noreport -f -i "$INSTALL_DIR" | sed -e 's/ -> .*//g' | grep -e 'pylon' -e 'gentlproducer' -e 'Basler' -e 'libgxapi' -e 'libuxapi' | tee -a install_manifest.txt
+	# append install manifest
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
+	echo "" >> "$THIRD_PARTY_DIR/install_manifest.txt"
 
 	cd "$THIRD_PARTY_DIR"
 else
@@ -228,6 +238,7 @@ fi
 #------------------------------------------------------------------------------
 # cleanup
 
+ldconfig
 rmdir archive
 
 #------------------------------------------------------------------------------

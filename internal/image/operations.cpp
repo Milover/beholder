@@ -22,9 +22,9 @@ DivGaussBlur DivGaussBlur_New(float scale, float sX, float sY, int kW, int kH) {
 	return new beholder::DivGaussianBlur {scale, sX, sY, kW, kH};
 }
 
-DrawTB DrawTB_New(float color[4], int thickness) {
+DrawBB DrawBB_New(float color[4], int thickness) {
 	std::array<float, 4> c {color[0], color[1], color[2], color[3]};
-	return new beholder::DrawTextBoxes {c, thickness};
+	return new beholder::DrawBoundingBoxes {c, thickness};
 }
 
 EqHist EqHist_New() {

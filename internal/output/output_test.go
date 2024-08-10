@@ -1,4 +1,4 @@
-package ocr
+package output
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Milover/beholder/internal/ocr"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,17 +19,19 @@ var (
 	resultTSText, _ = resultTS.MarshalText()
 
 	// result is the Result that is used in all tests.
-	result = Result{
-		Text:      "some text\nsome other text",
-		Expected:  "some text\nsome other text",
-		Status:    RSPass,
+	result = ocr.Result{
+		Text:      []string{"some text", "some other text"},
+		Expected:  []string{"some text", "some other text"},
+		Status:    ocr.RSPass,
 		TimeStamp: resultTS,
 	}
 
-	resultCSV = fmt.Sprintf("timestamp,expected,result,status\n%v,\"%v\",\"%v\",%v\n",
+	resultCSV = fmt.Sprintf("timestamp,expected_l0,result_l0,expected_l1,result_l1,status\n%v,%s,%s,%s,%s,%v\n",
 		string(resultTSText),
-		result.Expected,
-		result.Text,
+		result.Expected[0],
+		result.Text[0],
+		result.Expected[1],
+		result.Text[1],
 		result.Status,
 	)
 

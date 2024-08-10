@@ -1,4 +1,4 @@
-package ocr
+package image
 
 /*
 #include <stdlib.h>
@@ -27,7 +27,7 @@ var opFactoryMap = map[string]opFactory{
 	"clahe":                         NewCLAHE,
 	"crop":                          NewCrop,
 	"div_gaussian_blur":             NewDivGaussianBlur,
-	"draw_text_boxes":               NewDrawTextBoxes,
+	"draw_bounding_boxes":           NewDrawBoundingBoxes,
 	"equalize_histogram":            NewEqualizeHistogram,
 	"gaussian_blur":                 NewGaussianBlur,
 	"invert":                        NewInvert,
@@ -226,22 +226,22 @@ func NewDivGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 	)), nil
 }
 
-// drawTextBoxes represents a postprocessing operation which draws rectangles
+// drawBoundingBoxes represents a postprocessing operation which draws rectangles
 // around detected text.
-type drawTextBoxes struct {
+type drawBoundingBoxes struct {
 	// Text box line color.
 	Color [4]float32 `json:"color"`
 	// Text box line thickness.
 	Thickness int `json:"thickness"`
 }
 
-// NewDrawTextBoxes creates a drawTextBoxes operation with default values,
+// NewDrawBoundingBoxes creates a drawTextBoxes operation with default values,
 // unmarshals runtime data into it and then constructs a C-class representing
 // the operation.
 // WARNING: the C-allocated memory will be managed by C,
 // hence C.free should NOT be called on the returned pointer.
-func NewDrawTextBoxes(m json.RawMessage) (unsafe.Pointer, error) {
-	op := drawTextBoxes{
+func NewDrawBoundingBoxes(m json.RawMessage) (unsafe.Pointer, error) {
+	op := drawBoundingBoxes{
 		Color:     [4]float32{0, 0, 0, 0},
 		Thickness: 2,
 	}
@@ -249,7 +249,7 @@ func NewDrawTextBoxes(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	// all values accepted, no input validation required
-	return unsafe.Pointer(C.DrawTB_New(
+	return unsafe.Pointer(C.DrawBB_New(
 		(*C.float)(&op.Color[0]),
 		C.int(op.Thickness),
 	)), nil

@@ -2,113 +2,25 @@
 #include <vector>
 #include <string>
 
-#include <pylon/GrabResultPtr.h>
-
 #include "ocr.h"
 
-
-bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags) {
-	if (!p) {
-		return false;
-	}
-	if (!buf && bufSize > 0) {
-		return false;
-	}
-	return p->decodeImage(buf, bufSize, flags);
-}
-
-void Proc_Delete(Proc p) {
-	if (p) {
-		delete p;
-		p = nullptr;
-	}
-}
-
-bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
-	if (!p) {
-		return false;
-	}
-	if ((!post && nPost > 0) || (!pre && nPre > 0)) {
-		return false;
-	}
-	auto helper = []
-	(
-		beholder::ImageProcessor::OpList& list,
-		void** ptrs,
-		std::size_t nPtrs
-	) -> void
-	{
-		list.reserve(nPtrs);
-		for (auto i {0ul}; i < nPtrs; ++i) {
-			list.emplace_back(static_cast<beholder::ProcessingOp*>(ptrs[i]));
+void ResArr_Delete(void* r) {
+	if (r) {
+		ResArr** ptr {static_cast<ResArr**>(r)};
+		if (ResArr* p {*ptr}; p) {
+			if (p->array)
+			// delete text of each result
+			for (auto i {0ul}; i < p->count; ++i) {
+				delete[] p->array[i].text;
+			}
+			// delete the underlying array
+			delete[] p->array;
+			p->array = nullptr;
 		}
-	};
-	helper(p->postprocessing, post, nPost);
-	helper(p->preprocessing, pre, nPre);
-	return true;
-}
-
-Proc Proc_New() {
-	return new beholder::ImageProcessor {};
-}
-
-bool Proc_Postprocess(Proc p, Tess t) {
-	if (!p || !t) {
-		return false;
+		// delete the wrapper
+		delete *ptr;
+		*ptr = nullptr;
 	}
-	return p->postprocess(t->getResults());
-}
-
-bool Proc_Preprocess(Proc p) {
-	if (!p) {
-		return false;
-	}
-	return p->preprocess();
-}
-
-bool Proc_ReadImage(Proc p, const char* filename, int flags) {
-	if (!p) {
-		return false;
-	}
-	std::string s {filename};
-	return p->readImage(s, flags);
-}
-
-bool Proc_ReceiveAcquisitionResult(Proc p, const void* result) {
-	if (!p || !result) {
-		return false;
-	}
-	return p->receiveAcquisitionResult
-	(
-		*static_cast<const Pylon::CGrabResultPtr*>(result)
-	);
-}
-
-void Proc_ShowImage(Proc p, const char* title) {
-	if (!p) {
-		return;
-	}
-	std::string s {title};
-	p->showImage(s);
-}
-
-bool Proc_WriteAcquisitionResult(Proc p, const void* result, const char* filename) {
-	if (!p || !result) {
-		return false;
-	}
-	std::string s {filename};
-	return p->writeAcquisitionResult(
-		*static_cast<const Pylon::CGrabResultPtr*>(result),
-		filename
-	);
-}
-
-bool Proc_WriteImage(Proc p, const char* filename) {
-	if (!p) {
-		return false;
-	}
-	std::string s {filename};
-	return p->writeImage(s);
 }
 
 void Tess_Clear(Tess t) {
@@ -124,20 +36,31 @@ void Tess_Delete(Tess t) {
 	}
 }
 
-char* Tess_DetectAndRecognize(Tess t) {
+ResArr* Tess_Recognize(Tess t) {
 	if (!t) {
-		return nullptr;
-	}
-	if (!t->detectText()) {
 		return nullptr;
 	}
 	if (!t->recognizeText()) {
 		return nullptr;
 	}
-	const std::string& txt {t->getResults().text};
-	char* result {new char[txt.length() + 1]};
-	std::strncpy(result, txt.c_str(), txt.length() + 1);
-	return result;
+	const std::vector<beholder::Result>& results {t->getResults()};
+	Res* res {new Res[results.size()]};
+	for (auto i {0ul}; i < results.size(); ++i) {
+		const beholder::Result& raw {results[i]};
+		Res& ret {res[i]};
+
+		// copy the string
+		ret.text = new char[raw.text.size() + 1];
+		std::strncpy(ret.text, raw.text.c_str(), raw.text.size() + 1);
+
+		// copy the other stuff
+		ret.conf = raw.confidence;
+		ret.box.left = raw.box.left;
+		ret.box.top = raw.box.top;
+		ret.box.right = raw.box.right;
+		ret.box.bottom = raw.box.bottom;
+	}
+	return new ResArr{res, static_cast<size_t>(results.size())};
 }
 
 bool Tess_Init(Tess t, const TInit* in) {

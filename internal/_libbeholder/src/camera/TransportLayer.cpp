@@ -197,6 +197,8 @@ Pylon::IPylonDevice* TransportLayer::createDevice
 			for (auto i {0ul}; i < nRetries; ++i)
 			{
 				std::this_thread::sleep_for(waitTime);
+				// FIXME: mute log output here, we only care about failure
+				// after all attempts have been made
 				if (d = createDeviceImpl(designator, ddt); d)
 				{
 					return d;

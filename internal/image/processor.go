@@ -1,8 +1,8 @@
-package ocr
+package image
 
 /*
 #include <stdlib.h>
-#include "ocr.h"
+#include "image.h"
 */
 import "C"
 import (
@@ -12,22 +12,22 @@ import (
 	"unsafe"
 )
 
-type ImreadMode int
+type ReadMode int
 
 const (
-	ImreadUnchanged ImreadMode = iota - 1
-	ImreadGrayscale
-	ImreadAnyDepth
-	ImreadAnyColor = iota
+	RMUnchanged ReadMode = iota - 1
+	RMGrayscale
+	RMAnyDepth
+	RMAnyColor = iota
 )
 
-// ImageProcessor is a handle for the image processing API
+// Processor is a handle for the image processing API
 // and contains API configuration data.
-// WARNING: ImageProcessor holds a pointer to C-allocated memory,
+// WARNING: Processor holds a pointer to C-allocated memory,
 // so when it is no longer needed, Delete must be called to release
 // the memory and clean up.
 // TODO: missing a way to reset the image/read an image from a []byte.
-type ImageProcessor struct {
+type Processor struct {
 	// Postprocessing holds a list of configurations for
 	// image postprocessing operations.
 	Postprocessing []json.RawMessage `json:"postprocessing"`
@@ -39,17 +39,17 @@ type ImageProcessor struct {
 	p C.Proc
 }
 
-// NewImageProcessor constructs (C call) a new image processing API.
+// NewProcessor constructs (C call) a new image processing API.
 // WARNING: Delete must be called to release the memory when no longer needed.
-func NewImageProcessor() *ImageProcessor {
-	return &ImageProcessor{p: C.Proc_New()}
+func NewProcessor() *Processor {
+	return &Processor{p: C.Proc_New()}
 }
 
 // DecodeImage decodes and stores an image from the provided buffer.
 // WARNING: the image buffer MUST be kept alive until the function returns.
-func (ip ImageProcessor) DecodeImage(buf []byte, readMode ImreadMode) error {
+func (ip Processor) DecodeImage(buf []byte, readMode ReadMode) error {
 	if len(buf) <= 0 {
-		return errors.New("ocr.ImageProcessor.DecodeImage: empty image buffer")
+		return errors.New("image.Processor.DecodeImage: empty image buffer")
 	}
 	ok := C.Proc_DecodeImage(
 		ip.p,
@@ -58,19 +58,19 @@ func (ip ImageProcessor) DecodeImage(buf []byte, readMode ImreadMode) error {
 		C.int(readMode),
 	)
 	if !ok {
-		return errors.New("ocr.ImageProcessor.DecodeImage: could not decode image")
+		return errors.New("image.Processor.DecodeImage: could not decode image")
 	}
 	return nil
 }
 
 // Delete releases C-allocated memory. Once called, ip is no longer valid.
-func (ip *ImageProcessor) Delete() {
+func (ip *Processor) Delete() {
 	C.Proc_Delete(ip.p)
 }
 
 // Init initializes the C-allocated API with the configuration data,
 // if ip is valid.
-func (ip ImageProcessor) Init() error {
+func (ip Processor) Init() error {
 	if err := ip.IsValid(); err != nil {
 		return err
 	}
@@ -82,17 +82,17 @@ func (ip ImageProcessor) Init() error {
 				return nil, err
 			}
 			if len(op) != 1 {
-				return nil, fmt.Errorf("ocr.ImageProcessor.Init: too many fields %v", op)
+				return nil, fmt.Errorf("image.Processor.Init: too many fields %v", op)
 			}
 			for k, v := range op {
 				f, ok := opFactoryMap[k]
 				if !ok {
-					return nil, fmt.Errorf("ocr.ImageProcessor.Init: bad operation: %v", k)
+					return nil, fmt.Errorf("image.Processor.Init: bad operation: %v", k)
 				}
 				// C will manage this memory, we don't have to clean it up
 				ptr, err := f(v)
 				if err != nil {
-					return nil, fmt.Errorf("ocr.ImageProcessor.Init: %w", err)
+					return nil, fmt.Errorf("image.Processor.Init: %w", err)
 				}
 				ptrs = append(ptrs, ptr)
 			}
@@ -124,15 +124,15 @@ func (ip ImageProcessor) Init() error {
 		C.size_t(len(pre)),
 	)
 	if !ok {
-		return errors.New("ocr.ImageProcessor.Init: could not initialize image processing")
+		return errors.New("image.Processor.Init: could not initialize image processing")
 	}
 	return nil
 }
 
 // IsValid is function used as an assertion that ip is able to be initialized.
-func (ip ImageProcessor) IsValid() error {
+func (ip Processor) IsValid() error {
 	if ip.p == (C.Proc)(nil) {
-		return errors.New("ocr.ImageProcessor.IsValid: nil API pointer")
+		return errors.New("image.Processor.IsValid: nil API pointer")
 	}
 	return nil
 }
@@ -142,36 +142,43 @@ func (ip ImageProcessor) IsValid() error {
 // Note that Postprocess is usually only run after text detection/recognition
 // since some postprocessing operations may depend on detection/recognition
 // results.
-func (ip ImageProcessor) Postprocess(t Tesseract) error {
-	if ok := C.Proc_Postprocess(ip.p, t.p); !ok {
-		return errors.New("ocr.ImageProcessor.Postprocess: could not postprocess image")
+// FIXME: this shouldn't need a Tesseract, it should take an image.Image
+func (ip Processor) Postprocess(tess unsafe.Pointer) error {
+	if ok := C.Proc_Postprocess(ip.p, C.Tess(tess)); !ok {
+		return errors.New("image.Processor.Postprocess: could not postprocess image")
 	}
 	return nil
 }
 
 // Preprocess runs all currently stored preprocessing operations
 // on the current image.
-func (ip ImageProcessor) Preprocess() error {
+func (ip Processor) Preprocess() error {
 	if ok := C.Proc_Preprocess(ip.p); !ok {
-		return errors.New("ocr.ImageProcessor.Preprocess: could not preprocess image")
+		return errors.New("image.Processor.Preprocess: could not preprocess image")
 	}
 	return nil
 }
 
+// Ptr returns a pointer to the underlying C-API.
+// FIXME: nope --- remove this
+func (ip Processor) Ptr() unsafe.Pointer {
+	return unsafe.Pointer(ip.p)
+}
+
 // ReadImage reads and stores an image from disc.
-func (ip ImageProcessor) ReadImage(filename string, readMode ImreadMode) error {
+func (ip Processor) ReadImage(filename string, readMode ReadMode) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
 	if ok := C.Proc_ReadImage(ip.p, cs, C.int(readMode)); !ok {
-		return errors.New("ocr.ImageProcessor.ReadImage: could not read image")
+		return errors.New("image.Processor.ReadImage: could not read image")
 	}
 	return nil
 }
 
 // WriteAcquisitionResult writes 'r' to disc in PNG format.
-func (ip ImageProcessor) ReceiveAcquisitionResult(r unsafe.Pointer) error {
+func (ip Processor) ReceiveAcquisitionResult(r unsafe.Pointer) error {
 	if ok := C.Proc_ReceiveAcquisitionResult(ip.p, r); !ok {
-		return errors.New("ocr.ImageProcessor.ReceiveAcquisitionResult: could not convert image")
+		return errors.New("image.Processor.ReceiveAcquisitionResult: could not convert image")
 	}
 	return nil
 }
@@ -185,7 +192,7 @@ func (ip ImageProcessor) ReceiveAcquisitionResult(r unsafe.Pointer) error {
 // for what we need and could potentially cause more critical issues.
 // Hence, any functionality requiring a GUI, regardless of the platform,
 // should be implemented through the web app.
-func (ip ImageProcessor) ShowImage(title string) {
+func (ip Processor) ShowImage(title string) {
 	cs := C.CString(title)
 	defer C.free(unsafe.Pointer(cs))
 	C.Proc_ShowImage(ip.p, cs)
@@ -194,11 +201,11 @@ func (ip ImageProcessor) ShowImage(title string) {
 // WriteAcquisitionResult writes 'r' to disc in PNG format.
 // NOTE: this function is slow and magical, and should only be used
 // for debugging.
-func (ip ImageProcessor) WriteAcquisitionResult(r unsafe.Pointer, filename string) error {
+func (ip Processor) WriteAcquisitionResult(r unsafe.Pointer, filename string) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
 	if ok := C.Proc_WriteAcquisitionResult(ip.p, r, cs); !ok {
-		return errors.New("ocr.ImageProcessor.WriteAcquisitionResult: could not write image")
+		return errors.New("image.Processor.WriteAcquisitionResult: could not write image")
 	}
 	return nil
 }
@@ -206,11 +213,11 @@ func (ip ImageProcessor) WriteAcquisitionResult(r unsafe.Pointer, filename strin
 // Write writes the currently held image to disc.
 // The format of the image is determined from the filename extension,
 // see OpenCV 'cv::imwrite' for supported formats.
-func (ip ImageProcessor) WriteImage(filename string) error {
+func (ip Processor) WriteImage(filename string) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
 	if ok := C.Proc_WriteImage(ip.p, cs); !ok {
-		return errors.New("ocr.ImageProcessor.WriteImage: could not write image")
+		return errors.New("image.Processor.WriteImage: could not write image")
 	}
 	return nil
 }

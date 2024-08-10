@@ -17,11 +17,15 @@ typedef void* Ptr;
 
 // Mem_Delete is a function which deletes ptr by calling the deleter del
 // with ptr as the argument.
-void Mem_Delete(Ptr* ptr, Deleter del);
+void Mem_Delete(Ptr ptr, Deleter del);
 
 // Mem_DeleteCharPtr is a convenience function which acts as a deleter
 // for a char* allocated with new[].
-void Mem_DeleteCharPtr(Ptr* ptr);
+void Mem_DeleteCharPtr(Ptr ptr);
+
+// Mem_DeleteCharPtrArr is a convenience function which acts as a deleter
+// for a char** allocated with new[].
+void Mem_DeleteCharPtrArr(Ptr ptr);
 
 #ifdef __cplusplus
 } // end extern "C"

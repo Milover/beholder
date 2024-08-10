@@ -8,15 +8,16 @@ import "C"
 import (
 	"io"
 
+	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/stopwatch"
 )
 
-// OCR is a container for Tesseract and ImageProcessor APIs.
+// OCR is a container for Tesseract and Processor APIs.
 // Since both are usually required at the same time, OCR simplifies
 // construction, initialization and cleanup of the two APIs.
 //
 // NOTE: think whether we should restrict access to the APIs altogether,
-// and just use OCR as the API interface, since Tesseract and ImageProcessor
+// and just use OCR as the API interface, since Tesseract and Processor
 // are almost exclusively used in tandem, for example: when reading
 // a new image, Tesseract should be Clear()-ed; when preprocessing an image,
 // Tesseract should SetImage(); postprocessing an image should only happen
@@ -24,9 +25,9 @@ import (
 // So while this would be somewhat more restrictive, it would probably make
 // using the two less error prone.
 type OCR struct {
-	T *Tesseract      `json:"tesseract"`
-	P *ImageProcessor `json:"image_processing"`
-	O *Output         `json:"output"`
+	T *Tesseract       `json:"tesseract"`
+	P *image.Processor `json:"image_processing"`
+	// O *output.Output   `json:"output"`
 }
 
 // NewOCR constructs a new OCR.
@@ -35,8 +36,8 @@ type OCR struct {
 func NewOCR() OCR {
 	return OCR{
 		T: NewTesseract(),
-		P: NewImageProcessor(),
-		O: NewOutput(),
+		P: image.NewProcessor(),
+		//		O: output.NewOutput(),
 	}
 }
 
@@ -52,7 +53,8 @@ func (o OCR) Delete() {
 // Once called, o is no longer valid.
 func (o OCR) Finalize() error {
 	o.Delete()
-	return o.O.Close()
+	return nil
+	// return o.O.Close()
 }
 
 // Init initializes C-allocated APIs with configuration data by calling
@@ -64,46 +66,48 @@ func (o OCR) Init() error {
 	if err := o.P.Init(); err != nil {
 		return err
 	}
-	if err := o.O.Init(); err != nil {
-		return err
-	}
+	//	if err := o.O.Init(); err != nil {
+	//		return err
+	//	}
 	return nil
 }
 
 // Run is a function that runs the OCR pipeline for a single image: reading,
 // preprocessing, recognition and postprocessing.
-func (o OCR) Run(r io.Reader) (Result, error) {
+func (o OCR) Run(r io.Reader) (*Result, error) {
 	sw := stopwatch.New()
-	res := Result{TimeStamp: sw.Start}
+	res := NewResult()
+	res.TimeStamp = sw.Start
 
 	// FIXME: this should probably happen in a different goroutine
 	buf, err := io.ReadAll(r)
 	if err != nil {
 		return res, err
 	}
-	res.ReadDuration = sw.Lap()
+	res.Timings.Set("read", sw.Lap())
 
-	if err = o.P.DecodeImage(buf, ImreadGrayscale); err != nil {
+	// FIXME: the read mode shouldn't be hardcoded
+	if err = o.P.DecodeImage(buf, image.RMGrayscale); err != nil {
 		return res, err
 	}
-	res.DecodeDuration = sw.Lap()
+	res.Timings.Set("decode", sw.Lap())
 
 	if err := o.P.Preprocess(); err != nil {
 		return res, err
 	}
-	o.T.SetImage(*o.P, 1)
-	res.PreprocDuration = sw.Lap()
+	o.T.SetImage(o.P.Ptr(), 1)
+	res.Timings.Set("preprocess", sw.Lap())
 
-	if res.Text, err = o.T.DetectAndRecognize(); err != nil {
+	if err = o.T.Recognize(res); err != nil {
 		return res, err
 	}
-	res.OCRDuration = sw.Lap()
+	res.Timings.Set("ocr", sw.Lap())
 
-	if err = o.P.Postprocess(*o.T); err != nil {
+	if err = o.P.Postprocess(o.T.Ptr()); err != nil {
 		return res, err
 	}
-	res.PostprocDuration = sw.Lap()
+	res.Timings.Set("postprocess", sw.Lap())
 
-	res.RunDuration = sw.Total()
+	res.Timings.Set("total", sw.Total())
 	return res, nil
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/image"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,10 +94,10 @@ func TestArray(t *testing.T) {
 
 			// setup
 			p := struct {
-				Cs Array               `json:"cameras"`
-				IP *ocr.ImageProcessor `json:"image_processor"`
+				Cs Array            `json:"cameras"`
+				IP *image.Processor `json:"image_processor"`
 			}{
-				IP: ocr.NewImageProcessor(),
+				IP: image.NewProcessor(),
 			}
 			defer func() {
 				p.Cs.Delete()

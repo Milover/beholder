@@ -8,7 +8,7 @@ import (
 	"runtime"
 
 	"github.com/Milover/beholder/internal/camera"
-	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/image"
 	"github.com/spf13/cobra"
 )
 
@@ -45,14 +45,14 @@ var (
 // a camera device.
 type CamApp struct {
 	Cs camera.Array            `json:"cameras"`
-	IP *ocr.ImageProcessor     `json:"image_processing"`
+	IP *image.Processor        `json:"image_processing"`
 	F  Filename[camera.Result] `json:"filename"`
 }
 
 // NewCamApp creates a new camera app.
 func NewCamApp() *CamApp {
 	return &CamApp{
-		IP: ocr.NewImageProcessor(),
+		IP: image.NewProcessor(),
 		F: Filename[camera.Result]{
 			FString: "img_%v_%v.png",
 			Fields: []string{

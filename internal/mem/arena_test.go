@@ -38,6 +38,8 @@ func (c ctrAssert) AssertWithGC() {
 }
 
 // TestStorage validates operation of [Arena.Store] and [Arena.StoreArray].
+//
+// TODO: test C-string stuff.
 func TestStorage(t *testing.T) {
 	ca := ctrAssert{
 		ass: assert.New(t),
