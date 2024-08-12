@@ -19,9 +19,9 @@ SourceFiles
 
 #include <algorithm>
 #include <chrono>
-#include <cstddef>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <ratio>
 
 #include <GenApi/Container.h>
@@ -34,6 +34,7 @@ SourceFiles
 
 #include "Exception.h"
 #include "ParamEntry.h"
+#include "RawImage.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -135,16 +136,27 @@ public:
 		//- Report if command execution finished
 		bool cmdIsDone(const char* cmd) noexcept;
 
+		//- Get the acquired result as a raw image.
+		//
+		//	NOTE: this does not transfer ownership of the underlying
+		//	acquisition result.
+		//	The receiver should copy the returned buffer if data persistence
+		//	is required.
+		std::optional<RawImage> getRawImage() noexcept;
+
 #ifndef NDEBUG
 		//- Get reference to the underlying pylon camera
-		Pylon::CInstantCamera& getRef() noexcept;
-#endif
+		Pylon::CInstantCamera& getRef() noexcept
+		{
+			return cam_;
+		}
 
 		//- Get reference to the acquired result
 		const Pylon::CGrabResultPtr& getResult() noexcept
 		{
 			return res_;
 		}
+#endif
 
 		//- Get camera parameters
 		ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite);

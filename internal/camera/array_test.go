@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Milover/beholder/internal/image"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,14 +93,14 @@ func TestArray(t *testing.T) {
 
 			// setup
 			p := struct {
-				Cs Array            `json:"cameras"`
-				IP *image.Processor `json:"image_processor"`
+				Cs Array `json:"cameras"`
+				//IP *image.Processor `json:"image_processor"`
 			}{
-				IP: image.NewProcessor(),
+				//IP: image.NewProcessor(),
 			}
 			defer func() {
 				p.Cs.Delete()
-				p.IP.Delete()
+				//p.IP.Delete()
 			}()
 			// unmarshal
 			err := json.Unmarshal([]byte(tt.Config), &p)
@@ -111,9 +110,9 @@ func TestArray(t *testing.T) {
 				if err := p.Cs.Init(); err != nil {
 					return err
 				}
-				if err := p.IP.Init(); err != nil {
-					return err
-				}
+				//if err := p.IP.Init(); err != nil {
+				//	return err
+				//}
 				return nil
 			}()
 			assert.Nil(err, err)
@@ -133,7 +132,7 @@ func TestArray(t *testing.T) {
 				t.Log("acquiring...")
 				err = errors.Join(err, p.Cs.Acquire())
 				for _, cam := range p.Cs {
-					if cam.Result.Value != nil {
+					if cam.Result.Buffer != nil {
 						// wat do?
 					}
 				}

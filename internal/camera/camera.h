@@ -2,12 +2,11 @@
 #define _BEHOLDER_CAMERA_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #ifdef __cplusplus
-#include <pylon/GrabResultPtr.h>
-
-#include "libbeholder.h"
+#include "libbeholder_camera.h"
 extern "C" {
 #endif
 
@@ -15,12 +14,10 @@ extern "C" {
 typedef beholder::Camera* Cam;
 typedef beholder::PylonAPI* Pyl;
 typedef beholder::TransportLayer* Trans;
-typedef const Pylon::CGrabResultPtr* Res;
 #else
 typedef void* Cam;
 typedef void* Pyl;
 typedef void* Trans;
-typedef const void* Res;
 #endif
 
 typedef struct {
@@ -29,15 +26,19 @@ typedef struct {
 } Par;
 
 typedef struct {
-	Res ptr;	// NOTE: weak pointer; no need to call free
 	size_t id;
-} Result;
+	int rows;
+	int cols;
+	int64_t pxTyp;
+	void* buf;	// NOTE: weak pointer; no need to call free
+	size_t step;
+} RawImage;
 
 bool Cam_Acquire(Cam c, size_t timeoutMs);
 bool Cam_CmdExecute(Cam c, const char* cmd);
 bool Cam_CmdIsDone(Cam c, const char* cmd);
 void Cam_Delete(Cam* c);
-Result Cam_GetResult(Cam c);
+RawImage Cam_GetRawImage(Cam c);
 bool Cam_IsAcquiring(Cam c);
 bool Cam_IsAttached(Cam c);
 bool Cam_IsInitialized(Cam c);

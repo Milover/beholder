@@ -16,6 +16,7 @@ import (
 
 	"github.com/Milover/beholder/internal/chrono"
 	"github.com/Milover/beholder/internal/mem"
+	"github.com/Milover/beholder/internal/neutral"
 )
 
 // Parameter is a GenICam parameter.
@@ -44,20 +45,6 @@ func (p Parameters) makeCPars(ar *mem.Arena) (pars unsafe.Pointer, nPars uint64)
 		parsSlice[i].value = (*C.char)(ar.CopyStr(par.Value))
 	}
 	return pars, nPars
-}
-
-// Result represents the result of an image acquisition process.
-type Result struct {
-	// Value is the acquired image buffer.
-	//
-	// Value is a non-owning pointer to the buffer and does not require
-	// explicit deallocation, it is managed by C.
-	Value unsafe.Pointer
-	// ID is the acquisition result id as asigned by the camera device.
-	ID uint64
-	// Timestamp is the time at which the result was acquired, i.e.
-	// received by the host machine.
-	Timestamp time.Time
 }
 
 const (
@@ -125,9 +112,9 @@ type Camera struct {
 	Trigger *Trigger `json:"trigger"`
 
 	// Result is the acquisition result.
-	// It is reset after each call to Acquire(), and has a non-nil Value only
-	// after successful acquisitions.
-	Result Result `json:"-"`
+	// It is reset after each call to Acquire(), and has a non-nil
+	// [neutral.Image.Buffer] only after successful acquisitions.
+	Result neutral.Image `json:"-"`
 
 	p C.Cam
 }
@@ -151,16 +138,23 @@ func NewCamera() *Camera {
 // an unrecoverable error is one which requires explicit handling,
 // eg. the camera device was detached.
 func (c *Camera) Acquire() error {
-	c.Result = Result{}
+	c.Result = neutral.Image{}
 	ok := C.Cam_Acquire(c.p, (C.size_t)(c.AcquisitionTimeout.Milliseconds()))
 	if !ok {
 		return fmt.Errorf("camera.Camera.Acquire: %w", ErrAcquisition)
 	}
-	r := C.Cam_GetResult(c.p)
-	c.Result = Result{
-		Value:     unsafe.Pointer(r.ptr),
+	r := C.Cam_GetRawImage(c.p)
+	if unsafe.Pointer(r.buf) == nil {
+		return fmt.Errorf("camera.Camera.Acquire: could not get raw image data")
+	}
+	c.Result = neutral.Image{
+		Buffer:    unsafe.Pointer(r.buf),
 		ID:        uint64(r.id),
 		Timestamp: time.Now(),
+		Rows:      int(r.rows),
+		Cols:      int(r.cols),
+		PixelType: int64(r.pxTyp),
+		Step:      uint64(r.step),
 	}
 	return nil
 }

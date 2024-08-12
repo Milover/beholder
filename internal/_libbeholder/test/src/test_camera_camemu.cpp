@@ -111,7 +111,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			std::cout << "image id:   " << cam.getResult()->GetID() << '\n'
 					  << "image size: " << static_cast<double>(cam.getResult()->GetImageSize()) / 1000000.0 << "MB\n";
 
-			if (!ip.receiveAcquisitionResult(cam.getResult()))
+			if (auto raw {cam.getRawImage()}; !raw || !ip.receiveRawImage(raw.value()))
 			{
 				std::cerr << "failed to convert acquired image\n";
 				continue;

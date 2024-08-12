@@ -8,7 +8,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <optional>
 
 #include <GenApi/INode.h>
 #include <pylon/Device.h>
@@ -22,6 +25,7 @@ License
 #include "DefaultConfigurator.h"
 #include "Exception.h"
 #include "ParamEntry.h"
+#include "RawImage.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -118,12 +122,39 @@ bool Camera::cmdIsDone(const char* cmd) noexcept
 	return false;
 }
 
-#ifndef NDEBUG
-Pylon::CInstantCamera& Camera::getRef() noexcept
+std::optional<RawImage> Camera::getRawImage() noexcept
 {
-	return cam_;
+	// not sure if this can throw, so we're being careful
+	try
+	{
+		if (!res_.IsValid())
+		{
+			return std::nullopt;
+		}
+		std::size_t step;
+		return std::optional
+		{
+			RawImage
+			{
+				static_cast<std::size_t>(res_->GetID()),
+				static_cast<int>(res_->GetHeight()),
+				static_cast<int>(res_->GetWidth()),
+				static_cast<std::int64_t>(res_->GetPixelType()),
+				res_->GetBuffer(),
+				res_->GetStride(step) ? step : 0ul
+			}
+		};
+	}
+	catch(const Pylon::GenericException& e)
+	{
+		std::cerr << "could get raw image data: " << e.what() << std::endl;
+	}
+	catch(...)
+	{
+		std::cerr << "could get raw image data" << std::endl;
+	}
+	return std::nullopt;
 }
-#endif
 
 ParamList Camera::getParams(ParamAccessMode mode)
 {

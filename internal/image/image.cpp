@@ -2,8 +2,6 @@
 #include <vector>
 #include <string>
 
-#include <pylon/GrabResultPtr.h>
-
 #include "image.h"
 
 
@@ -74,14 +72,19 @@ bool Proc_ReadImage(Proc p, const char* filename, int flags) {
 	return p->readImage(s, flags);
 }
 
-bool Proc_ReceiveAcquisitionResult(Proc p, const void* result) {
-	if (!p || !result) {
+bool Proc_ReceiveRawImage(Proc p, const RawImage* img) {
+	if (!p || !img) {
 		return false;
 	}
-	return p->receiveAcquisitionResult
-	(
-		*static_cast<const Pylon::CGrabResultPtr*>(result)
-	);
+	beholder::RawImage ri {
+		img->id,
+		img->rows,
+		img->cols,
+		img->pxTyp,
+		img->buf,
+		img->step
+	};
+	return p->receiveRawImage(ri);
 }
 
 void Proc_ShowImage(Proc p, const char* title) {
@@ -90,17 +93,6 @@ void Proc_ShowImage(Proc p, const char* title) {
 	}
 	std::string s {title};
 	p->showImage(s);
-}
-
-bool Proc_WriteAcquisitionResult(Proc p, const void* result, const char* filename) {
-	if (!p || !result) {
-		return false;
-	}
-	std::string s {filename};
-	return p->writeAcquisitionResult(
-		*static_cast<const Pylon::CGrabResultPtr*>(result),
-		filename
-	);
 }
 
 bool Proc_WriteImage(Proc p, const char* filename) {

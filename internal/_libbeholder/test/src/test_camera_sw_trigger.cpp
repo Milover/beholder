@@ -124,7 +124,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 			std::cout << "image id:   " << cam.getResult()->GetID() << '\n'
 					  << "image size: " << static_cast<double>(cam.getResult()->GetImageSize()) / 1000000.0 << "MB\n";
 
-			if (!ip.receiveAcquisitionResult(cam.getResult()))
+			if (auto raw {cam.getRawImage()}; !raw || !ip.receiveRawImage(raw.value()))
 			{
 				std::cerr << "failed to convert acquired image\n";
 				continue;
@@ -146,17 +146,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 				std::cerr << "failed to write JPEG image\n";
 			}
 			// write using the Pylon API
-			if
-			(
-				!ip.writeAcquisitionResult
-				(
-					cam.getResult(),
-					std::string{"py_img_"} + std::to_string(ip.getImageID()) + ".png"
-				)
-			)
-			{
-				std::cerr << "failed to write image with Pylon API\n";
-			}
+//			if
+//			(
+//				!ip.writeAcquisitionResult
+//				(
+//					cam.getResult(),
+//					std::string{"py_img_"} + std::to_string(ip.getImageID()) + ".png"
+//				)
+//			)
+//			{
+//				std::cerr << "failed to write image with Pylon API\n";
+//			}
 
 			std::cout << "Waiting for 2s\n";
 			beholder::wait(std::chrono::seconds {2});

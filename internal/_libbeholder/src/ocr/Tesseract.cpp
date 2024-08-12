@@ -161,10 +161,12 @@ bool Tesseract::recognizeText()
 	auto count {0ul};
 	do
 	{
-		char* ch {iter->GetUTF8Text(level)};
-		res_[count].text = ch;
-		trimWhiteLR(res_[count].text);
-		delete[] ch;
+		if (char* ch {iter->GetUTF8Text(level)}; ch)
+		{
+			res_[count].text = ch;
+			trimWhiteLR(res_[count].text);
+			delete[] ch;
+		}
 
 		res_[count].confidence = iter->Confidence(level);
 

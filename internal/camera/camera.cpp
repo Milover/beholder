@@ -48,16 +48,21 @@ void Cam_Delete(Cam* c) {
 	}
 }
 
-Result Cam_GetResult(Cam c) {
+RawImage Cam_GetRawImage(Cam c) {
 	if (!c) {
-		return Result {};
+		return RawImage {};
 	}
-	if (!c->getResult().IsValid()) {
-		return Result {};
+	auto res {c->getRawImage()};
+	if (!res) {
+		return RawImage {};
 	}
-	return Result {
-		&c->getResult(),
-		static_cast<std::size_t>(c->getResult()->GetID())
+	return RawImage {
+		res->id,
+		res->rows,
+		res->cols,
+		res->pixelType,
+		res->buffer,
+		res->step
 	};
 }
 

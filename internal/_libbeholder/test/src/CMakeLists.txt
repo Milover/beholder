@@ -9,9 +9,6 @@
 #list(APPEND BEHOLDER_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/lib")
 #list(APPEND BEHOLDER_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include")
 
-# append library
-list(APPEND BEHOLDER_LIBRARIES beholder)
-
 # add sources
 file(GLOB TEST_SRC *.cpp)
 
@@ -20,13 +17,21 @@ foreach(TESTFILE ${TEST_SRC})
 	get_filename_component(FILENAME ${TESTFILE} NAME_WE)
 	#add_executable(${FILENAME} "${FILENAME}.cpp" ${BEHOLDER_SRC})
 	add_executable(${FILENAME} "${FILENAME}.cpp")
-	target_include_directories(${FILENAME} PRIVATE ${BEHOLDER_INCLUDE_DIRS})
-	target_link_libraries(${FILENAME} PRIVATE ${BEHOLDER_LIBRARIES})
+	target_include_directories(${FILENAME}
+		PRIVATE
+		${BEHOLDER_INCLUDE_DIRS}
+		${BEHOLDER_CAMERA_INCLUDE_DIRS}
+	)
+	target_link_libraries(${FILENAME}
+		PRIVATE
+		beholder
+		beholder_camera
+		${BEHOLDER_CAMERA_LIBRARIES}
+	)
 	set_target_properties(${FILENAME}
 		PROPERTIES
 		RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/test/bin"
 	)
-
 	add_test(NAME ${FILENAME}
 		COMMAND ${FILENAME}
 		WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/test/bin"

@@ -9,6 +9,7 @@ import (
 
 	"github.com/Milover/beholder/internal/camera"
 	"github.com/Milover/beholder/internal/image"
+	"github.com/Milover/beholder/internal/neutral"
 	"github.com/spf13/cobra"
 )
 
@@ -46,14 +47,14 @@ var (
 type CamApp struct {
 	Cs camera.Array            `json:"cameras"`
 	IP *image.Processor        `json:"image_processing"`
-	F  Filename[camera.Result] `json:"filename"`
+	F  Filename[neutral.Image] `json:"filename"`
 }
 
 // NewCamApp creates a new camera app.
 func NewCamApp() *CamApp {
 	return &CamApp{
 		IP: image.NewProcessor(),
-		F: Filename[camera.Result]{
+		F: Filename[neutral.Image]{
 			FString: "img_%v_%v.png",
 			Fields: []string{
 				"Timestamp",
@@ -77,7 +78,7 @@ func (app *CamApp) Init() error {
 	if err := app.IP.Init(); err != nil {
 		return err
 	}
-	if err := app.F.Init(camera.Result{}); err != nil {
+	if err := app.F.Init(neutral.Image{}); err != nil {
 		return err
 	}
 	return nil
@@ -119,13 +120,13 @@ func cam(cmd *cobra.Command, args []string) error {
 		}
 		// FIXME: output/processing should not block acquisition
 		for _, cam := range app.Cs {
-			if cam.Result.Value == nil {
+			if cam.Result.Buffer == nil {
 				continue
 			}
 			acquired++
 
 			// FIXME: the image processor shouldn't own the image
-			if err := app.IP.ReceiveAcquisitionResult(cam.Result.Value); err != nil {
+			if err := app.IP.ReceiveRawImage(cam.Result); err != nil {
 				return err
 			}
 			log.Println("writing image with ID: ", cam.Result.ID)

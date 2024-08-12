@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"unsafe"
+
+	"github.com/Milover/beholder/internal/neutral"
 )
 
 type ReadMode int
@@ -176,9 +178,17 @@ func (ip Processor) ReadImage(filename string, readMode ReadMode) error {
 }
 
 // WriteAcquisitionResult writes 'r' to disc in PNG format.
-func (ip Processor) ReceiveAcquisitionResult(r unsafe.Pointer) error {
-	if ok := C.Proc_ReceiveAcquisitionResult(ip.p, r); !ok {
-		return errors.New("image.Processor.ReceiveAcquisitionResult: could not convert image")
+func (ip Processor) ReceiveRawImage(img neutral.Image) error {
+	ri := C.RawImage{
+		id:    C.size_t(img.ID),
+		rows:  C.int(img.Rows),
+		cols:  C.int(img.Cols),
+		pxTyp: C.int64_t(img.PixelType),
+		buf:   img.Buffer,
+		step:  C.size_t(img.Step),
+	}
+	if ok := C.Proc_ReceiveRawImage(ip.p, &ri); !ok {
+		return errors.New("image.Processor.ReceiveRawImage: could not convert image")
 	}
 	return nil
 }
@@ -196,18 +206,6 @@ func (ip Processor) ShowImage(title string) {
 	cs := C.CString(title)
 	defer C.free(unsafe.Pointer(cs))
 	C.Proc_ShowImage(ip.p, cs)
-}
-
-// WriteAcquisitionResult writes 'r' to disc in PNG format.
-// NOTE: this function is slow and magical, and should only be used
-// for debugging.
-func (ip Processor) WriteAcquisitionResult(r unsafe.Pointer, filename string) error {
-	cs := C.CString(filename)
-	defer C.free(unsafe.Pointer(cs))
-	if ok := C.Proc_WriteAcquisitionResult(ip.p, r, cs); !ok {
-		return errors.New("image.Processor.WriteAcquisitionResult: could not write image")
-	}
-	return nil
 }
 
 // Write writes the currently held image to disc.

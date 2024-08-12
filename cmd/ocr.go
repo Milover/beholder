@@ -92,7 +92,7 @@ func (app *OCRApp) Run(filename string, res *ocr.Result) error {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err = app.P.DecodeImage(buf, image.RMGrayscale); err != nil {
+	if err := app.P.DecodeImage(buf, image.RMGrayscale); err != nil {
 		return err
 	}
 	res.Timings.Set("decode", sw.Lap())
@@ -103,12 +103,12 @@ func (app *OCRApp) Run(filename string, res *ocr.Result) error {
 	app.T.SetImage(app.P.Ptr(), 1)
 	res.Timings.Set("preprocess", sw.Lap())
 
-	if err = app.T.Recognize(res); err != nil {
+	if err := app.T.Recognize(res); err != nil {
 		return err
 	}
 	res.Timings.Set("ocr", sw.Lap())
 
-	if err = app.P.Postprocess(app.T.Ptr()); err != nil {
+	if err := app.P.Postprocess(app.T.Ptr()); err != nil {
 		return err
 	}
 	res.Timings.Set("postprocess", sw.Lap())

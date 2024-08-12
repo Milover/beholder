@@ -17,16 +17,24 @@ typedef void* Proc;
 typedef void* Tess;	// FIXME: remove this
 #endif
 
+typedef struct {
+	size_t id;
+	int rows;
+	int cols;
+	int64_t pxTyp;
+	void* buf;	// NOTE: weak pointer; no need to call free
+	size_t step;
+} RawImage;
+
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags);
 void Proc_Delete(Proc p);
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre);
 Proc Proc_New();
 bool Proc_Postprocess(Proc p, Tess t);	// FIXME: remove Tess
 bool Proc_Preprocess(Proc p);
-bool Proc_ReceiveAcquisitionResult(Proc p, const void* result);
+bool Proc_ReceiveRawImage(Proc p, const RawImage* img);
 bool Proc_ReadImage(Proc p, const char* filename, int flags);
 void Proc_ShowImage(Proc p, const char* title);
-bool Proc_WriteAcquisitionResult(Proc p, const void* result, const char* filename);
 bool Proc_WriteImage(Proc p, const char* filename);
 
 #ifdef __cplusplus

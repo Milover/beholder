@@ -22,11 +22,9 @@ License
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <pylon/GrabResultPtr.h>
-#include <pylon/ImagePersistence.h>
-
 #include "ConversionInfo.h"
 #include "Processor.h"
+#include "RawImage.h"
 #include "Result.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -99,38 +97,37 @@ bool Processor::preprocess()
 	return true;
 }
 
-bool Processor::receiveAcquisitionResult(const Pylon::CGrabResultPtr& r)
+bool Processor::receiveRawImage(const RawImage& img)
 {
-	id_ = r->GetID();
+	id_ = img.id;
 
 	// find the conversion table entry
-	Pylon::EPixelType pixelType {r->GetPixelType()};
+	PxType typ {static_cast<PxType>(img.pixelType)};
 	auto found
 	{
 		std::find_if
 		(
 			ConversionInfoTable.begin(),
 			ConversionInfoTable.end(),
-			[pixelType](const auto& p) -> bool { return p.first == pixelType; }
+			[typ](const auto& p) -> bool { return p.first == typ; }
 		)
 	};
 	if (found == ConversionInfoTable.end())
 	{
 		std::cerr << "could not receive acquisition result (ID: " << id_ << "): "
-				  << "unknown pixel type: " << pixelType << std::endl;
+				  << "unknown pixel type: " << typ << std::endl;
 		return false;
 	}
 	const ConversionInfo& info {found->second};
 
 	// assign the buffer
-	std::size_t step;
 	cv::Mat tmp
 	{
-		static_cast<int>(r->GetHeight()),
-		static_cast<int>(r->GetWidth()),
+		img.rows,
+		img.cols,
 		info.inputType,
-		r->GetBuffer(),
-		r->GetStride(step) ? step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+		img.buffer,
+		img.step > 0ul ? img.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
 	};
 
 	// convert the color scheme if necessary
@@ -155,24 +152,6 @@ void Processor::showImage(const std::string& title) const
 {
 	cv::imshow(title, *img_);
 	cv::waitKey();
-}
-
-bool Processor::writeAcquisitionResult
-(
-	const Pylon::CGrabResultPtr& r,
-	const std::string& filename
-) const
-{
-	try
-	{
-		Pylon::CImagePersistence::Save
-		(
-			Pylon::ImageFileFormat_Png, filename.c_str(), r
-		);
-		return true;
-	}
-	catch(...) { }
-	return false;
 }
 
 bool Processor::writeImage(const std::string& filename) const

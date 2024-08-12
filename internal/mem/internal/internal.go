@@ -2,7 +2,7 @@
 package internal
 
 /*
-#cgo CXXFLAGS: --std=c++17
+#cgo CXXFLAGS: -std=c++17
 #include <stdlib.h>
 #include "internal.h"
 */

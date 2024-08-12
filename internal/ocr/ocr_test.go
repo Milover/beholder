@@ -381,7 +381,7 @@ func TestOCRRunSet(t *testing.T) {
 
 			// get the image set file names
 			dir, err := os.Open(tt.ImageSet)
-			assert.Nil(err, "could not open image set directory")
+			assert.Nil(err, "could not open image set directory: %v", err)
 			defer dir.Close()
 			filenames, err := dir.Readdirnames(-1)
 			assert.Nil(err, "could not read image set file names")
@@ -396,12 +396,12 @@ func TestOCRRunSet(t *testing.T) {
 				}
 				// read image
 				img, err := os.Open(path.Join(tt.ImageSet, filename))
-				assert.Nil(err, "could not open image")
+				assert.Nil(err, "could not open image file: %v", err)
 				defer img.Close()
 
 				// test
 				res, err := o.Run(img)
-				assert.Equal(tt.Error, err, "unexpected OCR error")
+				assert.Equal(tt.Error, err, "unexpected OCR error at file: %q", img.Name())
 
 				//				// if there were no errors, try to write the result
 				//				if tt.Error == nil && err == nil {

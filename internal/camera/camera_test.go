@@ -3,12 +3,8 @@ package camera
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"path"
-	"strconv"
 	"testing"
 
-	"github.com/Milover/beholder/internal/image"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -175,22 +171,24 @@ func TestCamera(t *testing.T) {
 			if tt.NeedsHwTrigger && !hwTriggering {
 				t.Skip("hardware triggering is disabled")
 			}
-			var outDir string
-			if cleanUp {
-				outDir = t.TempDir()
-			}
+			/*
+				var outDir string
+				if cleanUp {
+					outDir = t.TempDir()
+				}
+			*/
 
 			// setup
 			p := struct {
-				C  *Camera          `json:"camera"`
-				IP *image.Processor `json:"image_processor"`
+				C *Camera `json:"camera"`
+				//IP *image.Processor `json:"image_processor"`
 			}{
-				C:  NewCamera(),
-				IP: image.NewProcessor(),
+				C: NewCamera(),
+				//IP: image.NewProcessor(),
 			}
 			defer func() {
 				p.C.Delete()
-				p.IP.Delete()
+				//p.IP.Delete()
 			}()
 			// unmarshal
 			err := json.Unmarshal([]byte(tt.Config), &p)
@@ -204,9 +202,9 @@ func TestCamera(t *testing.T) {
 				if err := p.C.Init(); err != nil {
 					return err
 				}
-				if err := p.IP.Init(); err != nil {
-					return err
-				}
+				//if err := p.IP.Init(); err != nil {
+				//	return err
+				//}
 				return nil
 			}()
 			assert.Nil(err, err)
@@ -234,16 +232,19 @@ func TestCamera(t *testing.T) {
 				err = errors.Join(err, p.C.Acquire())
 
 				// TODO: should be in a separate test probably
-				if p.C.Result.Value != nil {
-					t.Log("writing...")
-					filename := fmt.Sprintf("img_%v_%v.png",
-						p.C.Result.Timestamp.Format("2006-01-02_15-04-05"),
-						strconv.FormatUint(p.C.Result.ID, 10))
-					err = errors.Join(
-						err,
-						p.IP.WriteAcquisitionResult(
-							p.C.Result.Value, path.Join(outDir, filename),
-						))
+				if p.C.Result.Buffer != nil {
+					// wat do?
+					/*
+						t.Log("writing...")
+						filename := fmt.Sprintf("img_%v_%v.png",
+							p.C.Result.Timestamp.Format("2006-01-02_15-04-05"),
+							strconv.FormatUint(p.C.Result.ID, 10))
+						err = errors.Join(
+							err,
+							p.IP.WriteAcquisitionResult(
+								p.C.Result.Buffer, path.Join(outDir, filename),
+							))
+					*/
 				}
 				assert.ErrorIs(err, tt.Error, "unexpected error")
 			}

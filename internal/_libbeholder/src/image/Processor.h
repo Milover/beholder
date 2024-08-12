@@ -23,10 +23,10 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include <pylon/GrabResultPtr.h>
-
-#include "Result.h"
+#include "ConversionInfo.h"
 #include "ProcessingOp.h"
+#include "RawImage.h"
+#include "Result.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -58,7 +58,7 @@ private:
 		//	FIXME: only images received from a camera will have an ID.
 		std::size_t id_ {0};
 
-	// Private Member functions 
+	// Private Member functions
 
 public:
 
@@ -110,24 +110,17 @@ public:
 		//	FIXME: this should take an Image
 		bool postprocess(const std::vector<Result>& res);
 
-		//- Recieve a (Pylon) camera acquisition result, and copy it locally.
+		//- Recieve a raw image, usually a camera acquisition result, and
+		//	copy it locally while converting to a standard color space.
+		//
 		//	Returns false if image conversion fails, and true otherwise.
-		bool receiveAcquisitionResult(const Pylon::CGrabResultPtr& r);
+		bool receiveRawImage(const RawImage& img);
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
 
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
-
-		//- Write a camera acquisition result to disc in PNG format.
-		//	NOTE: for debugging purposes only because it's
-		//	pretty slow and magical and the output format is hard-coded to PNG.
-		bool writeAcquisitionResult
-		(
-			const Pylon::CGrabResultPtr& r,
-			const std::string& filename = "img.png"
-		) const;
 
 		//- Write an image to disc
 		//	FIXME: hard-coded to use the lowest compression levels for PNG/JPEG.

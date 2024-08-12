@@ -7,17 +7,26 @@ cd ${0%/*} || exit 1
 set -e
 
 #------------------------------------------------------------------------------
+# setup
 
+# third party library versions
 OPENCV_VERSION="4.10.0"
 LEPTONICA_VERSION="1.84.1"
 TESSERACT_VERSION="5.4.1"
 PYLON_VERSION="7.5.0.15658_linux-x86_64"
 
+# common file paths
 THIRD_PARTY_DIR="$PWD"
 INSTALL_DIR="/usr/local"
+BUILD_SHARED=OFF # TODO: this should be toggleable
 
-#CC_FLAGS="-march=native -O2"
-CC_FLAGS=
+OPT_INSTALL_DIR="$INSTALL_DIR"
+if [ "$BUILD_SHARED" = "OFF" ]; then
+	OPT_INSTALL_DIR="$THIRD_PARTY_DIR/../share"
+fi
+
+#CXX_FLAGS="-fPIC -march=native -O3"
+#CC_FLAGS="-fPIC -march=native -O3"
 
 #------------------------------------------------------------------------------
 # clean the install manifest
@@ -49,7 +58,9 @@ if [ ! -f "archive.tar.gz" ]; then
 	rm -r archive
 fi
 
-tar -xvzf archive.tar.gz
+if [ ! -d "archive" ]; then
+	tar -xvzf archive.tar.gz
+fi
 
 #------------------------------------------------------------------------------
 # Build OpenCV
@@ -61,9 +72,8 @@ if [ ! -d opencv ]; then
 	mkdir opencv/build
 	cd opencv/build
 	cmake -DCMAKE_BUILD_TYPE=Release \
-		  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
-		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
-		  -DCMAKE_CXX_FLAGS="$CC_FLAGS" \
+		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
+		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
 		  -DOPENCV_GENERATE_PKGCONFIG=ON \
 		  -DOPENCV_FORCE_3RDPARTY_BUILD=ON \
 		  ../
@@ -90,9 +100,8 @@ if [ ! -d leptonica ]; then
 	mkdir build
 	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release \
-		  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
-		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
-		  -DBUILD_SHARED_LIBS=ON \
+		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
+		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
 		  -DPNG_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibpng.a" \
 		  -DPNG_PNG_INCLUDE_DIR="$THIRD_PARTY_DIR/opencv/3rdparty/libpng" \
 		  -DZLIB_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/libzlib.a" \
@@ -112,9 +121,6 @@ if [ ! -d leptonica ]; then
 	make -j4
 	make install
 
-	mv /usr/local/lib/pkgconfig/lept_Release.pc /usr/local/lib/pkgconfig/lept.pc
-	sed -i -e 's/lept_Release\.pc/lept.pc/g' install_manifest.txt
-
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
 	echo "" >> "$THIRD_PARTY_DIR/install_manifest.txt"
 
@@ -133,17 +139,15 @@ if [ ! -d tesseract ]; then
 	mkdir tesseract/build
 	cd tesseract/build
 	cmake -DCMAKE_BUILD_TYPE=Release \
-		  -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
-		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
-		  -DCMAKE_CXX_FLAGS="$CC_FLAGS" \
-		  -DBUILD_SHARED_LIBS=ON \
+		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
+		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
 		  -DINSTALL_CONFIGS=OFF \
 		  -DBUILD_TRAINING_TOOLS=OFF \
 		  -DDISABLE_CURL=ON \
 		  -DDISABLE_ARCHIVE=ON \
 		  -DTIFF_INCLUDE_DIR="$THIRD_PARTY_DIR/opencv/3rdparty/libtiff;$THIRD_PARTY_DIR/opencv/build/3rdparty/libtiff" \
 		  -DTIFF_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibtiff.a" \
-		  -DLeptonica_DIR="$INSTALL_DIR/lib/cmake/leptonica" \
+		  -DLeptonica_DIR="$OPT_INSTALL_DIR/lib/cmake/leptonica" \
 		  ../
 	make -j4
 	make install
@@ -201,13 +205,12 @@ elif [ ! -d pylon ]; then
 		  lib/libpylon_TL_camemu.so* \
 		  lib/libpylon_TL_usb.so* \
 		  lib/pylon-libusb-1.0.so* \
-		  lib/gentlproducer \
 		  "$INSTALL_DIR/lib/"
-	tree --prune --noreport -f -i "$INSTALL_DIR" | sed -e 's/ -> .*//g' | grep -e 'pylon' -e 'gentlproducer' -e 'Basler' -e 'libgxapi' -e 'libuxapi' | tee -a install_manifest.txt
+	tree --prune --noreport -f -i "$INSTALL_DIR" | sed -e 's/ -> .*//g' | grep -e 'pylon' -e 'Basler' -e 'libgxapi' -e 'libuxapi' | tee -a install_manifest.txt
 
 	# move licenses
 	mv -v share/pylon/licenses "$INSTALL_DIR/share/licenses/pylon"
-	tree --prune --noreport -f -i "$INSTALL_DIR/share/licences/pylon" | sed -e 's/ -> .*//g' | tee -a install_manifest.txt
+	tree --prune --noreport -f -i "$INSTALL_DIR/share/licenses/pylon" | sed -e 's/ -> .*//g' | tee -a install_manifest.txt
 
 	# make pkg-config file
 	tee pylon.pc << EOF
@@ -239,6 +242,6 @@ fi
 # cleanup
 
 ldconfig
-rmdir archive
+rm -rf archive
 
 #------------------------------------------------------------------------------
