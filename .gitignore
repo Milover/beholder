@@ -31,6 +31,8 @@ internal/ocr/testdata/images
 internal/_libbeholder/bin/
 internal/_libbeholder/build/
 internal/_libbeholder/doc/
+internal/_libbeholder/include/
+internal/_libbeholder/lib/
 internal/_libbeholder/share/
 internal/_libbeholder/vagrant/
 internal/_libbeholder/test/bin/
