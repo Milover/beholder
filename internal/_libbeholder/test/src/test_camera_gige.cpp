@@ -19,6 +19,7 @@ License
 #include <pylon/gige/GigETransportLayer.h>
 
 #include "Test.h"
+#include "TestCamera.h"
 
 namespace py = Pylon;
 

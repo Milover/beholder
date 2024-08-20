@@ -3,7 +3,9 @@
 #
 # See the LICENSE file for license information
 
-# cmake options
+###############################################################################
+
+# cmake version
 cmake_minimum_required(VERSION 3.25)
 
 # build type
@@ -15,11 +17,6 @@ endif()
 
 # project name
 project(beholder)
-
-# restrict platform
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	message(FATAL_ERROR "Camera support can only be built on Linux")
-endif()
 
 # install prefix
 #if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -46,12 +43,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 ###############################################################################
-# define dependency vars
+# set up main library target
+
 set(BEHOLDER_INCLUDE_DIRS "")
 set(BEHOLDER_LIBRARIES "")
-
-set(BEHOLDER_CAMERA_INCLUDE_DIRS "")
-set(BEHOLDER_CAMERA_LIBRARIES "")
 
 # FetchContent
 #include(FetchContent)
@@ -59,27 +54,22 @@ set(BEHOLDER_CAMERA_LIBRARIES "")
 # we always build the main library statically, so we use static third-party
 # libraries only
 # Leptonica
-set(Leptonica_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/leptonica")
+set(Leptonica_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/leptonica")
 #find_package(Leptonica REQUIRED)
 #list(APPEND BEHOLDER_INCLUDE_DIRS ${Leptonica_INCLUDE_DIRS})
 #list(APPEND BEHOLDER_LIBRARIES ${Leptonica_LIBRARIES})
 
 # Tesseract
-set(Tesseract_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/tesseract")
+set(Tesseract_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/tesseract")
 find_package(Tesseract REQUIRED)
 list(APPEND BEHOLDER_INCLUDE_DIRS ${Tesseract_INCLUDE_DIRS})
 list(APPEND BEHOLDER_LIBRARIES "Tesseract::libtesseract")
 
 # OpenCV
-set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/share/lib/cmake/opencv4")
+set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/opencv4")
 find_package(OpenCV REQUIRED)
 list(APPEND BEHOLDER_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 list(APPEND BEHOLDER_LIBRARIES ${OpenCV_LIBS})
-
-# pylon
-find_package(pylon 7.5.0 REQUIRED)
-list(APPEND BEHOLDER_CAMERA_INCLUDE_DIRS ${pylon_INCLUDE_DIRS})
-list(APPEND BEHOLDER_CAMERA_LIBRARIES "pylon::pylon")
 
 # Threads
 #find_package(Threads REQUIRED)
@@ -88,8 +78,6 @@ list(APPEND BEHOLDER_CAMERA_LIBRARIES "pylon::pylon")
 # random linker stuff
 #list(APPEND BEHOLDER_LIBRARIES "stdc++fs")
 
-###############################################################################
-# add main library sources and headers
 file(
 	GLOB
 	BEHOLDER_SRC
@@ -122,9 +110,9 @@ list(
 # main library target
 add_library(beholder STATIC)
 set_target_properties(beholder
-		PROPERTIES
-		#CMAKE_POSITION_INDEPENDENT_CODE TRUE
-		INTERPROCEDURAL_OPTIMIZATION TRUE
+	PROPERTIES
+	#CMAKE_POSITION_INDEPENDENT_CODE TRUE
+	INTERPROCEDURAL_OPTIMIZATION TRUE
 )
 target_include_directories(beholder PRIVATE ${BEHOLDER_INCLUDE_DIRS})
 target_link_libraries(beholder PRIVATE ${BEHOLDER_LIBRARIES})
@@ -154,8 +142,8 @@ list(APPEND BEHOLDER_HDR "${CMAKE_BINARY_DIR}/libbeholder.h")
 # install targets
 #install(TARGETS beholder LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
 #install(FILES ${BEHOLDER_HDR} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/beholder")
-install(TARGETS beholder ARCHIVE DESTINATION "${PROJECT_SOURCE_DIR}/share/lib")
-install(FILES ${BEHOLDER_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/share/include/beholder")
+install(TARGETS beholder ARCHIVE DESTINATION "${PROJECT_SOURCE_DIR}/lib")
+install(FILES ${BEHOLDER_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include/beholder")
 
 # install the pkg-config
 #install(FILES "${CMAKE_BINARY_DIR}/beholder.pc"
@@ -163,65 +151,78 @@ install(FILES ${BEHOLDER_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/share/include/b
 #)
 
 ###############################################################################
-# add camera library sources and headers
-file(
-	GLOB
-	BEHOLDER_CAMERA_SRC
-	CONFIGURE_DEPENDS
-	"${PROJECT_SOURCE_DIR}/src/*.cpp"
-	"${PROJECT_SOURCE_DIR}/src/camera/*.cpp"
-)
+# set up camera library target
 
-file(
-	GLOB
-	BEHOLDER_CAMERA_HDR
-	CONFIGURE_DEPENDS
-	"${PROJECT_SOURCE_DIR}/src/*.h"
-	"${PROJECT_SOURCE_DIR}/src/camera/*.h"
-)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
-list(
-	APPEND
-	BEHOLDER_CAMERA_INCLUDE_DIRS
-	"${PROJECT_SOURCE_DIR}/src"
-	"${PROJECT_SOURCE_DIR}/src/camera"
-)
+	set(BEHOLDER_CAMERA_INCLUDE_DIRS "")
+	set(BEHOLDER_CAMERA_LIBRARIES "")
 
-# camera library target
-add_library(beholder_camera SHARED)
-target_include_directories(beholder_camera PRIVATE ${BEHOLDER_CAMERA_INCLUDE_DIRS})
-target_link_libraries(beholder_camera PRIVATE ${BEHOLDER_CAMERA_LIBRARIES})
-target_sources(beholder_camera PRIVATE ${BEHOLDER_CAMERA_SRC})
-target_sources(beholder_camera PUBLIC FILE_SET HEADERS FILES ${BEHOLDER_CAMERA_HDR})
+	# pylon
+	find_package(pylon 7.5.0 REQUIRED)
+	list(APPEND BEHOLDER_CAMERA_INCLUDE_DIRS ${pylon_INCLUDE_DIRS})
+	list(APPEND BEHOLDER_CAMERA_LIBRARIES "pylon::pylon")
 
-# generate camera library global header
-set(INCLUDE_BEHOLDER_CAMERA_HDR "")
-foreach(HEADER ${BEHOLDER_CAMERA_HDR})
-	get_filename_component(HDR ${HEADER} NAME)
-	set(INCLUDE_BEHOLDER_CAMERA_HDR "${INCLUDE_BEHOLDER_CAMERA_HDR}#include \"${HDR}\"\n")
-endforeach()
-configure_file(
-	${CMAKE_SOURCE_DIR}/src/libbeholder_camera.h.in
-	${CMAKE_BINARY_DIR}/libbeholder_camera.h
-	@ONLY
-)
-list(APPEND BEHOLDER_CAMERA_HDR "${CMAKE_BINARY_DIR}/libbeholder_camera.h")
+	file(
+		GLOB
+		BEHOLDER_CAMERA_SRC
+		CONFIGURE_DEPENDS
+		"${PROJECT_SOURCE_DIR}/src/*.cpp"
+		"${PROJECT_SOURCE_DIR}/src/camera/*.cpp"
+	)
 
-# generate pkg-config
-configure_file(
-	${CMAKE_SOURCE_DIR}/beholder_camera.pc.in
-	${CMAKE_BINARY_DIR}/beholder_camera.pc
-	@ONLY
-)
+	file(
+		GLOB
+		BEHOLDER_CAMERA_HDR
+		CONFIGURE_DEPENDS
+		"${PROJECT_SOURCE_DIR}/src/*.h"
+		"${PROJECT_SOURCE_DIR}/src/camera/*.h"
+	)
 
-# install targets
-install(TARGETS beholder_camera LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
-install(FILES ${BEHOLDER_CAMERA_HDR} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/beholder/camera")
+	list(
+		APPEND
+		BEHOLDER_CAMERA_INCLUDE_DIRS
+		"${PROJECT_SOURCE_DIR}/src"
+		"${PROJECT_SOURCE_DIR}/src/camera"
+	)
 
-# install the pkg-config
-install(FILES "${CMAKE_BINARY_DIR}/beholder_camera.pc"
-	DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig"
-)
+	# camera library target
+	add_library(beholder_camera SHARED)
+	target_include_directories(beholder_camera PRIVATE ${BEHOLDER_CAMERA_INCLUDE_DIRS})
+	target_link_libraries(beholder_camera PRIVATE ${BEHOLDER_CAMERA_LIBRARIES})
+	target_sources(beholder_camera PRIVATE ${BEHOLDER_CAMERA_SRC})
+	target_sources(beholder_camera PUBLIC FILE_SET HEADERS FILES ${BEHOLDER_CAMERA_HDR})
+
+	# generate camera library global header
+	set(INCLUDE_BEHOLDER_CAMERA_HDR "")
+	foreach(HEADER ${BEHOLDER_CAMERA_HDR})
+		get_filename_component(HDR ${HEADER} NAME)
+		set(INCLUDE_BEHOLDER_CAMERA_HDR "${INCLUDE_BEHOLDER_CAMERA_HDR}#include \"${HDR}\"\n")
+	endforeach()
+	configure_file(
+		${CMAKE_SOURCE_DIR}/src/libbeholder_camera.h.in
+		${CMAKE_BINARY_DIR}/libbeholder_camera.h
+		@ONLY
+	)
+	list(APPEND BEHOLDER_CAMERA_HDR "${CMAKE_BINARY_DIR}/libbeholder_camera.h")
+
+	# generate pkg-config
+	configure_file(
+		${CMAKE_SOURCE_DIR}/beholder_camera.pc.in
+		${CMAKE_BINARY_DIR}/beholder_camera.pc
+		@ONLY
+	)
+
+	# install targets
+	install(TARGETS beholder_camera LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib")
+	install(FILES ${BEHOLDER_CAMERA_HDR} DESTINATION "${CMAKE_INSTALL_PREFIX}/include/beholder/camera")
+
+	# install the pkg-config
+	install(FILES "${CMAKE_BINARY_DIR}/beholder_camera.pc"
+		DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig"
+	)
+
+endif()
 
 ###############################################################################
 # enable testing in debug mode
