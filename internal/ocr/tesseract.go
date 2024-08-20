@@ -148,9 +148,9 @@ func (t Tesseract) Recognize(res *Result) error {
 	nLines := uint64(results.count)
 	if uint64(cap(res.Text)) < nLines {
 		diff := int(nLines - uint64(cap(res.Text)))
-		slices.Grow(res.Text, diff)
-		slices.Grow(res.Confidence, diff)
-		slices.Grow(res.Boxes, diff)
+		res.Text = slices.Grow(res.Text, diff)
+		res.Confidence = slices.Grow(res.Confidence, diff)
+		res.Boxes = slices.Grow(res.Boxes, diff)
 	}
 	// FIXME: we probably shouldn't do this here
 	res.Text = res.Text[:0]

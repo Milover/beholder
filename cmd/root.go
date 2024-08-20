@@ -1,9 +1,14 @@
 package cmd
 
 import (
+	"errors"
 	"log"
 
 	"github.com/spf13/cobra"
+)
+
+var (
+	ErrCmdDisabled = errors.New("command disabled")
 )
 
 var (

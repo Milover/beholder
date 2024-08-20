@@ -21,6 +21,7 @@ License
 #include "TransportLayer.h"
 
 #include "Test.h"
+#include "TestCamera.h"
 
 // * * * * * * * * * * * * * * * * Constants * * * * * * * * * * * * * * * * //
 

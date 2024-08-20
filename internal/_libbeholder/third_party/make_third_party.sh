@@ -9,6 +9,9 @@ set -e
 #------------------------------------------------------------------------------
 # setup
 
+# system check
+PLATFORM="$(uname)"
+
 # third party library versions
 OPENCV_VERSION="4.10.0"
 LEPTONICA_VERSION="1.84.1"
@@ -22,11 +25,11 @@ BUILD_SHARED=OFF # TODO: this should be toggleable
 
 OPT_INSTALL_DIR="$INSTALL_DIR"
 if [ "$BUILD_SHARED" = "OFF" ]; then
-	OPT_INSTALL_DIR="$THIRD_PARTY_DIR/../share"
+	OPT_INSTALL_DIR="$THIRD_PARTY_DIR/.."
 fi
 
-#CXX_FLAGS="-fPIC -march=native -O3"
-#CC_FLAGS="-fPIC -march=native -O3"
+CXX_FLAGS="-march=native -O3"
+CC_FLAGS="-march=native -O3"
 
 #------------------------------------------------------------------------------
 # clean the install manifest
@@ -55,7 +58,7 @@ if [ ! -f "archive.tar.gz" ]; then
 	cd "$THIRD_PARTY_DIR"
 
 	tar -cvzf archive.tar.gz archive
-	rm -r archive
+	#rm -r archive
 fi
 
 if [ ! -d "archive" ]; then
@@ -69,9 +72,13 @@ if [ ! -d opencv ]; then
 	echo "setting up OpenCV"
 
 	mv archive/opencv ./
-	mkdir opencv/build
-	cd opencv/build
+	cd opencv
+	git apply "$THIRD_PARTY_DIR/patches/opencv.patch"
+	mkdir build
+	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release \
+		  -DCMAKE_CXX_FLAGS="$CXX_FLAGS" \
+		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
 		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
 		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
 		  -DOPENCV_GENERATE_PKGCONFIG=ON \
@@ -100,6 +107,7 @@ if [ ! -d leptonica ]; then
 	mkdir build
 	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release \
+		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
 		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
 		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
 		  -DPNG_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibpng.a" \
@@ -141,10 +149,13 @@ if [ ! -d tesseract ]; then
 	cmake -DCMAKE_BUILD_TYPE=Release \
 		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
 		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
-		  -DINSTALL_CONFIGS=OFF \
+		  -DENABLE_NATIVE=ON \
 		  -DBUILD_TRAINING_TOOLS=OFF \
-		  -DDISABLE_CURL=ON \
 		  -DDISABLE_ARCHIVE=ON \
+		  -DINSTALL_CONFIGS=OFF \
+		  -DDISABLE_CURL=ON \
+		  -DGRAPHICS_DISABLED=ON \
+		  -DOPENMP_BUILD=OFF \
 		  -DTIFF_INCLUDE_DIR="$THIRD_PARTY_DIR/opencv/3rdparty/libtiff;$THIRD_PARTY_DIR/opencv/build/3rdparty/libtiff" \
 		  -DTIFF_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibtiff.a" \
 		  -DLeptonica_DIR="$OPT_INSTALL_DIR/lib/cmake/leptonica" \
@@ -165,7 +176,7 @@ fi
 
 # TODO: we should also check the architecture, but realistically, we'll never
 # use an ARM linux, so whatever.
-if [ "$OSTYPE" = "darwin" ]; then
+if [ "$PLATFORM" = "Darwin" ]; then
 	echo "pylon not available for Apple silicon --- skipping"
 elif [ ! -d pylon ]; then
 	echo "setting up pylon"
@@ -241,7 +252,10 @@ fi
 #------------------------------------------------------------------------------
 # cleanup
 
-ldconfig
+if [ "$PLATFORM" = "Linux" ]; then
+	ldconfig
+fi
+
 rm -rf archive
 
 #------------------------------------------------------------------------------

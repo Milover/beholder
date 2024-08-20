@@ -3,8 +3,15 @@
 MODULE		:= $(shell go list -m)
 MODULE_URL	:= $(shell go list -m | tr [:upper:] [:lower:])
 TARGET		:= $(shell basename $(MODULE))
+PLATFORM	:= $(shell uname)
 
 BUILD_TAGS ?=
+
+ifeq ($(PLATFORM), Darwin)
+ # TODO: remove when no longer necessary, for more info see:
+ # https://stackoverflow.com/questions/77164140/ld-warning-ignoring-duplicate-libraries-lgcc-after-the-recent-update-of-xc
+ export CGO_LDFLAGS="-Wl,-no_warn_duplicate_libraries"
+endif
 
 build:
 	@echo $(MODULE)
