@@ -69,7 +69,8 @@ public:
 		//- Padding added to the cropped image
 		float padding {10.0};
 		//- Gradient kernel size
-		const int gradientKernelSize {3};
+		//	XXX: is there a reason why we maed it 'const' originally?
+		int gradientKernelSize {3};
 
 	//- Constructors
 
