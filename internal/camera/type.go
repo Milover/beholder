@@ -1,9 +1,7 @@
+//go:build linux
+
 package camera
 
-/*
-#include "camera.h"
-*/
-import "C"
 import (
 	"errors"
 
