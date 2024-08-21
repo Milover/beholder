@@ -96,7 +96,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// preprocess the image
 	ip.preprocess();
-	t.setImage(ip);
+	t.setImage(ip.getRawImage());
 	//ip.writeImage();
 	//ip.showImage();
 

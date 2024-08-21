@@ -31,7 +31,7 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include "Processor.h"
+#include "RawImage.h"
 #include "Result.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
@@ -110,8 +110,7 @@ public:
 		void clear();
 
 		//- Run text detection and store the results
-		// TODO: should take a neutral image
-		bool detect(const Processor& ip);
+		bool detect(const RawImage& raw);
 
 		//- Get a const reference to the OCR (detection) results
 		const std::vector<Result>& getResults() const;

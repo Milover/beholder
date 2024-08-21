@@ -12,16 +12,13 @@ License
 #include <string>
 #include <vector>
 
-// the dnn module randomly adds an OpenCV-version specific namespace, which
-// breaks the forward declaration
-//#define CV_DNN_DONT_ADD_INLINE_NS 1
-
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
 
 #include "Detector.h"
 #include "Processor.h"
+#include "RawImage.h"
 #include "Rectangle.h"
 #include "Result.h"
 
@@ -57,27 +54,30 @@ void Detector::clear()
 	res_.clear();
 }
 
-bool Detector::detect(const Processor& ip)
+bool Detector::detect(const RawImage& raw)
 {
 	res_.clear();
 	if (!m_)
 	{
 		return false;
 	}
+	auto img {rawToMatPtr(raw)};
+	if (!img)
+	{
+		return false;
+	}
 
-	const cv::Mat& img {ip.getImage()};
 	m_->setInputParams
 	(
 		scale_,
-		cv::Size {img.rows, img.cols},
-		cv::mean(img),	// XXX: not sure about this guy
+		cv::Size {img->cols, img->rows},
+		cv::mean(*img),	// XXX: not sure about this guy
 		swapRB_
 	);
-
 	// OPTIMIZE: should we reserve here?
 	std::vector<cv::RotatedRect> rects;
 	std::vector<float> confidences;
-	m_->detectTextRectangles(img, rects, confidences);	// EAST can't do detect(...)
+	m_->detectTextRectangles(*img, rects, confidences);	// EAST can't do detect(...)
 
 	res_.reserve(rects.size());
 	for (auto i {0ul}; i < rects.size(); ++i)

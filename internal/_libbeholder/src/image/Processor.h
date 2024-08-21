@@ -23,7 +23,6 @@ SourceFiles
 #include <string>
 #include <vector>
 
-#include "ConversionInfo.h"
 #include "ProcessingOp.h"
 #include "RawImage.h"
 #include "Result.h"
@@ -102,6 +101,9 @@ public:
 		//	of calling receiveAcquisitionResult(...), will have an ID.
 		std::size_t getImageID() const;
 
+		//- Get the stored image as a RawImage
+		RawImage getRawImage() const;
+
 		//- Run pre-OCR image processing
 		//	FIXME: this should take an Image
 		bool preprocess();
@@ -114,7 +116,7 @@ public:
 		//	copy it locally while converting to a standard color space.
 		//
 		//	Returns false if image conversion fails, and true otherwise.
-		bool receiveRawImage(const RawImage& img);
+		bool receiveRawImage(const RawImage& raw);
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
@@ -138,6 +140,9 @@ public:
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+//- Convert a raw image to a cv::Mat pointer
+std::unique_ptr<cv::Mat> rawToMatPtr(const RawImage& raw);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

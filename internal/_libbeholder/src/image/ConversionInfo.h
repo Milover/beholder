@@ -19,6 +19,7 @@ SourceFiles
 #define BEHOLDER_CONVERSION_INFO_H
 
 #include <array>
+#include <optional>
 #include <utility>
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -142,6 +143,10 @@ enum PxType
 //- A table relating various (foreign) pixel types to info needed to convert
 //	the image into a standard OpenCV format.
 extern const std::array<std::pair<PxType, ConversionInfo>, 49> ConversionInfoTable;
+
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+std::optional<ConversionInfo> getConversionInfo(PxType typ);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -83,7 +83,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// NOTE: the analysis (seemingly) isn't being re-run
 	// run ocr
-	if (!d.detect(ip))
+	if (!d.detect(ip.getRawImage()))
 	{
 		std::cerr << "Could not detect text.\n";
 		return 1;
