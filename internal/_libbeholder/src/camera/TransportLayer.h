@@ -56,7 +56,7 @@ private:
 	// Private data
 
 		//- Pylon transport layer handle
-		Pylon::ITransportLayer* tl_;
+		Pylon::ITransportLayer* tl_ {nullptr};
 
 	// Private Member functions
 
