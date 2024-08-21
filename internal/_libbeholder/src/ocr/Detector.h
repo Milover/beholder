@@ -9,8 +9,11 @@ License
 Description
 	A DNN-based text detector wrapper.
 
-	WARNING: images must be rescaled to multiples of 160px
-	for both DB and EAST models.
+	For more info on the DB model, see: https://github.com/MhLiao/DB
+	For more info on the EAST model, see: https://github.com/argman/EAST
+
+	WARNING: both DB and EAST models operate on images sized as
+	multiples of 160px.
 
 SourceFiles
 	Detector.cpp
