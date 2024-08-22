@@ -35,9 +35,16 @@ public:
 		std::size_t id;
 		int rows;
 		int cols;
+		// FIXME: this is pretty horrible, however simple values make
+		// life easier from the Go side
 		std::int64_t pixelType;
+		// FIXME: this should be something better than a raw pointer,
+		// however we can't do weak/shared pointers since Go will probably
+		// manage this memory, so should think of something, because it
+		// will cause issues
 		void* buffer;
 		std::size_t step;
+		// TODO: should have the size of the buffer in bytes
 
 };
 
