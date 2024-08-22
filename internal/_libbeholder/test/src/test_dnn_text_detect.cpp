@@ -96,7 +96,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// postprocess
 	ip.postprocess(d.getResults());
 
-	ip.showImage();
+	//ip.showImage();
 
 	return 0;
 }
