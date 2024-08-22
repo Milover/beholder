@@ -17,6 +17,7 @@ typedef void* Proc;
 typedef void* Tess;	// FIXME: remove this
 #endif
 
+// FIXME: we're copying this struct in like 7 places
 typedef struct {
 	size_t id;
 	int rows;
@@ -28,6 +29,7 @@ typedef struct {
 
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags);
 void Proc_Delete(Proc p);
+RawImage Proc_GetRawImage(Proc p);
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre);
 Proc Proc_New();
 bool Proc_Postprocess(Proc p, Tess t);	// FIXME: remove Tess

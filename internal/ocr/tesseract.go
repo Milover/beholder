@@ -17,6 +17,7 @@ import (
 	"github.com/Milover/beholder/internal/enumutils"
 	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/mem"
+	"github.com/Milover/beholder/internal/neutral"
 	"github.com/Milover/beholder/internal/ocr/model"
 )
 
@@ -252,9 +253,19 @@ func (t Tesseract) Ptr() unsafe.Pointer {
 // SetImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
 // FIXME: bytesPerPixel should be automatically determined.
-// FIXME: this shouldn't need a Processor, it should take an image.Image
-func (t Tesseract) SetImage(proc unsafe.Pointer, bytesPerPixel int) {
-	C.Tess_SetImage(t.p, C.Proc(proc), C.int(bytesPerPixel))
+func (t Tesseract) SetImage(img neutral.Image, bytesPerPixel int) error {
+	raw := C.RawImage{
+		C.size_t(img.ID),
+		C.int(img.Rows),
+		C.int(img.Cols),
+		C.int64_t(img.PixelType),
+		img.Buffer,
+		C.size_t(img.Step),
+	}
+	if ok := C.Tess_SetImage(t.p, &raw, C.int(bytesPerPixel)); !ok {
+		return errors.New("ocr.Tesseract.SetImage: could not set image")
+	}
+	return nil
 }
 
 // setPatterns sets up the stuff necessary for Tesseract

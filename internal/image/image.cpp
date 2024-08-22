@@ -22,6 +22,21 @@ void Proc_Delete(Proc p) {
 	}
 }
 
+RawImage Proc_GetRawImage(Proc p) {
+	if (!p) {
+		return RawImage {};
+	}
+	beholder::RawImage img {p->getRawImage()};
+	return RawImage {
+		img.id,
+		img.rows,
+		img.cols,
+		img.pixelType,
+		img.buffer,
+		img.step
+	};
+}
+
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 	if (!p) {
 		return false;

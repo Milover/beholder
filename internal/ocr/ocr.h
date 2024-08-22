@@ -49,12 +49,22 @@ typedef struct {
 	size_t nVars;
 } TInit;
 
+// FIXME: we're copying this struct in like 7 places
+typedef struct {
+	size_t id;
+	int rows;
+	int cols;
+	int64_t pxTyp;
+	void* buf;	// NOTE: weak pointer; no need to call free
+	size_t step;
+} RawImage;
+
 void Tess_Clear(Tess t);
 void Tess_Delete(Tess t);
 ResArr* Tess_Recognize(Tess t);
 bool Tess_Init(Tess t, const TInit* in);
 Tess Tess_New();
-void Tess_SetImage(Tess t, Proc p, int bytesPerPixel);
+bool Tess_SetImage(Tess t, const RawImage* raw, int bytesPerPixel);
 
 #ifdef __cplusplus
 } // end extern "C"

@@ -95,7 +95,9 @@ func (o OCR) Run(r io.Reader) (*Result, error) {
 	if err := o.P.Preprocess(); err != nil {
 		return res, err
 	}
-	o.T.SetImage(o.P.Ptr(), 1)
+	if err := o.T.SetImage(o.P.GetRawImage(), 1); err != nil {
+		return res, err
+	}
 	res.Timings.Set("preprocess", sw.Lap())
 
 	if err = o.T.Recognize(res); err != nil {

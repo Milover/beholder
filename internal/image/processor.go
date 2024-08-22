@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/neutral"
@@ -68,6 +69,20 @@ func (ip Processor) DecodeImage(buf []byte, readMode ReadMode) error {
 // Delete releases C-allocated memory. Once called, ip is no longer valid.
 func (ip *Processor) Delete() {
 	C.Proc_Delete(ip.p)
+}
+
+// GetRawImage returns the currently stored image as a neutral.Image.
+func (ip Processor) GetRawImage() neutral.Image {
+	raw := C.Proc_GetRawImage(ip.p)
+	return neutral.Image{
+		ID:        uint64(raw.id),
+		Timestamp: time.Now(),
+		Buffer:    unsafe.Pointer(raw.buf),
+		Rows:      int(raw.rows),
+		Cols:      int(raw.cols),
+		PixelType: int64(raw.pxTyp),
+		Step:      uint64(raw.step),
+	}
 }
 
 // Init initializes the C-allocated API with the configuration data,

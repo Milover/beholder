@@ -92,9 +92,17 @@ Tess Tess_New() {
 	return new beholder::Tesseract {};
 }
 
-void Tess_SetImage(Tess t, Proc p, int bytesPerPixel) {
-	if (!t || !p) {
-		return;
+bool Tess_SetImage(Tess t, const RawImage* img, int bytesPerPixel) {
+	if (!t || !img) {
+		return false;
 	}
-	t->setImage(*p, bytesPerPixel);
+	beholder::RawImage raw {
+		img->id,
+		img->rows,
+		img->cols,
+		img->pxTyp,
+		img->buf,
+		img->step
+	};
+	return t->setImage(raw, bytesPerPixel);
 }

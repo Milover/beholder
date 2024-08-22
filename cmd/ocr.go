@@ -100,7 +100,9 @@ func (app *OCRApp) Run(filename string, res *ocr.Result) error {
 	if err := app.P.Preprocess(); err != nil {
 		return err
 	}
-	app.T.SetImage(app.P.Ptr(), 1)
+	if err := app.T.SetImage(app.P.GetRawImage(), 1); err != nil {
+		return err
+	}
 	res.Timings.Set("preprocess", sw.Lap())
 
 	if err := app.T.Recognize(res); err != nil {
