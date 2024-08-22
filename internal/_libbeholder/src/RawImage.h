@@ -32,18 +32,18 @@ public:
 
 	// Public data
 
-		std::size_t id;
-		int rows;
-		int cols;
+		std::size_t id {0ul};
+		int rows {0};
+		int cols {0};
 		// FIXME: this is pretty horrible, however simple values make
 		// life easier from the Go side
-		std::int64_t pixelType;
+		std::int64_t pixelType {0};
 		// FIXME: this should be something better than a raw pointer,
 		// however we can't do weak/shared pointers since Go will probably
 		// manage this memory, so should think of something, because it
 		// will cause issues
-		void* buffer;
-		std::size_t step;
+		void* buffer {nullptr};
+		std::size_t step {0ul};
 		// TODO: should have the size of the buffer in bytes
 
 };
