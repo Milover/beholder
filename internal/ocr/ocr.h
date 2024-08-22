@@ -10,10 +10,8 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-typedef beholder::Processor* Proc;
 typedef beholder::Tesseract* Tess;
 #else
-typedef void* Proc;
 typedef void* Tess;
 #endif
 

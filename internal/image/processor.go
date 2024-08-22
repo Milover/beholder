@@ -176,12 +176,6 @@ func (ip Processor) Preprocess() error {
 	return nil
 }
 
-// Ptr returns a pointer to the underlying C-API.
-// FIXME: nope --- remove this
-func (ip Processor) Ptr() unsafe.Pointer {
-	return unsafe.Pointer(ip.p)
-}
-
 // ReadImage reads and stores an image from disc.
 func (ip Processor) ReadImage(filename string, readMode ReadMode) error {
 	cs := C.CString(filename)
