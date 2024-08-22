@@ -15,7 +15,6 @@ import (
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/enumutils"
-	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/mem"
 	"github.com/Milover/beholder/internal/neutral"
 	"github.com/Milover/beholder/internal/ocr/model"
@@ -134,7 +133,7 @@ func (t Tesseract) Clear() {
 //
 // [Tesseract.Clear] should be called before each new Recognize call, however
 // [Tesseract.SetImage] also clears previous results.
-func (t Tesseract) Recognize(res *Result) error {
+func (t Tesseract) Recognize(res *neutral.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
@@ -162,7 +161,7 @@ func (t Tesseract) Recognize(res *Result) error {
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
 		res.Confidence = append(res.Confidence, float64(r.conf))
-		res.Boxes = append(res.Boxes, image.Rectangle{
+		res.Boxes = append(res.Boxes, neutral.Rectangle{
 			Left:   int64(r.box.left),
 			Top:    int64(r.box.top),
 			Right:  int64(r.box.right),

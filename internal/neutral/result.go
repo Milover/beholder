@@ -1,28 +1,29 @@
-package ocr
+package neutral
 
 import (
 	"time"
 
 	"github.com/Milover/beholder/internal/chrono"
 	"github.com/Milover/beholder/internal/enumutils"
-	"github.com/Milover/beholder/internal/image"
 )
 
-// Result holds the OCR pipeline results and statistics.
+// Result holds the processing pipeline results and statistics.
 type Result struct {
-	// Text is a line-by-line list of text recognized by the OCR.
+	// Text is a list of strings associated with each Box.
 	Text []string `json:"result"`
-	// Expected is a line-by-line list of expected text results of the OCR.
+	// Expected is the expected Text.
 	Expected []string `json:"expected"`
-	// Confidence is a list of confidences for the text recognized by the OCR.
+	// Confidence is a list of confidences associated with
+	// each Box or Text string.
 	Confidence []float64 `json:"confidence"`
-	// Boxes is a list of text bounding boxes detected by the OCR.
-	Boxes []image.Rectangle `json:"boxes"`
+	// Boxes is a list of bounding boxes detected by the processing pipeline.
+	Boxes []Rectangle `json:"boxes"`
 	// Status is the final status of the result.
 	Status ResultStatus `json:"status"`
-	// TimeStamp is the time at which the OCR pipeline started.
+	// TimeStamp is the time at which processing started.
 	TimeStamp time.Time `json:"timestamp"`
-	// Timings are the named durations of various parts of the OCR process.
+	// Timings are the named durations of various parts of the processing
+	// pipeline.
 	Timings chrono.Timings `json:"-"`
 }
 
