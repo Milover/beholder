@@ -9,11 +9,7 @@ License
 Description
 	A DNN-based text detector wrapper.
 
-	For more info on the DB model, see: https://github.com/MhLiao/DB
-	For more info on the EAST model, see: https://github.com/argman/EAST
-
-	WARNING: both DB and EAST models operate on images sized as
-	multiples of 160px.
+	WARNING: most models operate on images sized as multiples of 80px.
 
 SourceFiles
 	Detector.cpp
@@ -28,6 +24,7 @@ SourceFiles
 #define CV__DNN_INLINE_NS_END
 #endif
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -38,6 +35,8 @@ SourceFiles
 
 namespace cv
 {
+	class Mat;
+
 	namespace dnn
 	{
 		CV__DNN_INLINE_NS_BEGIN
@@ -59,26 +58,42 @@ class Detector
 {
 public:
 
-	using TDN = cv::dnn::TextDetectionModel;
+	using TDM = cv::dnn::TextDetectionModel;
 
 private:
 
 	// Private data
 
-		//- A pointer to the tesseract api
+		//- A pointer to the OpenCV text detector
 		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
-		TDN* m_ {nullptr};
+		TDM* p_ {nullptr};
 
 		//- OCR (detection) results
 		std::vector<Result> res_;
 
+protected:
+
+	// Protected data
+
 		//- Multiplier for image pixel values.
 		//	Set based on which model is in use.
 		//	XXX: why tho?
-		double scale_;
+		double scale_ {1.0};
 
 		//- Swap red and green channels
-		bool swapRB_;
+		bool swapRB_ {false};
+
+
+	// Protected member functions
+
+		//- Get the mean value which is subtracted from the image.
+		virtual std::array<double, 3> getMean(const cv::Mat& img) const;
+
+		//- Is the underlying text detector pointer valid?
+		bool hasPtr() const;
+
+		//- Delete and reset the underlying text detector pointer.
+		void resetPtr(TDM* p = nullptr);
 
 public:
 
@@ -88,12 +103,20 @@ public:
 		std::string modelPath;
 		//- Model (trained data) name
 		std::string model;
+		//- Use a hard-coded mean value. For more info, see:
+		//	https://docs.opencv.org/4.10.0/d4/d43/tutorial_dnn_text_spotting.html
+		bool useHardCodedMean {false};
+
+		//- dimLCD is the least common denominator of the image dimensions, i.e.
+		//	the image dimensions must be a multiple of dimLCD for the detector
+		//	to work properly.
+		inline static constexpr int dimLCD {80};
 
 
 	// Constructors
 
 		//- Default constructor
-		Detector();
+		Detector() = default;
 
 		//- Disable copy constructor
 		Detector(const Detector&) = delete;
@@ -103,7 +126,7 @@ public:
 
 
 	//- Destructor
-	~Detector();
+	virtual ~Detector();
 
 	// Member functions
 
@@ -116,8 +139,8 @@ public:
 		//- Get a const reference to the OCR (detection) results
 		const std::vector<Result>& getResults() const;
 
-		//- Initialize Detector
-		bool init();
+		//- Initialize a Detector
+		virtual bool init() = 0;
 
 	// Member operators
 

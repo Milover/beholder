@@ -15,7 +15,8 @@ License
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "Detector.h"
+#include "DBDetector.h"
+#include "EASTDetector.h"
 #include "Processor.h"
 #include "Ops.h"
 #include "Utility.h"
@@ -44,6 +45,7 @@ const std::string testImage
 };
 
 // TODO: 'expected' should be some kind of rect and we should check overlap
+const std::size_t expected {10};	// the number of results
 
 } // end namespace beholder
 
@@ -55,29 +57,37 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	std::filesystem::current_path(beholder::internalDir);
 
 	// setup tesseract
-	beholder::Detector d {};
-	//t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf.patterns.config"};
-	// WARNING: images must be rescaled to multiples of 160px
-	//d.modelPath = "model/db";
-	//d.model = "DB_IC15_resnet50.onnx";
+	beholder::DBDetector db {};
+	db.modelPath = "model/db";
+	db.model = "DB_IC15_resnet50.onnx";
 	//d.model = "DB_TD500_resnet50.onnx";
-	d.modelPath = "model/east";
-	d.model = "EAST.pb";	// seems to be performing better than the DB models
-	if (!d.init())
+	if (!db.init())
 	{
-		std::cerr << "Could not initialize text detector.\n";
+		std::cerr << "Could not initialize DB text detector.\n";
 		return 1;
 	}
 
+	// NOTE: seems to be performing better than the DB detector
+	beholder::EASTDetector east {};
+	east.modelPath = "model/east";
+	east.model = "EAST.pb";
+	if (!east.init())
+	{
+		std::cerr << "Could not initialize EAST text detector.\n";
+		return 1;
+	}
+
+
 	// setup image processor
 	beholder::Processor ip {};
-	// preprocessin
+	// preprocessing
+	// WARNING: images must be rescaled to multiples of 80px
 	//ip.preprocessing.emplace_back(new beholder::Resize {1280, 736});
 	//ip.preprocessing.emplace_back(new beholder::Resize {736, 736});
 	//ip.preprocessing.emplace_back(new beholder::Resize {4000, 2880});
 	ip.preprocessing.emplace_back(new beholder::Crop {0, 0, 1920, 1920});
 	// postprocessing
-	ip.postprocessing.emplace_back(new beholder::DrawBoundingBoxes {std::array<float, 4>{0, 255, 0, 0}, 3});
+	//ip.postprocessing.emplace_back(new beholder::DrawBoundingBoxes {std::array<float, 4>{0, 255, 0, 0}, 3});
 
 	// read/load an image
 	ip.readImage(beholder::testImage, cv::IMREAD_COLOR);
@@ -85,20 +95,32 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// preprocess the image
 	ip.preprocess();
 
-	// NOTE: the analysis (seemingly) isn't being re-run
-	// run ocr
-	if (!d.detect(ip.getRawImage()))
+	// run text detection
+	if (!db.detect(ip.getRawImage()))
 	{
-		std::cerr << "Could not detect text.\n";
+		std::cerr << "Could not detect text with DB detector.\n";
+		return 1;
+	}
+	if (!east.detect(ip.getRawImage()))
+	{
+		std::cerr << "Could not detect text with EAST detector.\n";
 		return 1;
 	}
 
 	// postprocess
-	ip.postprocess(d.getResults());
-
+	//ip.postprocess(db.getResults());
 	//ip.showImage();
 
-	return 0;
+	// print results
+	std::cout << "Expected No. results:  " << beholder::expected << '\n'
+			  << "DB output:             " << db.getResults().size() << '\n'
+			  << "EAST output:           " << east.getResults().size() << '\n';
+	bool ok
+	{
+		db.getResults().size() == beholder::expected
+	 && east.getResults().size() == beholder::expected
+	};
+	return ok ? 0 : 1;
 }
 
 // ************************************************************************* //
