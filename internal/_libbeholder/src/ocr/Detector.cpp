@@ -9,6 +9,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include <filesystem>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -67,23 +68,28 @@ bool Detector::detect(const RawImage& raw)
 		return false;
 	}
 
+	// set params
 	m_->setInputParams
 	(
 		scale_,
 		cv::Size {img->cols, img->rows},
-		cv::mean(*img),	// XXX: not sure about this guy
+		cv::mean(*img),							// XXX: not sure about this guy
+		//cv::Scalar(123.68, 116.78, 103.94),	// XXX: OpenCV forces this value for EAST
+		//cv::Scalar(122.68, 116.67, 104.01),	// XXX: OpenCV forces this value for DB
 		swapRB_
 	);
-	// OPTIMIZE: should we reserve here?
-	std::vector<cv::RotatedRect> rects;
-	std::vector<float> confidences;
+	std::vector<cv::RotatedRect> rects;	// OPTIMIZE: should we reserve here?
+	std::vector<float> confidences;		// OPTIMIZE: should we reserve here?
+
+	// run detection
 	m_->detectTextRectangles(*img, rects, confidences);	// EAST can't do detect(...)
 
-	res_.reserve(rects.size());
+	// store results
+	res_.reserve(10);	// guesstimate
 	for (auto i {0ul}; i < rects.size(); ++i)
 	{
-		// FIXME: we're throwing away orientation data, should do a perspective
-		// transform or something
+		// FIXME: we're throwing away orientation data, we should instead
+		// do a perspective transform or store a quadrangle or something
 		cv::Rect r {rects[i].boundingRect()};
 		res_.emplace_back
 		(
@@ -136,7 +142,7 @@ bool Detector::init()
 		DB* m {static_cast<DB*>(m_)};
 		m->setBinaryThreshold(0.3);
 		m->setPolygonThreshold(0.5);
-		m->setMaxCandidates(200);
+		m->setMaxCandidates(20);
 		m->setUnclipRatio(2.0);
 
 		scale_ = 1.0/255.0;	// XXX: ?
@@ -150,7 +156,7 @@ bool Detector::init()
 		}
 
 		EAST* m {static_cast<EAST*>(m_)};
-		m->setConfidenceThreshold(0.5);
+		m->setConfidenceThreshold(0.6);
 		m->setNMSThreshold(0.4);
 
 		scale_ = 1.0;	// XXX: ?

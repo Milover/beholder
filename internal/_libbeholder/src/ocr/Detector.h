@@ -89,6 +89,7 @@ public:
 		//- Model (trained data) name
 		std::string model;
 
+
 	// Constructors
 
 		//- Default constructor

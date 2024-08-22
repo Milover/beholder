@@ -36,8 +36,11 @@ const std::filesystem::path internalDir
 const std::string testImage
 {
 	//"testdata/images/neograf/imagefile_1.bmp"
-	"testdata/images/sawlog_0.png"
+	//"testdata/images/sawlog_0.png"
+	//"testdata/images/sawlog_0.cropped.png"
+	"testdata/images/tags_0.bmp"
 	//"testdata/images/sawlog_1.png"
+	//"testdata/images/sawlog_2.png"
 };
 
 // TODO: 'expected' should be some kind of rect and we should check overlap
@@ -71,7 +74,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// preprocessin
 	//ip.preprocessing.emplace_back(new beholder::Resize {1280, 736});
 	//ip.preprocessing.emplace_back(new beholder::Resize {736, 736});
-	ip.preprocessing.emplace_back(new beholder::Resize {4000, 2880});
+	//ip.preprocessing.emplace_back(new beholder::Resize {4000, 2880});
+	ip.preprocessing.emplace_back(new beholder::Crop {0, 0, 1920, 1920});
 	// postprocessing
 	ip.postprocessing.emplace_back(new beholder::DrawBoundingBoxes {std::array<float, 4>{0, 255, 0, 0}, 3});
 
