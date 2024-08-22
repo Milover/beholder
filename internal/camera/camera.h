@@ -25,6 +25,7 @@ typedef struct {
 	char* value;
 } Par;
 
+// FIXME: we're copying this struct in like 7 places
 typedef struct {
 	size_t id;
 	int rows;

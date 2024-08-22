@@ -11,7 +11,7 @@ import (
 type Image struct {
 	// ID is the acquisition result id as asigned by the camera.
 	ID uint64
-	// Timestamp is the time at which the image was acquired, i.e.
+	// Timestamp is the time at which the image was created or acquired, i.e.
 	// received by the host machine.
 	Timestamp time.Time
 	// Buffer is a non-owning (weak) pointer to the raw bytes of an image.
