@@ -177,8 +177,9 @@ bool Tesseract::recognizeText()
 	return true;
 }
 
-void Tesseract::setImage(const RawImage& raw, int bytesPerPixel)
+bool Tesseract::setImage(const RawImage& raw, int bytesPerPixel)
 {
+	res_.clear();
 	p_->SetImage
 	(
 		static_cast<unsigned char*>(raw.buffer),
@@ -187,8 +188,7 @@ void Tesseract::setImage(const RawImage& raw, int bytesPerPixel)
 		bytesPerPixel,
 		static_cast<int>(raw.step)
 	);
-
-	res_.clear();
+	return static_cast<bool>(p_->GetInputImage());
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //

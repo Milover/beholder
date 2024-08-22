@@ -116,7 +116,7 @@ public:
 		bool recognizeText();
 
 		//- Set image for detection/recognition and clear all results.
-		void setImage(const RawImage& raw, int bytesPerPixel = 1);
+		bool setImage(const RawImage& raw, int bytesPerPixel = 1);
 
 
 	// Member operators
