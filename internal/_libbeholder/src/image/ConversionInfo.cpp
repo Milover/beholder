@@ -9,6 +9,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include <array>
+#include <optional>
 #include <utility>
 
 #include <opencv2/imgproc.hpp>
@@ -107,6 +108,26 @@ const std::array<std::pair<PxType, ConversionInfo>, 49> ConversionInfoTable
 //	{PxType::Data32f,                       {CV_8UC1,	CV_8UC1,	-1}},               // Data32f
 //	{PxType::Data64f,                       {CV_8UC1,	CV_8UC1,	-1}},               // Data64f
 }};
+
+// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+std::optional<ConversionInfo> getConversionInfo(PxType typ)
+{
+	auto found
+	{
+		std::find_if
+		(
+			ConversionInfoTable.begin(),
+			ConversionInfoTable.end(),
+			[typ](const auto& p) -> bool { return p.first == typ; }
+		)
+	};
+	if (found == ConversionInfoTable.end())
+	{
+		return std::nullopt;
+	}
+	return found->second;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

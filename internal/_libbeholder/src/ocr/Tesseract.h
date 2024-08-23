@@ -21,7 +21,7 @@ SourceFiles
 #include <utility>
 #include <vector>
 
-#include "Processor.h"
+#include "RawImage.h"
 #include "Result.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
@@ -116,8 +116,7 @@ public:
 		bool recognizeText();
 
 		//- Set image for detection/recognition and clear all results.
-		//	FIXME: this should take an Image
-		void setImage(const Processor& ip, int bytesPerPixel = 1);
+		bool setImage(const RawImage& raw, int bytesPerPixel = 1);
 
 
 	// Member operators

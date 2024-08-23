@@ -148,7 +148,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// preprocess the image
 	ip.preprocess();
-	t.setImage(ip);
+	if (!t.setImage(ip.getRawImage()))
+	{
+		std::cerr << "Could not set image.\n";
+		return 1;
+	}
 	//ip.writeImage();
 	//ip.showImage();
 

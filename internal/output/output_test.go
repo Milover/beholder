@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/neutral"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,10 +19,10 @@ var (
 	resultTSText, _ = resultTS.MarshalText()
 
 	// result is the Result that is used in all tests.
-	result = ocr.Result{
+	result = neutral.Result{
 		Text:      []string{"some text", "some other text"},
 		Expected:  []string{"some text", "some other text"},
-		Status:    ocr.RSPass,
+		Status:    neutral.RSPass,
 		TimeStamp: resultTS,
 	}
 

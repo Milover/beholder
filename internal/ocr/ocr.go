@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/Milover/beholder/internal/image"
+	"github.com/Milover/beholder/internal/neutral"
 	"github.com/Milover/beholder/internal/stopwatch"
 )
 
@@ -74,9 +75,9 @@ func (o OCR) Init() error {
 
 // Run is a function that runs the OCR pipeline for a single image: reading,
 // preprocessing, recognition and postprocessing.
-func (o OCR) Run(r io.Reader) (*Result, error) {
+func (o OCR) Run(r io.Reader) (*neutral.Result, error) {
 	sw := stopwatch.New()
-	res := NewResult()
+	res := neutral.NewResult()
 	res.TimeStamp = sw.Start
 
 	// FIXME: this should probably happen in a different goroutine
@@ -95,7 +96,9 @@ func (o OCR) Run(r io.Reader) (*Result, error) {
 	if err := o.P.Preprocess(); err != nil {
 		return res, err
 	}
-	o.T.SetImage(o.P.Ptr(), 1)
+	if err := o.T.SetImage(o.P.GetRawImage(), 1); err != nil {
+		return res, err
+	}
 	res.Timings.Set("preprocess", sw.Lap())
 
 	if err = o.T.Recognize(res); err != nil {
@@ -103,7 +106,7 @@ func (o OCR) Run(r io.Reader) (*Result, error) {
 	}
 	res.Timings.Set("ocr", sw.Lap())
 
-	if err = o.P.Postprocess(o.T.Ptr()); err != nil {
+	if err = o.P.Postprocess(res); err != nil {
 		return res, err
 	}
 	res.Timings.Set("postprocess", sw.Lap())

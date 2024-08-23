@@ -22,6 +22,21 @@ void Proc_Delete(Proc p) {
 	}
 }
 
+RawImage Proc_GetRawImage(Proc p) {
+	if (!p) {
+		return RawImage {};
+	}
+	beholder::RawImage img {p->getRawImage()};
+	return RawImage {
+		img.id,
+		img.rows,
+		img.cols,
+		img.pixelType,
+		img.buffer,
+		img.step
+	};
+}
+
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 	if (!p) {
 		return false;
@@ -50,11 +65,25 @@ Proc Proc_New() {
 	return new beholder::Processor {};
 }
 
-bool Proc_Postprocess(Proc p, Tess t) {
-	if (!p || !t) {
+bool Proc_Postprocess(Proc p, Res* res, size_t nRes) {
+	if (!p || !res) {
 		return false;
 	}
-	return p->postprocess(t->getResults());
+	std::vector<beholder::Result> results;
+	results.reserve(nRes);
+	for (auto i {0ul}; i < nRes; ++i) {
+		results.emplace_back(beholder::Result{
+			res[i].text,
+			beholder::Rectangle{
+				res[i].box.left,
+				res[i].box.top,
+				res[i].box.right,
+				res[i].box.bottom
+			},
+			res[i].conf
+		});
+	}
+	return p->postprocess(results);
 }
 
 bool Proc_Preprocess(Proc p) {

@@ -55,8 +55,11 @@ func (ar *Arena) Malloc(size uint64) unsafe.Pointer {
 // Copy copies bytes into ar and returns a pointer to the location
 // at which the bytes were written.
 func (ar *Arena) Copy(b []byte) unsafe.Pointer {
-	ptr := ar.Malloc(uint64(len(b)))
-	C.memcpy(ptr, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+	size := uint64(len(b))
+	ptr := ar.Malloc(size)
+	if size > uint64(1) {
+		C.memcpy(ptr, unsafe.Pointer(&b[0]), C.size_t(len(b)))
+	}
 	return ptr
 }
 
@@ -67,7 +70,9 @@ func (ar *Arena) Copy(b []byte) unsafe.Pointer {
 func (ar *Arena) CopyStr(s string) unsafe.Pointer {
 	size := uint64(len(s) + 1)
 	ptr := ar.Malloc(size)
-	C.memcpy(ptr, unsafe.Pointer(&([]byte(s))[0]), C.size_t(size))
+	if size > uint64(1) {
+		C.memcpy(ptr, unsafe.Pointer(&([]byte(s))[0]), C.size_t(size))
+	}
 	unsafe.Slice((*byte)(ptr), size)[size-1] = '\x00'
 	return ptr
 }

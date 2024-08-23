@@ -13,6 +13,7 @@ import (
 
 	"github.com/Milover/beholder/internal/chrono"
 	"github.com/Milover/beholder/internal/image"
+	"github.com/Milover/beholder/internal/neutral"
 	"github.com/Milover/beholder/internal/ocr"
 	"github.com/Milover/beholder/internal/output"
 	"github.com/Milover/beholder/internal/stopwatch"
@@ -72,7 +73,7 @@ func (app *OCRApp) Init() error {
 
 // Run is a function that runs the OCR pipeline for a single image file:
 // reading, preprocessing, recognition and postprocessing.
-func (app *OCRApp) Run(filename string, res *ocr.Result) error {
+func (app *OCRApp) Run(filename string, res *neutral.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
 	res.TimeStamp = sw.Start
@@ -100,7 +101,9 @@ func (app *OCRApp) Run(filename string, res *ocr.Result) error {
 	if err := app.P.Preprocess(); err != nil {
 		return err
 	}
-	app.T.SetImage(app.P.Ptr(), 1)
+	if err := app.T.SetImage(app.P.GetRawImage(), 1); err != nil {
+		return err
+	}
 	res.Timings.Set("preprocess", sw.Lap())
 
 	if err := app.T.Recognize(res); err != nil {
@@ -108,7 +111,7 @@ func (app *OCRApp) Run(filename string, res *ocr.Result) error {
 	}
 	res.Timings.Set("ocr", sw.Lap())
 
-	if err := app.P.Postprocess(app.T.Ptr()); err != nil {
+	if err := app.P.Postprocess(res); err != nil {
 		return err
 	}
 	res.Timings.Set("postprocess", sw.Lap())
@@ -132,8 +135,8 @@ func (app *OCRApp) Run(filename string, res *ocr.Result) error {
 
 // Stats holds various program statistics.
 type Stats struct {
-	Result *ocr.Result
-	// AvgTimings is a map of averaged [ocr.Result.Timings]
+	Result *neutral.Result
+	// AvgTimings is a map of averaged [neutral.Result.Timings]
 	AvgTimings chrono.Timings
 	// InitDuration is the time elapsed while initializing the OCR pipeline.
 	InitDuration time.Duration
@@ -144,7 +147,7 @@ type Stats struct {
 // NewStats creates a new ready to use Stats.
 func NewStats() *Stats {
 	return &Stats{
-		Result: ocr.NewResult(),
+		Result: neutral.NewResult(),
 	}
 }
 

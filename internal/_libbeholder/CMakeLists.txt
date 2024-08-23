@@ -32,7 +32,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # compiler flags
 add_compile_options(
-	"-Wall" "-Wextra" "-Wshadow" "-pedantic"
+	"-Wall" "-Wextra" "-Wshadow" "-pedantic" "-Wno-c11-extensions"
 	"$<$<CONFIG:DEBUG>:-O0>"
 	"$<$<CONFIG:RELEASE>:-march=native>"
 )

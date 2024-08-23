@@ -18,7 +18,7 @@ License
 #include <opencv2/core/types.hpp>
 #include <tesseract/baseapi.h>
 
-#include "Processor.h"
+#include "RawImage.h"
 #include "Rectangle.h"
 #include "Result.h"
 #include "Tesseract.h"
@@ -177,12 +177,18 @@ bool Tesseract::recognizeText()
 	return true;
 }
 
-void Tesseract::setImage(const Processor& ip, int bytesPerPixel)
+bool Tesseract::setImage(const RawImage& raw, int bytesPerPixel)
 {
-	const cv::Mat& im {ip.getImage()};
-	p_->SetImage(im.data, im.cols, im.rows, bytesPerPixel, im.step);
-
 	res_.clear();
+	p_->SetImage
+	(
+		static_cast<unsigned char*>(raw.buffer),
+		raw.cols,
+		raw.rows,
+		bytesPerPixel,
+		static_cast<int>(raw.step)
+	);
+	return static_cast<bool>(p_->GetInputImage());
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //

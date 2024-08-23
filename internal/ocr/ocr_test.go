@@ -155,6 +155,12 @@ var pipelineTests = []pipelineTest{
 			}
 		],
 		"postprocessing": [
+			{
+				"draw_bounding_boxes": {
+					"color": [0, 255, 0, 0],
+					"thickness": 3
+				}
+			}
 		]
 	}
 }

@@ -11,6 +11,7 @@ License
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -69,6 +70,21 @@ std::size_t Processor::getImageID() const
 	return id_;
 }
 
+RawImage Processor::getRawImage() const
+{
+	// WARNING: we assume that we can only have 8-bit Mono or BGR images
+	return RawImage
+	{
+		id_,
+		img_->rows,
+		img_->cols,
+		img_->elemSize() == 1ul ? static_cast<std::int64_t>(PxType::Mono8)
+							  : static_cast<std::int64_t>(PxType::BGR8packed),
+		static_cast<void*>(img_->data),
+		img_->step1()
+	};
+}
+
 bool Processor::postprocess(const std::vector<Result>& res)
 {
 	for (const auto& o : postprocessing)
@@ -97,47 +113,34 @@ bool Processor::preprocess()
 	return true;
 }
 
-bool Processor::receiveRawImage(const RawImage& img)
+bool Processor::receiveRawImage(const RawImage& raw)
 {
-	id_ = img.id;
+	id_ = raw.id;
 
-	// find the conversion table entry
-	PxType typ {static_cast<PxType>(img.pixelType)};
-	auto found
+	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
+	if (!info)
 	{
-		std::find_if
-		(
-			ConversionInfoTable.begin(),
-			ConversionInfoTable.end(),
-			[typ](const auto& p) -> bool { return p.first == typ; }
-		)
-	};
-	if (found == ConversionInfoTable.end())
-	{
-		std::cerr << "could not receive acquisition result (ID: " << id_ << "): "
-				  << "unknown pixel type: " << typ << std::endl;
+		std::cerr << "could not get conversion info (ID: " << id_ << "): "
+				  << "unknown pixel type: " << raw.pixelType << std::endl;
 		return false;
 	}
-	const ConversionInfo& info {found->second};
-
-	// assign the buffer
 	cv::Mat tmp
 	{
-		img.rows,
-		img.cols,
-		info.inputType,
-		img.buffer,
-		img.step > 0ul ? img.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+		raw.rows,
+		raw.cols,
+		info->inputType,
+		raw.buffer,
+		raw.step > 0ul ? raw.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
 	};
 
 	// convert the color scheme if necessary
-	if (info.colorConvCode == -1)
+	if (info->colorConvCode == -1)
 	{
 		tmp.copyTo(*img_);
 	}
 	else
 	{
-		cv::cvtColor(tmp, *img_, info.colorConvCode, info.outChannels);
+		cv::cvtColor(tmp, *img_, info->colorConvCode, info->outChannels);
 	}
 	return true;
 }
@@ -165,6 +168,28 @@ bool Processor::writeImage(const std::string& filename) const
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+std::unique_ptr<cv::Mat> rawToMatPtr(const RawImage& raw)
+{
+	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
+	if (!info)
+	{
+		std::cerr << "could not get conversion info (ID: " << raw.id << "): "
+				  << "unknown pixel type: " << raw.pixelType << std::endl;
+		return nullptr;
+	}
+	return std::unique_ptr<cv::Mat>
+	{
+		new cv::Mat
+		{
+			raw.rows,
+			raw.cols,
+			info->inputType,
+			raw.buffer,
+			raw.step > 0ul ? raw.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+		}
+	};
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

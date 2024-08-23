@@ -9,8 +9,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 	"unsafe"
 
+	"github.com/Milover/beholder/internal/mem"
 	"github.com/Milover/beholder/internal/neutral"
 )
 
@@ -68,6 +70,20 @@ func (ip Processor) DecodeImage(buf []byte, readMode ReadMode) error {
 // Delete releases C-allocated memory. Once called, ip is no longer valid.
 func (ip *Processor) Delete() {
 	C.Proc_Delete(ip.p)
+}
+
+// GetRawImage returns the currently stored image as a neutral.Image.
+func (ip Processor) GetRawImage() neutral.Image {
+	raw := C.Proc_GetRawImage(ip.p)
+	return neutral.Image{
+		ID:        uint64(raw.id),
+		Timestamp: time.Now(),
+		Buffer:    unsafe.Pointer(raw.buf),
+		Rows:      int(raw.rows),
+		Cols:      int(raw.cols),
+		PixelType: int64(raw.pxTyp),
+		Step:      uint64(raw.step),
+	}
 }
 
 // Init initializes the C-allocated API with the configuration data,
@@ -144,9 +160,25 @@ func (ip Processor) IsValid() error {
 // Note that Postprocess is usually only run after text detection/recognition
 // since some postprocessing operations may depend on detection/recognition
 // results.
-// FIXME: this shouldn't need a Tesseract, it should take an image.Image
-func (ip Processor) Postprocess(tess unsafe.Pointer) error {
-	if ok := C.Proc_Postprocess(ip.p, C.Tess(tess)); !ok {
+func (ip Processor) Postprocess(res *neutral.Result) error {
+	ar := &mem.Arena{}
+	defer ar.Free()
+
+	// a Result should always have associated Boxes
+	cres := make([]C.Res, len(res.Boxes))
+	for i := range res.Boxes {
+		cres[i].box.left = C.int(res.Boxes[i].Left)
+		cres[i].box.top = C.int(res.Boxes[i].Top)
+		cres[i].box.right = C.int(res.Boxes[i].Right)
+		cres[i].box.bottom = C.int(res.Boxes[i].Bottom)
+		if len(res.Text) > i {
+			cres[i].text = (*C.char)(ar.CopyStr(res.Text[i]))
+		}
+		if len(res.Confidences) > i {
+			cres[i].conf = C.double(res.Confidences[i])
+		}
+	}
+	if ok := C.Proc_Postprocess(ip.p, &cres[0], C.size_t(len(cres))); !ok {
 		return errors.New("image.Processor.Postprocess: could not postprocess image")
 	}
 	return nil
@@ -159,12 +191,6 @@ func (ip Processor) Preprocess() error {
 		return errors.New("image.Processor.Preprocess: could not preprocess image")
 	}
 	return nil
-}
-
-// Ptr returns a pointer to the underlying C-API.
-// FIXME: nope --- remove this
-func (ip Processor) Ptr() unsafe.Pointer {
-	return unsafe.Pointer(ip.p)
 }
 
 // ReadImage reads and stores an image from disc.

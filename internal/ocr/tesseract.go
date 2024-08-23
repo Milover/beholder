@@ -15,8 +15,8 @@ import (
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/enumutils"
-	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/mem"
+	"github.com/Milover/beholder/internal/neutral"
 	"github.com/Milover/beholder/internal/ocr/model"
 )
 
@@ -133,7 +133,7 @@ func (t Tesseract) Clear() {
 //
 // [Tesseract.Clear] should be called before each new Recognize call, however
 // [Tesseract.SetImage] also clears previous results.
-func (t Tesseract) Recognize(res *Result) error {
+func (t Tesseract) Recognize(res *neutral.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
@@ -149,19 +149,19 @@ func (t Tesseract) Recognize(res *Result) error {
 	if uint64(cap(res.Text)) < nLines {
 		diff := int(nLines - uint64(cap(res.Text)))
 		res.Text = slices.Grow(res.Text, diff)
-		res.Confidence = slices.Grow(res.Confidence, diff)
+		res.Confidences = slices.Grow(res.Confidences, diff)
 		res.Boxes = slices.Grow(res.Boxes, diff)
 	}
 	// FIXME: we probably shouldn't do this here
 	res.Text = res.Text[:0]
-	res.Confidence = res.Confidence[:0]
+	res.Confidences = res.Confidences[:0]
 	res.Boxes = res.Boxes[:0]
 	// populate the result
 	resultsSl := unsafe.Slice(results.array, nLines)
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
-		res.Confidence = append(res.Confidence, float64(r.conf))
-		res.Boxes = append(res.Boxes, image.Rectangle{
+		res.Confidences = append(res.Confidences, float64(r.conf))
+		res.Boxes = append(res.Boxes, neutral.Rectangle{
 			Left:   int64(r.box.left),
 			Top:    int64(r.box.top),
 			Right:  int64(r.box.right),
@@ -243,18 +243,22 @@ func (t Tesseract) IsValid() error {
 	return nil
 }
 
-// Ptr returns a pointer to the underlying C-API.
-// FIXME: nope --- remove this
-func (t Tesseract) Ptr() unsafe.Pointer {
-	return unsafe.Pointer(t.p)
-}
-
 // SetImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
 // FIXME: bytesPerPixel should be automatically determined.
-// FIXME: this shouldn't need a Processor, it should take an image.Image
-func (t Tesseract) SetImage(proc unsafe.Pointer, bytesPerPixel int) {
-	C.Tess_SetImage(t.p, C.Proc(proc), C.int(bytesPerPixel))
+func (t Tesseract) SetImage(img neutral.Image, bytesPerPixel int) error {
+	raw := C.RawImage{
+		C.size_t(img.ID),
+		C.int(img.Rows),
+		C.int(img.Cols),
+		C.int64_t(img.PixelType),
+		img.Buffer,
+		C.size_t(img.Step),
+	}
+	if ok := C.Tess_SetImage(t.p, &raw, C.int(bytesPerPixel)); !ok {
+		return errors.New("ocr.Tesseract.SetImage: could not set image")
+	}
+	return nil
 }
 
 // setPatterns sets up the stuff necessary for Tesseract
