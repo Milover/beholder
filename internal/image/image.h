@@ -11,10 +11,8 @@ extern "C" {
 
 #ifdef __cplusplus
 typedef beholder::Processor* Proc;
-typedef beholder::Tesseract* Tess;	// FIXME: remove this
 #else
 typedef void* Proc;
-typedef void* Tess;	// FIXME: remove this
 #endif
 
 // FIXME: we're copying this struct in like 7 places
@@ -27,12 +25,22 @@ typedef struct {
 	size_t step;
 } RawImage;
 
+typedef struct {
+	int left, top, right, bottom;
+} Rect;
+
+typedef struct {
+	char* text;
+	double conf;
+	Rect box;
+} Res;		// per-line result
+
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags);
 void Proc_Delete(Proc p);
 RawImage Proc_GetRawImage(Proc p);
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre);
 Proc Proc_New();
-bool Proc_Postprocess(Proc p, Tess t);	// FIXME: remove Tess
+bool Proc_Postprocess(Proc p, Res* res, size_t nRes);
 bool Proc_Preprocess(Proc p);
 bool Proc_ReceiveRawImage(Proc p, const RawImage* img);
 bool Proc_ReadImage(Proc p, const char* filename, int flags);

@@ -106,7 +106,7 @@ func (o OCR) Run(r io.Reader) (*neutral.Result, error) {
 	}
 	res.Timings.Set("ocr", sw.Lap())
 
-	if err = o.P.Postprocess(o.T.Ptr()); err != nil {
+	if err = o.P.Postprocess(res); err != nil {
 		return res, err
 	}
 	res.Timings.Set("postprocess", sw.Lap())

@@ -111,7 +111,7 @@ func (app *OCRApp) Run(filename string, res *neutral.Result) error {
 	}
 	res.Timings.Set("ocr", sw.Lap())
 
-	if err := app.P.Postprocess(app.T.Ptr()); err != nil {
+	if err := app.P.Postprocess(res); err != nil {
 		return err
 	}
 	res.Timings.Set("postprocess", sw.Lap())

@@ -149,18 +149,18 @@ func (t Tesseract) Recognize(res *neutral.Result) error {
 	if uint64(cap(res.Text)) < nLines {
 		diff := int(nLines - uint64(cap(res.Text)))
 		res.Text = slices.Grow(res.Text, diff)
-		res.Confidence = slices.Grow(res.Confidence, diff)
+		res.Confidences = slices.Grow(res.Confidences, diff)
 		res.Boxes = slices.Grow(res.Boxes, diff)
 	}
 	// FIXME: we probably shouldn't do this here
 	res.Text = res.Text[:0]
-	res.Confidence = res.Confidence[:0]
+	res.Confidences = res.Confidences[:0]
 	res.Boxes = res.Boxes[:0]
 	// populate the result
 	resultsSl := unsafe.Slice(results.array, nLines)
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
-		res.Confidence = append(res.Confidence, float64(r.conf))
+		res.Confidences = append(res.Confidences, float64(r.conf))
 		res.Boxes = append(res.Boxes, neutral.Rectangle{
 			Left:   int64(r.box.left),
 			Top:    int64(r.box.top),
@@ -241,12 +241,6 @@ func (t Tesseract) IsValid() error {
 		return err
 	}
 	return nil
-}
-
-// Ptr returns a pointer to the underlying C-API.
-// FIXME: nope --- remove this
-func (t Tesseract) Ptr() unsafe.Pointer {
-	return unsafe.Pointer(t.p)
 }
 
 // SetImage sets the image on which text detection/recognition will be run.

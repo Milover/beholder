@@ -7,20 +7,29 @@ import (
 	"github.com/Milover/beholder/internal/enumutils"
 )
 
-// Result holds the processing pipeline results and statistics.
+// Result holds results and statistics of a processing pipeline.
+//
+// TODO: a Result should probably know to which image it is associated, eg.
+// by holding some type of reference to it.
 type Result struct {
+	// Boxes is a list of bounding boxes detected by a processing pipeline.
+	Boxes []Rectangle `json:"boxes"`
 	// Text is a list of strings associated with each Box.
+	//
+	// A Text string could, for example, be the text recognized by OCR or
+	// a object class tag assigned by an object detector.
 	Text []string `json:"result"`
 	// Expected is the expected Text.
 	Expected []string `json:"expected"`
-	// Confidence is a list of confidences associated with
-	// each Box or Text string.
-	Confidence []float64 `json:"confidence"`
-	// Boxes is a list of bounding boxes detected by the processing pipeline.
-	Boxes []Rectangle `json:"boxes"`
+	// Confidences is a list of confidences associated with each Result item.
+	//
+	// As an example, for a Result produced by OCR, the confidence could
+	// be the confidence in the recognized Text string.
+	Confidences []float64 `json:"confidences"`
 	// Status is the final status of the result.
 	Status ResultStatus `json:"status"`
-	// TimeStamp is the time at which processing started.
+	// TimeStamp is the time at which the result was created, which is usually
+	// the time at which the processing pipeline started.
 	TimeStamp time.Time `json:"timestamp"`
 	// Timings are the named durations of various parts of the processing
 	// pipeline.
@@ -36,27 +45,30 @@ func NewResult() *Result {
 func (r *Result) Reset() {
 	r.Text = r.Text[:0]
 	r.Expected = r.Expected[:0]
-	r.Confidence = r.Confidence[:0]
+	r.Confidences = r.Confidences[:0]
 	r.Boxes = r.Boxes[:0]
 	r.Status = RSNone
 	r.TimeStamp = time.Time{}
 	r.Timings.Reset()
 }
 
-// ResultStatus designates whether the result of the OCR pipeline is
-// good, bad or unclear.
+// ResultStatus indicates the (final) state of a processing pipeline [Result].
 type ResultStatus int
 
 const (
+	// RSNone is the zero-value ResultStatus.
 	RSNone ResultStatus = iota
-	// The recognized text matches the expected text.
+	// RSPass indicates that the obtained [Result] is the expected one.
 	RSPass
-	// The recognized text does not match the expected text, or
-	// there was an error during OCR pipeline execution.
+	// RSFail indicates that the obtained [Result] is not the expected one.
+	// For example, for a [Result] produced by OCR, it indicates that
+	// the recognized text does not match the expected text, or that
+	// there was an error during OCR.
 	RSFail
-	// The exact state of the result is not clear, eg. the recognized text
-	// matches the expected text, but there were issues, or the expected
-	// text is unknown.
+	// RSInspect indicates that the state of the obtained [Result] is unclear.
+	// For example, for a [Result] produced by OCR, it indicates that
+	// that the expected text is unknown (not set), or that the recognized
+	// text matches the expected text, but there were issues during OCR.
 	RSInspect
 )
 
