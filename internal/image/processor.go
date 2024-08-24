@@ -21,8 +21,9 @@ type ReadMode int
 const (
 	RMUnchanged ReadMode = iota - 1
 	RMGrayscale
+	RMColor
 	RMAnyDepth
-	RMAnyColor = iota
+	RMAnyColor = 4
 )
 
 // Processor is a handle for the image processing API
