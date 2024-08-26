@@ -11,66 +11,66 @@ import (
 
 	"github.com/Milover/beholder/internal/image"
 	"github.com/Milover/beholder/internal/neutral"
-	"github.com/Milover/beholder/internal/ocr"
-	"github.com/Milover/beholder/internal/output"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
 )
 
 var (
-	ocrCmd = &cobra.Command{
-		Use:   "ocr [CONFIG] [FILE/DIRECTORY]",
-		Short: "Run OCR pipeline from CONFIG on FILE or all files in DIRECTORY",
-		Long:  `Run OCR pipeline from CONFIG on FILE or all files in DIRECTORY`,
+	procCmd = &cobra.Command{
+		Use:   "proc [CONFIG] [FILE/DIRECTORY]",
+		Short: "Run image processing pipeline from CONFIG on FILE or all files in DIRECTORY",
+		Long:  `Run image processing pipeline from CONFIG on FILE or all files in DIRECTORY`,
 		Args: cobra.MatchAll(
 			cobra.ExactArgs(2),
 		),
-		RunE: runOCR,
+		RunE: runProc,
 	}
 )
 
-// OcrApp represents a program for running an OCR pipeline on an image or
-// a set of images read from disc.
-type OCRApp struct {
-	T *ocr.Tesseract   `json:"tesseract"`
+// id is a helper type, so that Filename can receive an arbitrary string.
+type id struct {
+	ID string // an arbitrary string ID
+}
+
+// ProcApp represents a program for running an image processing pipeline
+// on an image or a set of images read from disc.
+type ProcApp struct {
 	P *image.Processor `json:"image_processing"`
-	O *output.Output   `json:"output"`
+	F Filename[id]     `json:"filename"`
 }
 
-// NewOCRApp creates a new OCR app.
-func NewOCRApp() *OCRApp {
-	return &OCRApp{
-		T: ocr.NewTesseract(),
+// NewProcApp creates a new Proc app.
+func NewProcApp() *ProcApp {
+	return &ProcApp{
 		P: image.NewProcessor(),
-		O: output.NewOutput(),
+		F: Filename[id]{
+			FString: "img_%v.jpeg",
+			Fields:  []string{"ID"},
+		},
 	}
 }
 
-// Finalize releases resources held by the OCR app, flushes all buffer,
+// Finalize releases resources held by the Proc app, flushes all buffer,
 // closes all files and/or connections.
-func (app *OCRApp) Finalize() error {
-	app.T.Delete()
+func (app *ProcApp) Finalize() error {
 	app.P.Delete()
-	return app.O.Close()
+	return nil
 }
 
-// Init initializes the OCR app by applying the configuration.
-func (app *OCRApp) Init() error {
-	if err := app.T.Init(); err != nil {
-		return err
-	}
+// Init initializes the Proc app by applying the configuration.
+func (app *ProcApp) Init() error {
 	if err := app.P.Init(); err != nil {
 		return err
 	}
-	if err := app.O.Init(); err != nil {
+	if err := app.F.Init(id{}); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Run is a function that runs the OCR pipeline for a single image file:
-// reading, preprocessing, recognition and postprocessing.
-func (app *OCRApp) Run(filename string, res *neutral.Result) error {
+// Run is a function that runs the image processing pipeline for
+// a single image file: reading and preprocessing.
+func (app *ProcApp) Run(filename string, imgID id, res *neutral.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
 	res.TimeStamp = sw.Start
@@ -90,7 +90,7 @@ func (app *OCRApp) Run(filename string, res *neutral.Result) error {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err := app.P.DecodeImage(buf, image.RMGrayscale); err != nil {
+	if err := app.P.DecodeImage(buf, image.RMAnyColor); err != nil {
 		return err
 	}
 	res.Timings.Set("decode", sw.Lap())
@@ -98,31 +98,13 @@ func (app *OCRApp) Run(filename string, res *neutral.Result) error {
 	if err := app.P.Preprocess(); err != nil {
 		return err
 	}
-	// FIXME: bytes per pixel should be automagically determined
-	if err := app.T.SetImage(app.P.GetRawImage(), 1); err != nil {
-		return err
-	}
 	res.Timings.Set("preprocess", sw.Lap())
 
-	if err := app.T.Recognize(res); err != nil {
+	var fname string
+	if fname, err = app.F.Get(&imgID); err != nil {
 		return err
 	}
-	res.Timings.Set("ocr", sw.Lap())
-
-	if err := app.P.Postprocess(res); err != nil {
-		return err
-	}
-	res.Timings.Set("postprocess", sw.Lap())
-
-	// output results
-	// FIXME: writes should happen in a different goroutine, since we don't
-	// want the output to block pipeline execution
-	if err := app.O.Write(res); err != nil {
-		return err
-	}
-	// FIXME: this is only temporary, usually we don't want to flush after
-	// each write, but it makes the output nicer
-	if err := app.O.Flush(); err != nil {
+	if err := app.P.WriteImage(fname); err != nil {
 		return err
 	}
 	res.Timings.Set("output", sw.Lap())
@@ -131,7 +113,7 @@ func (app *OCRApp) Run(filename string, res *neutral.Result) error {
 	return nil
 }
 
-func runOCR(cmd *cobra.Command, args []string) error {
+func runProc(cmd *cobra.Command, args []string) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -143,11 +125,11 @@ func runOCR(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	// setup OCR
-	app := NewOCRApp()
+	// setup Proc
+	app := NewProcApp()
 	defer func() {
 		if err := app.Finalize(); err != nil {
-			log.Println("OCR app finalization error: ", err)
+			log.Println("Proc app finalization error:", err)
 		}
 	}()
 	// unmarshall
@@ -168,7 +150,8 @@ func runOCR(cmd *cobra.Command, args []string) error {
 	count := int64(0) // No. results to average
 	switch {
 	case info.Mode().IsRegular():
-		if err = app.Run(cliFile, stats.Result); err != nil {
+		id := id{ID: fmt.Sprintf("%07d", count)}
+		if err = app.Run(cliFile, id, stats.Result); err != nil {
 			return err
 		}
 		stats.Accumulate(stats.Result.Timings)
@@ -185,8 +168,14 @@ func runOCR(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		for _, filename := range filenames {
-			if err := app.Run(path.Join(dir.Name(), filename), stats.Result); err != nil {
-				return err
+			id := id{ID: fmt.Sprintf("%07d", count)}
+			file := path.Join(dir.Name(), filename)
+
+			log.Printf("processing (%d/%d): %v", count+1, len(filenames), file)
+			if err := app.Run(file, id, stats.Result); err != nil {
+				//return err
+				log.Println("processing error:", err)
+				continue
 			}
 			stats.Accumulate(stats.Result.Timings)
 			count++
