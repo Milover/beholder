@@ -39,6 +39,10 @@ Inv Inv_New() {
 	return new beholder::Invert {};
 }
 
+LScape LScape_New() {
+	return new beholder::Landscape {};
+}
+
 MedBlur MedBlur_New(int ksize) {
 	return new beholder::MedianBlur {ksize};
 }

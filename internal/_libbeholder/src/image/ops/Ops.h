@@ -25,6 +25,7 @@ Description
 #include "EqualizeHistogram.h"
 #include "GaussianBlur.h"
 #include "Invert.h"
+#include "Landscape.h"
 #include "MedianBlur.h"
 #include "Morphology.h"
 #include "NormalizeBrightnessContrast.h"

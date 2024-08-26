@@ -31,6 +31,7 @@ var opFactoryMap = map[string]opFactory{
 	"equalize_histogram":            NewEqualizeHistogram,
 	"gaussian_blur":                 NewGaussianBlur,
 	"invert":                        NewInvert,
+	"landscape":                     NewLandscape,
 	"median_blur":                   NewMedianBlur,
 	"morphology":                    NewMorphology,
 	"normalize_brightness_contrast": NewNormBC,
@@ -327,6 +328,25 @@ func NewInvert(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	// no input validation required
 	return unsafe.Pointer(C.Inv_New()), nil
+}
+
+// landscape is an operation which, optionally, rotates the image 90° clockwise
+// so that image width is greater than image height.
+// Does nothing if image width is already greater than image height.
+type landscape struct{}
+
+// NewLandscape creates a landscape operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewLandscape(m json.RawMessage) (unsafe.Pointer, error) {
+	op := landscape{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	// no input validation required
+	return unsafe.Pointer(C.LScape_New()), nil
 }
 
 // medianBlur represents an operation which applies median blur to an image.
