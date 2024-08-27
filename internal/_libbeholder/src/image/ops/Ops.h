@@ -22,6 +22,7 @@ Description
 #include "Crop.h"
 #include "DivGaussianBlur.h"
 #include "DrawBoundingBoxes.h"
+#include "DrawLabels.h"
 #include "EqualizeHistogram.h"
 #include "GaussianBlur.h"
 #include "Invert.h"
