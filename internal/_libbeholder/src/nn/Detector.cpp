@@ -103,7 +103,7 @@ bool Detector::detect(const RawImage& raw)
 	p_->detectTextRectangles(*img, rects, confidences);	// EAST can't do detect(...)
 
 	// store results
-	res_.reserve(10);	// guesstimate
+	res_.reserve(rects.size());
 	for (auto i {0ul}; i < rects.size(); ++i)
 	{
 		// FIXME: we're throwing away orientation data, we should instead

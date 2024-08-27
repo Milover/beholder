@@ -85,7 +85,7 @@ file(
 	"${PROJECT_SOURCE_DIR}/src/*.cpp"
 	"${PROJECT_SOURCE_DIR}/src/image/*.cpp"
 	"${PROJECT_SOURCE_DIR}/src/image/ops/*.cpp"
-	"${PROJECT_SOURCE_DIR}/src/ocr/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/nn/*.cpp"
 )
 
 file(
@@ -95,7 +95,7 @@ file(
 	"${PROJECT_SOURCE_DIR}/src/*.h"
 	"${PROJECT_SOURCE_DIR}/src/image/*.h"
 	"${PROJECT_SOURCE_DIR}/src/image/ops/*.h"
-	"${PROJECT_SOURCE_DIR}/src/ocr/*.h"
+	"${PROJECT_SOURCE_DIR}/src/nn/*.h"
 )
 
 list(
@@ -104,7 +104,7 @@ list(
 	"${PROJECT_SOURCE_DIR}/src"
 	"${PROJECT_SOURCE_DIR}/src/image"
 	"${PROJECT_SOURCE_DIR}/src/image/ops"
-	"${PROJECT_SOURCE_DIR}/src/ocr"
+	"${PROJECT_SOURCE_DIR}/src/nn"
 )
 
 # main library target
