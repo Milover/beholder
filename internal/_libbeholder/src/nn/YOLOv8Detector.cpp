@@ -32,33 +32,31 @@ void YOLOv8Detector::extract()
 	cv::transposeND(buf_->outs[0], {0, 2, 1}, buf_->outs[0]);
 
 	cv::Mat scores {};
-	for (auto out : buf_->outs)
+	cv::Mat out {buf_->outs[0]};
+	out = out.reshape(1, out.size[1]); // [1, 8400, 85] -> [8400, 85]
+	for (auto i {0}; i < out.rows; ++i)
 	{
-		out = out.reshape(1, out.size[1]); // [1, 8400, 85] -> [8400, 85]
-		for (auto i {0}; i < out.rows; ++i)
+		double conf;
+		cv::Point maxLoc {};
+		scores = out.row(i).colRange(4, out.cols);	// just a 'view', so should be efficient
+		cv::minMaxLoc(scores, 0, &conf, 0, &maxLoc);
+
+		if (conf < confidenceThreshold)
 		{
-			double conf;
-			cv::Point maxLoc {};
-			scores = out.row(i).colRange(4, out.cols);	// just a 'view', so should be efficient
-			cv::minMaxLoc(scores, 0, &conf, 0, &maxLoc);
+			continue;
+		}
 
-			if (conf < confidenceThreshold)
-			{
-			    continue;
-			}
-
-			// get bbox coords; [xCenter, yCenter, width, height]
-			float* det {out.ptr<float>(i)};
-			buf_->tBoxes.emplace_back
-			(
-				cvFloor(det[0] - 0.5 * det[2]),
-				cvFloor(det[1] - 0.5 * det[3]),
-				cvFloor(det[2]),
-				cvFloor(det[3])
-			);
-			buf_->tClassIDs.emplace_back(maxLoc.x);
-			buf_->tConfidences.emplace_back(static_cast<float>(conf));
-	    }
+		// get bbox coords; [xCenter, yCenter, width, height]
+		float* det {out.ptr<float>(i)};
+		buf_->tBoxes.emplace_back
+		(
+			cvFloor(det[0] - 0.5 * det[2]),
+			cvFloor(det[1] - 0.5 * det[3]),
+			cvFloor(det[2]),
+			cvFloor(det[3])
+		);
+		buf_->tClassIDs.emplace_back(maxLoc.x);
+		buf_->tConfidences.emplace_back(static_cast<float>(conf));
 	}
 
 	cv::dnn::NMSBoxes
