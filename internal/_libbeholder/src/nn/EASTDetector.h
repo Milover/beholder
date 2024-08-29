@@ -10,8 +10,6 @@ Description
 	A DNN-based text detector wrapper using the EAST model.
 	For more info, see: https://github.com/argman/EAST
 
-	WARNING: operates on images sized as multiples of 80px.
-
 SourceFiles
 	EASTDetector.cpp
 
@@ -20,9 +18,7 @@ SourceFiles
 #ifndef BEHOLDER_EAST_DETECTOR_H
 #define BEHOLDER_EAST_DETECTOR_H
 
-#include <array>
-
-#include "Detector.h"
+#include "ObjDetector.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -42,27 +38,22 @@ namespace beholder
 
 class EASTDetector
 :
-	public Detector
+	public ObjDetector
 {
 public:
 
-	using Base = Detector;
+	using Base = ObjDetector;
 
 protected:
 
 	// Protected member functions
 
-		//- Get the mean value which is subtracted from the image.
-		virtual std::array<double, 3> getMean(const cv::Mat& img) const override;
+		//- Extract inference results
+		virtual void extract() override;
 
 public:
 
 	// Public data
-
-		//- Confidence threshold used for text box filtering.
-		float confidenceThreshold {0.5};
-		//- Non-maximum suppression threshold.
-		float nmsThreshold {0.0};
 
 	// Constructors
 
@@ -70,10 +61,10 @@ public:
 		EASTDetector();
 
 		//- Disable copy constructor
-		EASTDetector(const EASTDetector&) = delete;
+		EASTDetector(const EASTDetector&) = default;
 
 		//- Disable move constructor
-		EASTDetector(EASTDetector&&) = delete;
+		EASTDetector(EASTDetector&&) = default;
 
 
 	//- Destructor
@@ -81,16 +72,13 @@ public:
 
 	// Member functions
 
-		//- Initialize a EASTDetector
-		virtual bool init() override;
-
 	// Member operators
 
 		//- Disable copy assignment
-		EASTDetector& operator=(const EASTDetector&) = delete;
+		EASTDetector& operator=(const EASTDetector&) = default;
 
 		//- Disable move assignment
-		EASTDetector& operator=(EASTDetector&&) = delete;
+		EASTDetector& operator=(EASTDetector&&) = default;
 
 };
 
