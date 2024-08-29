@@ -115,17 +115,22 @@ bool ObjDetector::detect(const RawImage& raw)
 
 	// filter and store results
 	res_.reserve(buf_->tNMSIDs.size());
+	std::string text {""};
 	for (auto i {0ul}; i < buf_->tNMSIDs.size(); ++i)
 	{
 		auto id {buf_->tNMSIDs[i]};	// use NMS filtered IDs to select results
 		const cv::Rect& r {buf_->tBoxes[id]};
-		auto classID {buf_->tClassIDs[id]};
+		if (!buf_->tClassIDs.empty())
+		{
+			auto classID {buf_->tClassIDs[id]};
+			text = classes.size() > static_cast<size_t>(classID)
+				 ? classes[classID] : std::to_string(classID);
+		}
 		res_.emplace_back
 		(
 			Result
 			{
-				classes.size() > static_cast<size_t>(classID)
-			  ? classes[classID] : std::to_string(classID),
+				text,
 				Rectangle {r.x, r.y, r.x + r.width, r.y + r.height},
 				static_cast<double>(buf_->tConfidences[id])
 			}
