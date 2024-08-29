@@ -131,9 +131,6 @@ public:
 		//	NOTE: the model should be in ONNX format.
 		std::string model;
 
-		//- A list of object clases that the loaded model supports.
-		std::vector<std::string> classes;
-
 		//- The network computation backend, see:
 		//	https://docs.opencv.org/4.10.0/d6/d0f/group__dnn.html#ga186f7d9bfacac8b0ff2e26e2eab02625
 		//
@@ -143,6 +140,10 @@ public:
 		//- The network target device for computations, see:
 		//	https://docs.opencv.org/4.10.0/d6/d0f/group__dnn.html#ga709af7692ba29788182cf573531b0ff5
 		int target {NNTarget::TargetCPU};
+
+		//- A list of object clases that the loaded model supports.
+		//	TODO: shouldn't be here
+		std::vector<std::string> classes;
 
 		//- Image size in px.
 		//	The image will be resized and padded so that the largest image

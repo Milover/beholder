@@ -8,6 +8,8 @@ License
 
 Description
 	An object detector using the YOLOv8 model.
+	A DNN-based object detector wrapper using the YOLOv8 model.
+	For more info, see: https://github.com/ultralytics/ultralytics
 
 SourceFiles
 	YOLOv8Detector.cpp
@@ -38,7 +40,6 @@ public:
 	using Base = ObjDetector;
 
 protected:
-
 
 	// Protected member functions
 

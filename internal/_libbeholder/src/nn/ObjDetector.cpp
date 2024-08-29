@@ -99,6 +99,10 @@ bool ObjDetector::detect(const RawImage& raw)
 
 	// forward
 	net_->setInput(buf_->blob);
+	// TODO: not sure how clear() and buf_->outs impact re-allocation,
+	// should check at some point.
+	// Ideally we would want to keep the memory allocated by
+	// each of the buf_->outs, instead of throwing it away each time.
 	net_->forward(buf_->outs, net_->getUnconnectedOutLayersNames());
 
 	// extract and prep raw results for storage
