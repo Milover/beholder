@@ -9,8 +9,6 @@ License
 Description
 	A DNN-based object detector wrapper.
 
-	WARNING: models operate on images sized as multiples of 32px.
-
 SourceFiles
 	ObjDetector.cpp
 
@@ -24,6 +22,7 @@ SourceFiles
 #define CV__DNN_INLINE_NS_END
 #endif
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,14 +47,9 @@ namespace cv
 
 namespace beholder
 {
-	namespace detail
+	namespace internal
 	{
-		// Buffers is a helper class which has buffers for various temporary
-		// values created during object detection.
-		//
-		// It is forward declared to avoid having to include OpenCV headers
-		// here.
-		class Buffers;
+		class ObjDetectorBuffers;
 	}
 }
 
@@ -89,9 +83,9 @@ enum NNTarget
 	TargetFPGA,
 	TargetCUDA,
 	TargetCUDAfp16,
-	TargetHDDL,		// OpenVINO HDDL
+	TargetHDDL,			// OpenVINO HDDL
 	TargetNPU,
-	TargetCPUfp16,	// WARNING: ARM only
+	TargetCPUfp16,		// ARM only
 };
 
 
@@ -101,9 +95,9 @@ enum NNTarget
 
 class ObjDetector
 {
-private:
+protected:
 
-	// Private data
+	// Protected data
 
 		//- A pointer to an OpenCV DNN
 		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
@@ -115,16 +109,16 @@ private:
 
 		//- Buffers for temporary values used during detection
 		//	WARNING: Go might complain because of the unique_ptr
-		std::unique_ptr<detail::Buffers> buf_ {nullptr};
+		std::unique_ptr<internal::ObjDetectorBuffers> buf_ {nullptr};
 
 		//- detection results
 		std::vector<Result> res_;
 
-	// Private member functions
+	// Protected member functions
 
 		//- Extract inference results
 		//	TODO: we would like to time this externally, somehow
-		void extract();
+		virtual void extract() = 0;
 
 public:
 
@@ -152,8 +146,8 @@ public:
 
 		//- Image size in px.
 		//	The image will be resized and padded so that the largest image
-		//	dimension is equal to size, and the original aspect ratio is
-		//	preserved.
+		//	dimension is equal to size. The aspect ratio is preserved using
+		//	letterboxing.
 		int size {640};
 		//- Multiplier for image pixel values.
 		//	Set based on which model is in use.
@@ -164,11 +158,11 @@ public:
 		float nmsThreshold {0.4};
 		//- Normalization constant.
 		//	This value is subtracted from each pixel value of the current image.
-        double mean {0.0};
+        std::array<double, 3> mean {0.0, 0.0, 0.0};
 		//- Swap red and green channels
         bool swapRB {true};
 		//- The pixel value used to pad the image, if padding is active.
-        float padValue {0.0};	// or 114.0?
+        std::array<double, 3> padValue {0.0, 0.0, 0.0};	// or 114.0, 114.0, 114.0
 
 
 	// Constructors
@@ -184,21 +178,21 @@ public:
 
 
 	//- Destructor
-	~ObjDetector();
+	virtual ~ObjDetector();
 
 	// Member functions
 
 		//- Clear detection results
-		void clear();
+		virtual void clear();
 
 		//- Run text detection and store the results
-		bool detect(const RawImage& raw);
+		virtual bool detect(const RawImage& raw);
 
 		//- Get a const reference to the detection results
 		const std::vector<Result>& getResults() const;
 
 		//- Initialize the object detector.
-		bool init();
+		virtual bool init();
 
 
 	// Member operators

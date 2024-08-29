@@ -9,12 +9,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include <filesystem>
-#include <iostream>
 #include <string>
 #include <vector>
 
-#include <opencv2/core.hpp>
-#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
@@ -25,48 +22,12 @@ License
 #include "Rectangle.h"
 #include "Result.h"
 
+#include "internal/ObjDetectorBuffers.h"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace beholder
 {
-
-namespace detail
-{
-
-/*---------------------------------------------------------------------------*\
-                          Class Buffers Declaration
-\*---------------------------------------------------------------------------*/
-
-class Buffers
-{
-public:
-
-	// Public data
-
-	//- Temporaries used during ObjDetector::detect() and ObjDetector::extract()
-    cv::Mat blob;
-    std::vector<cv::Mat> outs;			// forward results
-	std::vector<cv::Rect> tBoxes;		// unfiltered blob boxes
-	std::vector<int> tClassIDs;			// unfiltered class IDs
-	std::vector<float> tConfidences;	// unfiltered confidences
-	std::vector<int> tNMSIDs;			// IDs used during NMS filtering
-
-	// Member functions
-
-		//- Clear buffers, but keep allocated memory.
-		void clear()
-		{
-			outs.clear();
-			tBoxes.clear();
-			tClassIDs.clear();
-			tConfidences.clear();
-			tNMSIDs.clear();
-		}
-};
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace detail
 
 // * * * * * * * * * * * * * * * Static Checks * * * * * * * * * * * * * * * //
 
@@ -96,54 +57,9 @@ static_assert(static_cast<int>(NNTarget::TargetCPUfp16) == static_cast<int>(cv::
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
-void ObjDetector::extract()
-{
-	cv::transposeND(buf_->outs[0], {0, 2, 1}, buf_->outs[0]);
-
-	cv::Mat scores {};
-	for (auto out : buf_->outs)
-	{
-		out = out.reshape(1, out.size[1]); // [1, 8400, 85] -> [8400, 85]
-		for (auto i {0}; i < out.rows; ++i)
-		{
-			double conf;
-			cv::Point maxLoc {};
-			scores = out.row(i).colRange(4, out.cols);
-			cv::minMaxLoc(scores, 0, &conf, 0, &maxLoc);
-
-			if (conf < confidenceThreshold)
-			{
-			    continue;
-			}
-
-			// get bbox coords; [xCenter, yCenter, width, height]
-			float* det {out.ptr<float>(i)};
-			buf_->tBoxes.emplace_back
-			(
-				cvFloor(det[0] - 0.5 * det[2]),
-				cvFloor(det[1] - 0.5 * det[3]),
-				cvFloor(det[2]),
-				cvFloor(det[3])
-			);
-			buf_->tClassIDs.emplace_back(maxLoc.x);
-			buf_->tConfidences.emplace_back(static_cast<float>(conf));
-	    }
-	}
-
-	cv::dnn::NMSBoxes
-	(
-		buf_->tBoxes,
-		buf_->tConfidences,
-		confidenceThreshold,
-		nmsThreshold,
-		buf_->tNMSIDs
-	);
-}
-
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
-
 
 ObjDetector::ObjDetector()
 {}
@@ -187,9 +103,13 @@ bool ObjDetector::detect(const RawImage& raw)
 
 	// extract and prep raw results for storage
 	extract();
+	// TODO: will probably have to re-implement at some point because we
+	// would like this to work for RotatedRects as well.
+	// See TextDetectionModel_EAST_impl::detectTextRectangles for an example
+	// implamentation.
 	params_->blobRectsToImageRects(buf_->tBoxes, buf_->tBoxes, img->size());
 
-	// store results
+	// filter and store results
 	res_.reserve(buf_->tNMSIDs.size());
 	for (auto i {0ul}; i < buf_->tNMSIDs.size(); ++i)
 	{
@@ -223,8 +143,9 @@ bool ObjDetector::init()
 	{
 		std::filesystem::path{modelPath} / model
 	};
-	// TODO: we should supply a buffer and read from memory
-	net_.reset(new cv::dnn::Net {cv::dnn::readNetFromONNX(modelFile.string())});
+	// TODO: we could supply a buffer and read from memory
+	//net_.reset(new cv::dnn::Net {cv::dnn::readNetFromONNX(modelFile.string())});
+	net_.reset(new cv::dnn::Net {cv::dnn::readNet(modelFile.string())});
     net_->setPreferableBackend(backend);
     net_->setPreferableTarget(target);
 	params_.reset
@@ -233,15 +154,15 @@ bool ObjDetector::init()
 		{
 			cv::Scalar::all(scale),
 			cv::Size {size, size},
-			cv::Scalar::all(mean),
+			cv::Scalar {mean[0], mean[1], mean[2]},
 			swapRB,
 			CV_32F,
 			cv::dnn::DNN_LAYOUT_NCHW,
 			cv::dnn::DNN_PMODE_LETTERBOX,
-			cv::Scalar::all(padValue)
+			cv::Scalar {padValue[0], padValue[1], padValue[2]}
 		}
 	);
-	buf_.reset(new detail::Buffers {});
+	buf_.reset(new internal::ObjDetectorBuffers {});
 
 	return !net_->empty();
 }

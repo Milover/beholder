@@ -15,7 +15,7 @@ License
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "ObjDetector.h"
+#include "YOLOv8Detector.h"
 #include "Processor.h"
 #include "Ops.h"
 #include "Utility.h"
@@ -146,7 +146,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	std::filesystem::current_path(beholder::internalDir);
 
 	// setup object detector
-	beholder::ObjDetector det {};
+	beholder::YOLOv8Detector det {};
 	det.modelPath = "model/yolo";
 	det.model = "fima_v8n_640-50e-b16-2560px.onnx";
 	det.classes = beholder::fimaClasses;
