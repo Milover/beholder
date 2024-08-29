@@ -182,8 +182,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// postprocess
 	ip.postprocess(det.getResults());
-	//ip.showImage();
 	ip.writeImage();
+	//ip.showImage();
 
 	return 0;
 }
