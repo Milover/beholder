@@ -80,7 +80,7 @@ void ObjDetector::clear()
 	res_.clear();
 }
 
-bool ObjDetector::detect(const RawImage& raw)
+bool ObjDetector::detect(const capi::RawImage& raw)
 {
 	clear();
 
@@ -131,7 +131,7 @@ bool ObjDetector::detect(const RawImage& raw)
 			Result
 			{
 				text,
-				Rectangle {r.x, r.y, r.x + r.width, r.y + r.height},
+				capi::Rectangle {r.x, r.y, r.x + r.width, r.y + r.height},
 				static_cast<double>(buf_->tConfidences[id])
 			}
 		);

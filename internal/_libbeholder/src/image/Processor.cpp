@@ -70,10 +70,10 @@ std::size_t Processor::getImageID() const
 	return id_;
 }
 
-RawImage Processor::getRawImage() const
+capi::RawImage Processor::getRawImage() const
 {
 	// WARNING: we assume that we can only have 8-bit Mono or BGR images
-	return RawImage
+	return capi::RawImage
 	{
 		id_,
 		img_->rows,
@@ -113,7 +113,7 @@ bool Processor::preprocess()
 	return true;
 }
 
-bool Processor::receiveRawImage(const RawImage& raw)
+bool Processor::receiveRawImage(const capi::RawImage& raw)
 {
 	id_ = raw.id;
 
@@ -169,7 +169,7 @@ bool Processor::writeImage(const std::string& filename) const
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
-std::unique_ptr<cv::Mat> rawToMatPtr(const RawImage& raw)
+std::unique_ptr<cv::Mat> rawToMatPtr(const capi::RawImage& raw)
 {
 	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
 	if (!info)

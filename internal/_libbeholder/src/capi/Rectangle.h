@@ -7,50 +7,44 @@ License
 	See the LICENSE file for license information.
 
 Description
-	A simple, neutral class for transferring raw image data from a Camera.
+	A stupid rectangle class.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_RAW_IMAGE_H
-#define BEHOLDER_RAW_IMAGE_H
-
-#include <cstddef>
-#include <cstdint>
+#ifndef BEHOLDER_RECTANGLE_H
+#define BEHOLDER_RECTANGLE_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#ifdef __cplusplus
 namespace beholder
 {
+namespace capi
+{
+extern "C"
+{
+#endif
 
 /*---------------------------------------------------------------------------*\
-                         Class RawImage Declaration
+                        Struct Rectangle Declaration
 \*---------------------------------------------------------------------------*/
 
-class RawImage
+typedef struct
 {
-public:
-
-	// Public data
-
-		std::size_t id {0ul};
-		int rows {0};
-		int cols {0};
-		// FIXME: this is pretty horrible, however simple values make
-		// life easier from the Go side
-		std::int64_t pixelType {0};
-		// FIXME: this should be something better than a raw pointer,
-		// however we can't do weak/shared pointers since Go will probably
-		// manage this memory, so should think of something, because it
-		// will cause issues
-		void* buffer {nullptr};
-		std::size_t step {0ul};
-		// TODO: should have the size of the buffer in bytes
-
-};
+	int left;
+	int top;
+	int right;
+	int bottom;
+}
+Rectangle;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#ifdef __cplusplus
+} // End namespace capi
 } // End namespace beholder
+} // End extern "C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

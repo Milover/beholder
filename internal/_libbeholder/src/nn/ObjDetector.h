@@ -188,7 +188,7 @@ public:
 		virtual void clear();
 
 		//- Run text detection and store the results
-		virtual bool detect(const RawImage& raw);
+		virtual bool detect(const capi::RawImage& raw);
 
 		//- Get a const reference to the detection results
 		const std::vector<Result>& getResults() const;

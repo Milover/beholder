@@ -102,7 +102,7 @@ public:
 		std::size_t getImageID() const;
 
 		//- Get the stored image as a RawImage
-		RawImage getRawImage() const;
+		capi::RawImage getRawImage() const;
 
 		//- Run pre-OCR image processing
 		//	FIXME: this should take an Image
@@ -116,7 +116,7 @@ public:
 		//	copy it locally while converting to a standard color space.
 		//
 		//	Returns false if image conversion fails, and true otherwise.
-		bool receiveRawImage(const RawImage& raw);
+		bool receiveRawImage(const capi::RawImage& raw);
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
@@ -142,7 +142,7 @@ public:
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
 //- Convert a raw image to a cv::Mat pointer
-std::unique_ptr<cv::Mat> rawToMatPtr(const RawImage& raw);
+std::unique_ptr<cv::Mat> rawToMatPtr(const capi::RawImage& raw);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

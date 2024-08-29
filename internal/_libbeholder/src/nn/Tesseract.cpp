@@ -177,7 +177,7 @@ bool Tesseract::recognizeText()
 	return true;
 }
 
-bool Tesseract::setImage(const RawImage& raw, int bytesPerPixel)
+bool Tesseract::setImage(const capi::RawImage& raw, int bytesPerPixel)
 {
 	res_.clear();
 	p_->SetImage
