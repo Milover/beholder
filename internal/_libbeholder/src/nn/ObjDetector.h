@@ -118,6 +118,7 @@ protected:
 
 		//- Extract inference results
 		//	TODO: we would like to time this externally, somehow
+		//	TODO: should return an error of some kind
 		virtual void extract() = 0;
 
 public:
