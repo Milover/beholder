@@ -29,11 +29,19 @@ namespace beholder
 
 void YOLOv8Detector::extract()
 {
-	cv::transposeND(buf_->outs[0], {0, 2, 1}, buf_->outs[0]);
+	if (buf_->outs.size() != 1)
+	{
+		return;
+	}
 
-	cv::Mat scores {};
 	cv::Mat out {buf_->outs[0]};
+	if (out.dims != 3 || out.size[2] < 5)	// should have 4 coords and at least 1 class
+	{
+		return;
+	}
+	cv::transposeND(out, {0, 2, 1}, out);
 	out = out.reshape(1, out.size[1]); // [1, 8400, 85] -> [8400, 85]
+	cv::Mat scores {};
 	for (auto i {0}; i < out.rows; ++i)
 	{
 		double conf;
