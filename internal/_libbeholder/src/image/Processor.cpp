@@ -79,9 +79,10 @@ RawImage Processor::getRawImage() const
 		img_->rows,
 		img_->cols,
 		img_->elemSize() == 1ul ? static_cast<std::int64_t>(PxType::Mono8)
-							  : static_cast<std::int64_t>(PxType::BGR8packed),
+								: static_cast<std::int64_t>(PxType::BGR8packed),
 		static_cast<void*>(img_->data),
-		img_->step1()
+		img_->step1(),
+		img_->elemSize() * 8	// bytes to bits
 	};
 }
 

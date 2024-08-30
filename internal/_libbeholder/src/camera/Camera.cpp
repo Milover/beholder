@@ -20,6 +20,7 @@ License
 #include <pylon/ERegistrationMode.h>
 #include <pylon/ETimeoutHandling.h>
 #include <pylon/Parameter.h>
+#include <pylon/PixelType.h>
 
 #include "Camera.h"
 #include "DefaultConfigurator.h"
@@ -141,7 +142,8 @@ std::optional<RawImage> Camera::getRawImage() noexcept
 				static_cast<int>(res_->GetWidth()),
 				static_cast<std::int64_t>(res_->GetPixelType()),
 				res_->GetBuffer(),
-				res_->GetStride(step) ? step : 0ul
+				res_->GetStride(step) ? step : 0ul,
+				static_cast<std::size_t>(Pylon::BitPerPixel(res_->GetPixelType()))
 			}
 		};
 	}

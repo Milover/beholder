@@ -49,9 +49,12 @@ typedef struct
 	// however we can't do weak/shared pointers since Go will probably
 	// manage this memory, so should think of something, because it
 	// will cause issues
+	// TODO: should have the buffer size
 	void* buffer;
 	size_t step;
-	// TODO: should have the size of the buffer in bytes
+	//- Number of bits to store a pixel.
+	//	Cameras can return packed pixel types, so bytes are inappropriate.
+	size_t bitsPerPixel;
 }
 RawImage;
 
@@ -73,7 +76,7 @@ namespace capi
 		{
 			capi::RawImage operator()()
 			{
-				return capi::RawImage {0ul, 0, 0, 0, nullptr, 0ul};
+				return capi::RawImage {0ul, 0, 0, 0, nullptr, 0ul, 0ul};
 			}
 		};
 	}
