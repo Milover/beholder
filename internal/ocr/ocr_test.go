@@ -94,7 +94,7 @@ var pipelineTests = []pipelineTest{
 	"tesseract": {
 		"config_paths": [
 		],
-		"model": "model/dotmatrix/dotOCRDData1.traineddata",
+		"model": "model/_internal/tesseract/dotmatrix/dotOCRDData1.traineddata",
 		"page_seg_mode": "single_line",
 		"variables": {
 			"load_system_dawg": "0",
@@ -192,7 +192,7 @@ var pipelineTests = []pipelineTest{
 	"tesseract": {
 		"config_paths": [
 		],
-		"model": "model/dotmatrix/Transit_FT_500.traineddata",
+		"model": "model/_internal/tesseract/dotmatrix/Transit_FT_500.traineddata",
 		"page_seg_mode": "single_block",
 		"variables": {
 			"load_system_dawg": "0",
@@ -468,7 +468,7 @@ var patternTests = []patternTest{
 		Config: `
 {
 	"tesseract": {
-		"model": "model/dotmatrix/dotOCRDData1.traineddata",
+		"model": "model/_internal/tesseract/dotmatrix/dotOCRDData1.traineddata",
 		"variables": {
 			"load_system_dawg": "0",
 			"load_freq_dawg": "0"

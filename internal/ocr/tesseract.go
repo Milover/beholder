@@ -24,10 +24,11 @@ var (
 	ErrRecognition = errors.New("could not detect/recognize text")
 )
 
-// PSegMode represents available page segmentation modes.
+// PSegMode is the page segmentation mode.
 type PSegMode int
 
 const (
+	// FIXME: yolo
 	PSMOSDOnly PSegMode = iota
 	PSMAutoOSD
 	PSMAutoOnly
@@ -160,7 +161,7 @@ func (t Tesseract) Recognize(res *neutral.Result) error {
 	resultsSl := unsafe.Slice(results.array, nLines)
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
-		res.Confidences = append(res.Confidences, float64(r.conf))
+		res.Confidences = append(res.Confidences, float64(r.confidence))
 		res.Boxes = append(res.Boxes, neutral.Rectangle{
 			Left:   int64(r.box.left),
 			Top:    int64(r.box.top),
@@ -182,26 +183,22 @@ func (t Tesseract) Init() error {
 	} else {
 		defer os.Remove(patternsFile) // this could fail, but we don't care
 	}
+	// handle the model
+	mfn, cleanup, err := t.Model.File()
+	if err != nil {
+		return err
+	}
+	defer cleanup() // this could fail, but we don't care
 
 	ar := &mem.Arena{}
 	defer ar.Free()
 
 	// allocate the struct and handle the easy stuff (ints, strings...)
-	//in := (*C.TInit)(ar.Malloc(C.sizeof_TInit))
-	in := C.TInit{}
-
-	// set the page segmentation mode
-	in.psMode = C.int(t.PageSegMode)
-
-	// handle the model
-	mfn, remover, err := t.Model.File()
-	if err != nil {
-		return err
+	in := C.TInit{
+		psMode:    C.int(t.PageSegMode),
+		modelPath: (*C.char)(ar.CopyStr(path.Dir(mfn))),
+		model:     (*C.char)(ar.CopyStr(strings.TrimSuffix(path.Base(mfn), ".traineddata"))),
 	}
-	defer remover() // this could fail, but we don't care
-	in.modelPath = (*C.char)(ar.CopyStr(path.Dir(mfn)))
-	in.model = (*C.char)(ar.CopyStr(strings.TrimSuffix(path.Base(mfn), ".traineddata")))
-
 	// handle configuration file names
 	in.nCfgs = C.size_t(len(t.ConfigPaths))
 	in.cfgs = (**C.char)(ar.Malloc((uint64(in.nCfgs) * uint64(unsafe.Sizeof((*C.char)(nil))))))
@@ -209,7 +206,6 @@ func (t Tesseract) Init() error {
 	for i, p := range t.ConfigPaths {
 		cfgsSlice[i] = (*C.char)(ar.CopyStr(p))
 	}
-
 	// handle variables
 	in.nVars = C.size_t(len(t.Variables))
 	in.vars = (*C.KeyVal)(ar.Malloc(uint64(in.nVars) * uint64(unsafe.Sizeof(C.KeyVal{}))))
@@ -221,7 +217,7 @@ func (t Tesseract) Init() error {
 		iVar++
 	}
 
-	if ok := C.Tess_Init(t.p, (*C.TInit)(unsafe.Pointer(&in))); !ok {
+	if ok := C.Tess_Init(t.p, &in); !ok {
 		return errors.New("ocr.Tesseract.Init: could not initialize tesseract")
 	}
 	return nil
@@ -237,9 +233,6 @@ func (t Tesseract) IsValid() error {
 			return err
 		}
 	}
-	if err := t.Model.IsValid(); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -247,15 +240,16 @@ func (t Tesseract) IsValid() error {
 // It also clears the previous image and detection/recognition results.
 // FIXME: bytesPerPixel should be automatically determined.
 func (t Tesseract) SetImage(img neutral.Image, bytesPerPixel int) error {
-	raw := C.RawImage{
+	raw := C.Img{
 		C.size_t(img.ID),
 		C.int(img.Rows),
 		C.int(img.Cols),
 		C.int64_t(img.PixelType),
 		img.Buffer,
 		C.size_t(img.Step),
+		C.size_t(img.BitsPerPixel),
 	}
-	if ok := C.Tess_SetImage(t.p, &raw, C.int(bytesPerPixel)); !ok {
+	if ok := C.Tess_SetImage(t.p, &raw); !ok {
 		return errors.New("ocr.Tesseract.SetImage: could not set image")
 	}
 	return nil

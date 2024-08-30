@@ -77,13 +77,14 @@ func (ip *Processor) Delete() {
 func (ip Processor) GetRawImage() neutral.Image {
 	raw := C.Proc_GetRawImage(ip.p)
 	return neutral.Image{
-		ID:        uint64(raw.id),
-		Timestamp: time.Now(),
-		Buffer:    unsafe.Pointer(raw.buf),
-		Rows:      int(raw.rows),
-		Cols:      int(raw.cols),
-		PixelType: int64(raw.pxTyp),
-		Step:      uint64(raw.step),
+		ID:           uint64(raw.id),
+		Timestamp:    time.Now(),
+		Buffer:       unsafe.Pointer(raw.buffer),
+		Rows:         int(raw.rows),
+		Cols:         int(raw.cols),
+		PixelType:    int64(raw.pixelType),
+		Step:         uint64(raw.step),
+		BitsPerPixel: uint64(raw.bitsPerPixel),
 	}
 }
 
@@ -176,7 +177,7 @@ func (ip Processor) Postprocess(res *neutral.Result) error {
 			cres[i].text = (*C.char)(ar.CopyStr(res.Text[i]))
 		}
 		if len(res.Confidences) > i {
-			cres[i].conf = C.double(res.Confidences[i])
+			cres[i].confidence = C.double(res.Confidences[i])
 		}
 	}
 	if ok := C.Proc_Postprocess(ip.p, &cres[0], C.size_t(len(cres))); !ok {
@@ -206,13 +207,14 @@ func (ip Processor) ReadImage(filename string, readMode ReadMode) error {
 
 // WriteAcquisitionResult writes 'r' to disc in PNG format.
 func (ip Processor) ReceiveRawImage(img neutral.Image) error {
-	ri := C.RawImage{
-		id:    C.size_t(img.ID),
-		rows:  C.int(img.Rows),
-		cols:  C.int(img.Cols),
-		pxTyp: C.int64_t(img.PixelType),
-		buf:   img.Buffer,
-		step:  C.size_t(img.Step),
+	ri := C.Img{
+		id:           C.size_t(img.ID),
+		rows:         C.int(img.Rows),
+		cols:         C.int(img.Cols),
+		pixelType:    C.int64_t(img.PixelType),
+		buffer:       img.Buffer,
+		step:         C.size_t(img.Step),
+		bitsPerPixel: C.size_t(img.BitsPerPixel),
 	}
 	if ok := C.Proc_ReceiveRawImage(ip.p, &ri); !ok {
 		return errors.New("image.Processor.ReceiveRawImage: could not convert image")

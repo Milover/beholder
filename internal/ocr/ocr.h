@@ -7,39 +7,22 @@
 #ifdef __cplusplus
 #include "libbeholder.h"
 extern "C" {
+#else
+#include "RawImage.h"
+#include "Result.h"
 #endif
 
 #ifdef __cplusplus
-typedef beholder::DBDetector* DB;
-typedef beholder::EASTDetector* EAST;
-typedef beholder::Detector* Det;
+typedef beholder::ObjDetector* Det;
 typedef beholder::Tesseract* Tess;
+typedef beholder::capi::RawImage Img;
+typedef beholder::capi::Result Res;
 #else
-typedef void* DB;
-typedef void* EAST;
 typedef void* Det;
 typedef void* Tess;
+typedef RawImage Img;
+typedef Result Res;
 #endif
-
-// FIXME: we're copying this struct in like 7 places
-typedef struct {
-	size_t id;
-	int rows;
-	int cols;
-	int64_t pxTyp;
-	void* buf;	// NOTE: weak pointer; no need to call free
-	size_t step;
-} RawImage;
-
-typedef struct {
-	int left, top, right, bottom;
-} Rect;
-
-typedef struct {
-	char* text;
-	double conf;
-	Rect box;
-} Res;		// per-line result
 
 typedef struct {
 	Res* array;
@@ -51,30 +34,25 @@ void ResArr_Delete(void* r);
 typedef struct {
 	const char* modelPath;
 	const char* model;
-	float binary;
-	float polygon;
-	int maxCand;
-	double unclip;
-	bool useHCMean;
-} DBInit;
-
-bool DB_Init(DB d, const DBInit* in);
-DB DB_New();
+	int backend;
+	int target;
+	char** classes;
+	size_t nClasses;
+	int size;
+	double scale;
+	float conf;
+	float nms;
+	double mean[3];
+	bool swapRB;
+	double pad[3];
+} DetInit;
 
 void Det_Clear(Det d);
 void Det_Delete(Det d);
-ResArr* Det_Detect(Det d, const RawImage* img);
-
-typedef struct {
-	const char* modelPath;
-	const char* model;
-	float conf;
-	float nms;
-	bool useHCMean;
-} EASTInit;
-
-bool EAST_Init(EAST e, const EASTInit* in);
-EAST EAST_New();
+ResArr* Det_Detect(Det d, const Img* img);
+bool Det_Init(Det d, const DetInit* in);
+Det Det_NewEAST();
+Det Det_NewYOLOv8();
 
 typedef struct {
 	char* key;
@@ -96,7 +74,7 @@ void Tess_Delete(Tess t);
 ResArr* Tess_Recognize(Tess t);
 bool Tess_Init(Tess t, const TInit* in);
 Tess Tess_New();
-bool Tess_SetImage(Tess t, const RawImage* img, int bytesPerPixel);
+bool Tess_SetImage(Tess t, const Img* img);
 
 #ifdef __cplusplus
 } // end extern "C"

@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <string>
 
@@ -48,22 +49,15 @@ void Cam_Delete(Cam* c) {
 	}
 }
 
-RawImage Cam_GetRawImage(Cam c) {
+Img Cam_GetRawImage(Cam c) {
 	if (!c) {
-		return RawImage {};
+		return Img {};
 	}
 	auto res {c->getRawImage()};
 	if (!res) {
-		return RawImage {};
+		return Img {};
 	}
-	return RawImage {
-		res->id,
-		res->rows,
-		res->cols,
-		res->pixelType,
-		res->buffer,
-		res->step
-	};
+	return std::move(res).value().moveToC();
 }
 
 bool Cam_IsAcquiring(Cam c) {

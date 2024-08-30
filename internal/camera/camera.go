@@ -146,17 +146,18 @@ func (c *Camera) Acquire() error {
 		return fmt.Errorf("camera.Camera.Acquire: %w", ErrAcquisition)
 	}
 	r := C.Cam_GetRawImage(c.p)
-	if unsafe.Pointer(r.buf) == nil {
+	if unsafe.Pointer(r.buffer) == nil {
 		return fmt.Errorf("camera.Camera.Acquire: could not get raw image data")
 	}
 	c.Result = neutral.Image{
-		Buffer:    unsafe.Pointer(r.buf),
-		ID:        uint64(r.id),
-		Timestamp: time.Now(),
-		Rows:      int(r.rows),
-		Cols:      int(r.cols),
-		PixelType: int64(r.pxTyp),
-		Step:      uint64(r.step),
+		Buffer:       unsafe.Pointer(r.buffer),
+		ID:           uint64(r.id),
+		Timestamp:    time.Now(),
+		Rows:         int(r.rows),
+		Cols:         int(r.cols),
+		PixelType:    int64(r.pixelType),
+		Step:         uint64(r.step),
+		BitsPerPixel: uint64(r.bitsPerPixel),
 	}
 	return nil
 }

@@ -17,8 +17,9 @@ type Image struct {
 	// Buffer is a non-owning (weak) pointer to the raw bytes of an image.
 	Buffer unsafe.Pointer
 
-	Rows      int    // height of the image in pixels.
-	Cols      int    // width of the image in pixels.
-	PixelType int64  // pixel type of the image
-	Step      uint64 // number of bits per image row
+	Rows         int    // height of the image in pixels.
+	Cols         int    // width of the image in pixels.
+	PixelType    int64  // pixel type of the image
+	Step         uint64 // number of bits per image row
+	BitsPerPixel uint64 // number of bits per pixel
 }

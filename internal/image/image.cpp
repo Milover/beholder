@@ -22,19 +22,11 @@ void Proc_Delete(Proc p) {
 	}
 }
 
-RawImage Proc_GetRawImage(Proc p) {
+Img Proc_GetRawImage(Proc p) {
 	if (!p) {
-		return RawImage {};
+		return Img {};
 	}
-	beholder::RawImage img {p->getRawImage()};
-	return RawImage {
-		img.id,
-		img.rows,
-		img.cols,
-		img.pixelType,
-		img.buffer,
-		img.step
-	};
+	return p->getRawImage().moveToC();
 }
 
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
@@ -72,16 +64,7 @@ bool Proc_Postprocess(Proc p, Res* res, size_t nRes) {
 	std::vector<beholder::Result> results;
 	results.reserve(nRes);
 	for (auto i {0ul}; i < nRes; ++i) {
-		results.emplace_back(beholder::Result{
-			res[i].text,
-			beholder::Rectangle{
-				res[i].box.left,
-				res[i].box.top,
-				res[i].box.right,
-				res[i].box.bottom
-			},
-			res[i].conf
-		});
+		results.emplace_back(res[i]);
 	}
 	return p->postprocess(results);
 }
@@ -101,19 +84,11 @@ bool Proc_ReadImage(Proc p, const char* filename, int flags) {
 	return p->readImage(s, flags);
 }
 
-bool Proc_ReceiveRawImage(Proc p, const RawImage* img) {
+bool Proc_ReceiveRawImage(Proc p, const Img* img) {
 	if (!p || !img) {
 		return false;
 	}
-	beholder::RawImage ri {
-		img->id,
-		img->rows,
-		img->cols,
-		img->pxTyp,
-		img->buf,
-		img->step
-	};
-	return p->receiveRawImage(ri);
+	return p->receiveRawImage(beholder::RawImage {*img});
 }
 
 void Proc_ShowImage(Proc p, const char* title) {

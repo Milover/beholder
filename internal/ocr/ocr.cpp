@@ -23,25 +23,6 @@ void ResArr_Delete(void* r) {
 	}
 }
 
-
-bool DB_Init(DB d, const DBInit* in) {
-	if (!d || !in) {
-		return false;
-	}
-	d->modelPath = std::string(in->modelPath);
-	d->model = std::string(in->model);
-	d->binaryThreshold = in->binary;
-	d->polygonThreshold = in->polygon;
-	d->maxCandidates = in->maxCand;
-	d->unclipRatio = in->unclip;
-	d->useHardCodedMean = in->useHCMean;
-	return d->init();
-}
-
-DB DB_New() {
-	return new beholder::DBDetector {};
-}
-
 void Det_Clear(Det d) {
 	if (d) {
 		d->clear();
@@ -55,55 +36,57 @@ void Det_Delete(Det d) {
 	}
 }
 
-ResArr* Det_Detect(Det d, const RawImage* img) {
+ResArr* Det_Detect(Det d, const Img* img) {
 	if (!d || !img) {
 		return nullptr;
 	}
-	beholder::RawImage raw {
-		img->id,
-		img->rows,
-		img->cols,
-		img->pxTyp,
-		img->buf,
-		img->step
-	};
-	if (!d->detect(raw)) {
+	if (!d->detect(beholder::RawImage {*img})) {
 		return nullptr;
 	}
 	const std::vector<beholder::Result>& results {d->getResults()};
 	Res* res {new Res[results.size()]};
 	for (auto i {0ul}; i < results.size(); ++i) {
-		const beholder::Result& raw {results[i]};
-		Res& ret {res[i]};
-
-		// copy the string
-		ret.text = new char[raw.text.size() + 1];
-		std::strncpy(ret.text, raw.text.c_str(), raw.text.size() + 1);
-
-		// copy the other stuff
-		ret.conf = raw.confidence;
-		ret.box.left = raw.box.left;
-		ret.box.top = raw.box.top;
-		ret.box.right = raw.box.right;
-		ret.box.bottom = raw.box.bottom;
+		res[i] = results[i].toC();
 	}
 	return new ResArr{res, static_cast<size_t>(results.size())};
 }
 
-bool EAST_Init(EAST e, const EASTInit* in) {
-	if (!e || !in) {
+bool Det_Init(Det d, const DetInit* in) {
+	if (!d || !in) {
 		return false;
 	}
-	e->modelPath = std::string(in->modelPath);
-	e->model = std::string(in->model);
-	e->confidenceThreshold = in->conf;
-	e->nmsThreshold = in->nms;
-	e->useHardCodedMean = in->useHCMean;
-	return e->init();
+	auto arrAsgn = [](std::array<double, 3>& ar, const double (&a)[3]) -> void {
+		for (auto i {0}; i < 3; ++i) {
+			ar[i] = a[i];
+		}
+	};
+	d->modelPath = std::string {in->modelPath};
+	d->model = std::string {in->model};
+	d->backend = in->backend;
+	d->target = in->target;
+	d->size = in->size;
+	d->scale = in->scale;
+	d->confidenceThreshold = in->conf;
+	d->nmsThreshold = in->nms;
+	d->swapRB = in->swapRB;
+	// handle arrays
+	arrAsgn(d->mean, in->mean);
+	arrAsgn(d->padValue, in->pad);
+	// handle classes
+	d->classes.clear();
+	d->classes.reserve(in->nClasses);
+	for (auto i {0ul}; i < in->nClasses; ++i) {
+		d->classes.emplace_back(in->classes[i]);
+	}
+	return d->init();
 }
 
-EAST EAST_New() {
-	return new beholder::EASTDetector {};
+Det Det_NewEAST() {
+	return static_cast<Det>(new beholder::EASTDetector {});
+}
+
+Det Det_NewYOLOv8() {
+	return static_cast<Det>(new beholder::YOLOv8Detector {});
 }
 
 void Tess_Clear(Tess t) {
@@ -129,19 +112,7 @@ ResArr* Tess_Recognize(Tess t) {
 	const std::vector<beholder::Result>& results {t->getResults()};
 	Res* res {new Res[results.size()]};
 	for (auto i {0ul}; i < results.size(); ++i) {
-		const beholder::Result& raw {results[i]};
-		Res& ret {res[i]};
-
-		// copy the string
-		ret.text = new char[raw.text.size() + 1];
-		std::strncpy(ret.text, raw.text.c_str(), raw.text.size() + 1);
-
-		// copy the other stuff
-		ret.conf = raw.confidence;
-		ret.box.left = raw.box.left;
-		ret.box.top = raw.box.top;
-		ret.box.right = raw.box.right;
-		ret.box.bottom = raw.box.bottom;
+		res[i] = results[i].toC();
 	}
 	return new ResArr{res, static_cast<size_t>(results.size())};
 }
@@ -175,17 +146,9 @@ Tess Tess_New() {
 	return new beholder::Tesseract {};
 }
 
-bool Tess_SetImage(Tess t, const RawImage* img, int bytesPerPixel) {
+bool Tess_SetImage(Tess t, const Img* img) {
 	if (!t || !img) {
 		return false;
 	}
-	beholder::RawImage raw {
-		img->id,
-		img->rows,
-		img->cols,
-		img->pxTyp,
-		img->buf,
-		img->step
-	};
-	return t->setImage(raw, bytesPerPixel);
+	return t->setImage(beholder::RawImage {*img});
 }
