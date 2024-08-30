@@ -72,7 +72,8 @@ bool Tesseract::detectText()
 	do
 	{
 		Result r {};
-		if (iter->BoundingBox(level, &r.box.left, &r.box.top, &r.box.right, &r.box.bottom))
+		auto b {r.box.ref()};
+		if (iter->BoundingBox(level, &b.left, &b.top, &b.right, &b.bottom))
 		{
 			res_.emplace_back(std::move(r));
 		}
@@ -177,16 +178,18 @@ bool Tesseract::recognizeText()
 	return true;
 }
 
-bool Tesseract::setImage(const capi::RawImage& raw, int bytesPerPixel)
+bool Tesseract::setImage(const RawImage& raw, int bytesPerPixel)
 {
 	res_.clear();
+
+	const auto& ref {raw.cRef()};
 	p_->SetImage
 	(
-		static_cast<unsigned char*>(raw.buffer),
-		raw.cols,
-		raw.rows,
+		static_cast<unsigned char*>(ref.buffer),
+		ref.cols,
+		ref.rows,
 		bytesPerPixel,
-		static_cast<int>(raw.step)
+		static_cast<int>(ref.step)
 	);
 	return static_cast<bool>(p_->GetInputImage());
 }

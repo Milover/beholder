@@ -142,7 +142,7 @@ public:
 		//	acquisition result.
 		//	The receiver should copy the returned buffer if data persistence
 		//	is required.
-		std::optional<capi::RawImage> getRawImage() noexcept;
+		std::optional<RawImage> getRawImage() noexcept;
 
 #ifndef NDEBUG
 		//- Get reference to the underlying pylon camera

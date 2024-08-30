@@ -46,10 +46,11 @@ bool DrawBoundingBoxes::execute
 	cv::Rect rect {};
 	for (const auto& r : res)
 	{
-		rect.x = r.box.left;
-		rect.y = r.box.top;
-		rect.width = r.box.right - r.box.left;
-		rect.height = r.box.bottom - r.box.top;	// because we measure from the top left
+		const auto& b {r.box.cRef()};
+		rect.x = b.left;
+		rect.y = b.top;
+		rect.width = b.right - b.left;
+		rect.height = b.bottom - b.top;	// because we measure from the top left
 		cv::rectangle(out, rect, c, thickness);
 	}
 	return true;

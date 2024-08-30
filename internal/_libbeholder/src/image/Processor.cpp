@@ -70,10 +70,10 @@ std::size_t Processor::getImageID() const
 	return id_;
 }
 
-capi::RawImage Processor::getRawImage() const
+RawImage Processor::getRawImage() const
 {
 	// WARNING: we assume that we can only have 8-bit Mono or BGR images
-	return capi::RawImage
+	return RawImage
 	{
 		id_,
 		img_->rows,
@@ -113,24 +113,25 @@ bool Processor::preprocess()
 	return true;
 }
 
-bool Processor::receiveRawImage(const capi::RawImage& raw)
+bool Processor::receiveRawImage(const RawImage& raw)
 {
-	id_ = raw.id;
+	const auto& ref {raw.cRef()};
+	id_ = ref.id;
 
-	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
+	auto info {getConversionInfo(static_cast<PxType>(ref.pixelType))};
 	if (!info)
 	{
 		std::cerr << "could not get conversion info (ID: " << id_ << "): "
-				  << "unknown pixel type: " << raw.pixelType << std::endl;
+				  << "unknown pixel type: " << ref.pixelType << std::endl;
 		return false;
 	}
 	cv::Mat tmp
 	{
-		raw.rows,
-		raw.cols,
+		ref.rows,
+		ref.cols,
 		info->inputType,
-		raw.buffer,
-		raw.step > 0ul ? raw.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+		ref.buffer,
+		ref.step > 0ul ? ref.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
 	};
 
 	// convert the color scheme if necessary
@@ -169,24 +170,25 @@ bool Processor::writeImage(const std::string& filename) const
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
-std::unique_ptr<cv::Mat> rawToMatPtr(const capi::RawImage& raw)
+std::unique_ptr<cv::Mat> rawToMatPtr(const RawImage& raw)
 {
-	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
+	const auto& ref {raw.cRef()};
+	auto info {getConversionInfo(static_cast<PxType>(ref.pixelType))};
 	if (!info)
 	{
-		std::cerr << "could not get conversion info (ID: " << raw.id << "): "
-				  << "unknown pixel type: " << raw.pixelType << std::endl;
+		std::cerr << "could not get conversion info (ID: " << ref.id << "): "
+				  << "unknown pixel type: " << ref.pixelType << std::endl;
 		return nullptr;
 	}
 	return std::unique_ptr<cv::Mat>
 	{
 		new cv::Mat
 		{
-			raw.rows,
-			raw.cols,
+			ref.rows,
+			ref.cols,
 			info->inputType,
-			raw.buffer,
-			raw.step > 0ul ? raw.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+			ref.buffer,
+			ref.step > 0ul ? ref.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
 		}
 	};
 }

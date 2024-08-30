@@ -63,11 +63,11 @@ bool DrawLabels::execute
 				label, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline
 			)
 		};
-		int top {cv::max(r.box.top, labelSize.height)};
+		int top {cv::max(r.box.cRef().top, labelSize.height)};
 		cv::putText
 		(
 			out, label,
-			cv::Point(r.box.left, top - baseline),
+			cv::Point(r.box.cRef().left, top - baseline),
 			cv::FONT_HERSHEY_SIMPLEX, fontScale, c, thickness
 		);
 	}

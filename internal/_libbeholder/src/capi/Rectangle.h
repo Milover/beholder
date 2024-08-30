@@ -14,6 +14,10 @@ Description
 #ifndef BEHOLDER_RECTANGLE_H
 #define BEHOLDER_RECTANGLE_H
 
+#ifdef __cplusplus
+#include "CWrapperBase.h"
+#endif
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef __cplusplus
@@ -26,7 +30,7 @@ extern "C"
 #endif
 
 /*---------------------------------------------------------------------------*\
-                        Struct Rectangle Declaration
+                      Struct Rectangle Declaration
 \*---------------------------------------------------------------------------*/
 
 typedef struct
@@ -41,9 +45,36 @@ Rectangle;
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef __cplusplus
-} // End namespace capi
-} // End namespace beholder
 } // End extern "C"
+} // End namespace capi
+
+/*---------------------------------------------------------------------------*\
+                      Class Rectangle Declaration
+\*---------------------------------------------------------------------------*/
+
+namespace capi
+{
+	namespace detail
+	{
+		struct RectangleCtor
+		{
+			capi::Rectangle operator()()
+			{
+				return capi::Rectangle {0, 0, 0, 0};
+			}
+		};
+	}
+}
+
+//- The actual class we use throughout the library.
+using Rectangle = capi::internal::CWrapperBase
+<
+	capi::Rectangle, capi::detail::RectangleCtor
+>;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace beholder
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

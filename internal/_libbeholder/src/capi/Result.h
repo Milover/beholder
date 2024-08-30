@@ -21,6 +21,9 @@ SourceFile
 #include <cstring>
 #include <cstddef>
 #include <string>
+#include <type_traits>
+
+#include "Traits.h"
 #else
 #include <stddef.h>
 #endif
@@ -62,21 +65,13 @@ Result;
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
 //- Free memory held by r.
-inline void Result_Delete(Result* r)
-{
-	if (r->text)
-	{
-		delete[] r->text;
-		r->text = nullptr;
-	}
-}
+void Result_Delete(Result* r);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef __cplusplus
 } // End namespace capi
 } // End extern "C"
-#endif
 
 /*---------------------------------------------------------------------------*\
                           Class Result Declaration
@@ -84,46 +79,77 @@ inline void Result_Delete(Result* r)
 
 // We always use this guy where we can.
 //
-// TODO: instead of this, we should inherit from capi::Result and have a
-// wrapper class for the char* which acts like a std::string.
+// FIXME: we don't like how this is implemented.
 class Result
 {
 public:
 
+	using CAPI = capi::Result;
+
 	// Public data
 
-		// TODO: should we hold an image or a reference to an image?
+	//- Recognized/detected text
+	std::string text;
 
-		//- Recognized/detected text
-		std::string text;
+	//- Bounding boxes detected by algorithms and/or NNs
+	Rectangle box;
 
-		//- Bounding boxes detected by algorithms and/or NNs
-		capi::Rectangle box;
+	//- Confidence of the result
+	double confidence;
 
-		//- Confidence of the result
-		double confidence;
+	// Constructors
 
+		//- Default constructor
+		Result() = default;
+
+		//- Default copy constructor
+		Result(const Result&) = default;
+
+		//- Default move constructor
+		Result(Result&&) = default;
+
+		//- Construct by forwarding components
+		template<typename Txt, typename Box, typename Conf>
+		Result(Txt&& t, Box&& b, Conf&& c)
+		:
+			text {std::forward<Txt>(t)},
+			box {std::forward<Box>(b)},
+			confidence {std::forward<Conf>(c)}
+		{}
+
+		//- Construct by copying a capi::Result
+		Result(const capi::Result& r)
+		:
+			text {r.text},
+			box {r.box},
+			confidence {r.confidence}
+		{}
+
+	//- Destructor
+	~Result() = default;
 
 	// Public member functions
 
 		//- Return a capi::Result copy
-		//
-		//	WARNING: this function is intended for use ONLY from C-APIs,
-		//	i.e. from Go.
-		//	It is marked as deprecated so that the compiler can yell at us
-		//	if we accidentally use it.
-		[[nodiscard, deprecated("unsafe C-API function")]]
 		capi::Result toC() const
 		{
 			char* ch {new char[text.size() + 1]};
 			std::strcpy(ch, text.c_str());
-			return capi::Result {ch, box, confidence};
+			return capi::Result {ch, box.cRef(), confidence};
 		}
+
+	// Member operators
+
+		//- Default copy assignment operator
+		Result& operator=(const Result&) = default;
+
+		//- Default move assignment operator
+		Result& operator=(Result&&) = default;
+
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#ifdef __cplusplus
 } // End namespace beholder
 #endif
 

@@ -16,6 +16,8 @@ Description
 
 #ifdef __cplusplus
 #include <cstdint>
+
+#include "CWrapperBase.h"
 #else
 #include <stdint.h>
 #endif
@@ -37,18 +39,18 @@ extern "C"
 
 typedef struct
 {
-	size_t id {0ul};
-	int rows {0};
-	int cols {0};
+	size_t id;
+	int rows;
+	int cols;
 	// FIXME: this is pretty horrible, however simple values make
 	// life easier from the Go side
-	int64_t pixelType {0};
+	int64_t pixelType;
 	// FIXME: this should be something better than a raw pointer,
 	// however we can't do weak/shared pointers since Go will probably
 	// manage this memory, so should think of something, because it
 	// will cause issues
-	void* buffer {nullptr};
-	size_t step {0ul};
+	void* buffer;
+	size_t step;
 	// TODO: should have the size of the buffer in bytes
 }
 RawImage;
@@ -56,9 +58,36 @@ RawImage;
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef __cplusplus
-} // End namespace capi
-} // End namespace beholder
 } // End extern "C"
+} // End namespace capi
+
+/*---------------------------------------------------------------------------*\
+                          Class RawImage Declaration
+\*---------------------------------------------------------------------------*/
+
+namespace capi
+{
+	namespace detail
+	{
+		struct RawImageCtor
+		{
+			capi::RawImage operator()()
+			{
+				return capi::RawImage {0ul, 0, 0, 0, nullptr, 0ul};
+			}
+		};
+	}
+}
+
+//- The actual class we use throughout the library.
+using RawImage = capi::internal::CWrapperBase
+<
+	capi::RawImage, capi::detail::RawImageCtor
+>;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace beholder
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

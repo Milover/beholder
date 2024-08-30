@@ -51,7 +51,10 @@ public:
 	// Constructors
 
 		//- Default constructor
-		YOLOv8Detector() = default;
+		YOLOv8Detector()
+		{
+			scale = 1.0/255.0;
+		}
 
 		//- Disable copy constructor
 		YOLOv8Detector(const YOLOv8Detector&) = default;

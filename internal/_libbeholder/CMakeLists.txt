@@ -94,7 +94,7 @@ file(
 	BEHOLDER_HDR
 	CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/src/*.h"
-	"${PROJECT_SOURCE_DIR}/src/capi*.h"
+	"${PROJECT_SOURCE_DIR}/src/capi/*.h"
 	"${PROJECT_SOURCE_DIR}/src/image/*.h"
 	"${PROJECT_SOURCE_DIR}/src/image/ops/*.h"
 	"${PROJECT_SOURCE_DIR}/src/nn/*.h"

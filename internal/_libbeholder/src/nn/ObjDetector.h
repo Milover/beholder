@@ -153,7 +153,7 @@ public:
 		int size {640};
 		//- Multiplier for image pixel values.
 		//	Set based on which model is in use.
-		double scale {1.0/255.0};
+		double scale {1.0};
 		//- Confidence threshold used for text box filtering.
 		float confidenceThreshold {0.5};
 		//- Non-maximum suppression threshold.
@@ -188,7 +188,7 @@ public:
 		virtual void clear();
 
 		//- Run text detection and store the results
-		virtual bool detect(const capi::RawImage& raw);
+		virtual bool detect(const RawImage& raw);
 
 		//- Get a const reference to the detection results
 		const std::vector<Result>& getResults() const;

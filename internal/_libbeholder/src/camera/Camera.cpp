@@ -122,7 +122,7 @@ bool Camera::cmdIsDone(const char* cmd) noexcept
 	return false;
 }
 
-std::optional<capi::RawImage> Camera::getRawImage() noexcept
+std::optional<RawImage> Camera::getRawImage() noexcept
 {
 	// not sure if this can throw, so we're being careful
 	try
@@ -134,7 +134,7 @@ std::optional<capi::RawImage> Camera::getRawImage() noexcept
 		std::size_t step;
 		return std::optional
 		{
-			capi::RawImage
+			RawImage
 			{
 				static_cast<std::size_t>(res_->GetID()),
 				static_cast<int>(res_->GetHeight()),
