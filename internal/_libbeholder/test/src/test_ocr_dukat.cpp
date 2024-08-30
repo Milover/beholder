@@ -57,7 +57,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	beholder::Tesseract t {};
 	//t.configPaths = std::vector<std::string>{"testdata/configs/test_dukat.patterns.config"};
 	//t.modelPath = "_models/best";
-	t.modelPath = "model/dotmatrix";
+	t.modelPath = "model/_internal/tesseract/dotmatrix";
 	//t.model = "5x5_Dots_FT_500";
 	//t.model = "DisplayDots_FT_500";
 	//t.model = "DotMatrix_FT_500";

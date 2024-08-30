@@ -147,7 +147,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// setup object detector
 	beholder::YOLOv8Detector det {};
-	det.modelPath = "model/yolo";
+	det.modelPath = "model/_internal/yolo";
 	det.model = "fima_v8n_640-50e-b16-2560px.onnx";
 	det.classes = beholder::fimaClasses;
 	det.size = 2560;

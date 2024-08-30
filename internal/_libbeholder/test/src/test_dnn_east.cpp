@@ -36,9 +36,9 @@ const std::filesystem::path internalDir
 const std::string testImage
 {
 	//"testdata/images/neograf/imagefile_1.bmp"
-	"testdata/images/sawlog_0.png"
+	//"testdata/images/sawlog_0.png"
 	//"testdata/images/sawlog_0.cropped.png"
-	//"testdata/images/tags_0.bmp"
+	"testdata/images/tags_0.bmp"
 	//"testdata/images/sawlog_1.png"
 	//"testdata/images/sawlog_2.png"
 };
@@ -58,7 +58,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// NOTE: seems to be performing better than the DB detector
 	beholder::EASTDetector det {};
-	det.modelPath = "model/east";
+	det.modelPath = "model/_internal/east";
 	det.model = "EAST.pb";
 	det.size = 1920;
 	if (!det.init())

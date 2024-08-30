@@ -60,7 +60,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// setup tesseract
 	beholder::Tesseract t {};
 	//t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf.patterns.config"};
-	t.modelPath = "model/dotmatrix";
+	t.modelPath = "model/_internal/tesseract/dotmatrix";
 	t.model = "dotOCRDData1";
 	t.pageSegMode = 7;
 	t.variables = std::vector<std::pair<std::string, std::string>>
