@@ -58,7 +58,7 @@ func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.Padding < 0 {
-		return nil, errors.New("ocr.NewAddPadding: bad padding")
+		return nil, errors.New("imgproc.NewAddPadding: bad padding")
 	}
 	return unsafe.Pointer(C.AdPad_New(
 		C.int(op.Padding),
@@ -95,10 +95,10 @@ func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.KernelSize <= 0 {
-		return nil, errors.New("ocr.NewAutoCrop: bad kernel size")
+		return nil, errors.New("imgproc.NewAutoCrop: bad kernel size")
 	}
 	if op.Padding < 0 {
-		return nil, errors.New("ocr.NewAutoCrop: bad padding")
+		return nil, errors.New("imgproc.NewAutoCrop: bad padding")
 	}
 	// TextWidth and TextHeight accept all values
 	return unsafe.Pointer(C.AuCrp_New(
@@ -134,10 +134,10 @@ func NewCLAHE(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.TileRows <= 0 {
-		return nil, errors.New("ocr.NewCLAHE: bad tile rows")
+		return nil, errors.New("imgproc.NewCLAHE: bad tile rows")
 	}
 	if op.TileColumns <= 0 {
-		return nil, errors.New("ocr.NewCLAHE: bad tile columns")
+		return nil, errors.New("imgproc.NewCLAHE: bad tile columns")
 	}
 	// ClipLimit accepts all values
 	return unsafe.Pointer(C.CLH_New(
@@ -212,10 +212,10 @@ func NewDivGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.SigmaX <= 0 && (op.KernelWidth < 0 || op.KernelWidth%2 != 1) {
-		return nil, errors.New("ocr.NewDivGaussianBlur: bad kernel width")
+		return nil, errors.New("imgproc.NewDivGaussianBlur: bad kernel width")
 	}
 	if op.SigmaY <= 0 && (op.KernelHeight < 0 || op.KernelHeight%2 != 1) {
-		return nil, errors.New("ocr.NewDivGaussianBlur: bad kernel height")
+		return nil, errors.New("imgproc.NewDivGaussianBlur: bad kernel height")
 	}
 	// SigmaX and SigmaY accept all values
 	return unsafe.Pointer(C.DivGaussBlur_New(
@@ -299,10 +299,10 @@ func NewGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.SigmaX <= 0 && (op.KernelWidth < 0 || op.KernelWidth%2 != 1) {
-		return nil, errors.New("ocr.NewGaussianBlur: bad kernel width")
+		return nil, errors.New("imgproc.NewGaussianBlur: bad kernel width")
 	}
 	if op.SigmaY <= 0 && (op.KernelHeight < 0 || op.KernelHeight%2 != 1) {
-		return nil, errors.New("ocr.NewGaussianBlur: bad kernel height")
+		return nil, errors.New("imgproc.NewGaussianBlur: bad kernel height")
 	}
 	// SigmaX and SigmaY accept all values
 	return unsafe.Pointer(C.GaussBlur_New(
@@ -369,7 +369,7 @@ func NewMedianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.KernelSize%2 != 1 {
-		return nil, errors.New("ocr.NewMedianBlur: bad kernel size")
+		return nil, errors.New("imgproc.NewMedianBlur: bad kernel size")
 	}
 	return unsafe.Pointer(C.MedBlur_New(C.int(op.KernelSize))), nil
 }
@@ -463,10 +463,10 @@ func NewMorphology(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.KernelWidth <= 0 {
-		return nil, errors.New("ocr.NewMorphology: bad kernel width")
+		return nil, errors.New("imgproc.NewMorphology: bad kernel width")
 	}
 	if op.KernelHeight <= 0 {
-		return nil, errors.New("ocr.NewMorphology: bad kernel height")
+		return nil, errors.New("imgproc.NewMorphology: bad kernel height")
 	}
 	// Iterations accepts all values; types are valid if parsed
 	return unsafe.Pointer(C.Morph_New(
@@ -519,10 +519,10 @@ func NewResize(m json.RawMessage) (unsafe.Pointer, error) {
 		return nil, err
 	}
 	if op.Width <= 0 {
-		return nil, errors.New("ocr.NewResize: bad width")
+		return nil, errors.New("imgproc.NewResize: bad width")
 	}
 	if op.Height <= 0 {
-		return nil, errors.New("ocr.NewResize: bad height")
+		return nil, errors.New("imgproc.NewResize: bad height")
 	}
 	return unsafe.Pointer(C.Rsz_New(
 		C.int(op.Width),
@@ -615,7 +615,7 @@ func NewThreshold(m json.RawMessage) (unsafe.Pointer, error) {
 	if !(typ >= ThreshBinary && typ <= ThreshToZeroInv) &&
 		!(typ >= ThreshOtsu && typ <= ThreshOtsu+ThreshToZeroInv) &&
 		!(typ >= ThreshTriangle && typ <= ThreshTriangle+ThreshToZeroInv) {
-		return nil, errors.New("ocr.NewThreshold: bad threshold type")
+		return nil, errors.New("imgproc.NewThreshold: bad threshold type")
 	}
 	// Value and MaxValue accept all values
 	return unsafe.Pointer(C.Thresh_New(

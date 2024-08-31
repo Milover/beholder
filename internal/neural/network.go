@@ -1,8 +1,8 @@
-package ocr
+package neural
 
 /*
 #include <stdlib.h>
-#include "ocr.h"
+#include "neural.h"
 */
 import "C"
 import (
@@ -14,7 +14,7 @@ import (
 	"github.com/Milover/beholder/internal/enumutils"
 	"github.com/Milover/beholder/internal/mem"
 	"github.com/Milover/beholder/internal/models"
-	"github.com/Milover/beholder/internal/ocr/model"
+	"github.com/Milover/beholder/internal/neural/model"
 )
 
 var (

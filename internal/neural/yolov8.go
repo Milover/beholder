@@ -1,7 +1,7 @@
-package ocr
+package neural
 
 /*
-#include "ocr.h"
+#include "neural.h"
 */
 import "C"
 

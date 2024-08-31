@@ -1,4 +1,4 @@
-package ocr
+package neural
 
 import (
 	"errors"

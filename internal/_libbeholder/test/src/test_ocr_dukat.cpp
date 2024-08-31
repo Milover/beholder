@@ -27,10 +27,10 @@ License
 namespace beholder
 {
 
-// the internal/ocr directory
+// the internal/neural directory
 const std::filesystem::path internalDir
 {
-	std::filesystem::path {__FILE__}.parent_path() / "../../../ocr/"
+	std::filesystem::path {__FILE__}.parent_path() / "../../../neural/"
 };
 
 const std::string testImage
@@ -50,7 +50,7 @@ const std::vector<std::string> expected
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-	// chdir to the go project internal/ocr directory to make our life easier
+	// chdir to the go project internal/neural directory to make our life easier
 	std::filesystem::current_path(beholder::internalDir);
 
 	// setup tesseract

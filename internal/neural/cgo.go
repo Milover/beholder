@@ -1,6 +1,6 @@
-package ocr
+package neural
 
-// Changes here should be mirrored in internal/image/cgo.go.
+// Changes here should be mirrored in internal/imgproc/cgo.go.
 
 /*
 #cgo CXXFLAGS: -std=c++17

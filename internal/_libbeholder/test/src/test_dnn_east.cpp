@@ -27,10 +27,10 @@ License
 namespace beholder
 {
 
-// the internal/ocr directory
+// the internal/neural directory
 const std::filesystem::path internalDir
 {
-	std::filesystem::path {__FILE__}.parent_path() / "../../../ocr/"
+	std::filesystem::path {__FILE__}.parent_path() / "../../../neural/"
 };
 
 const std::string testImage
@@ -53,7 +53,7 @@ const std::string testImage
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
 	auto pwd {std::filesystem::current_path()};	// so we can return
-	// chdir to the go project internal/ocr directory to make our life easier
+	// chdir to the go project internal/neural directory to make our life easier
 	std::filesystem::current_path(beholder::internalDir);
 
 	// NOTE: seems to be performing better than the DB detector

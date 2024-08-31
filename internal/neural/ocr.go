@@ -1,10 +1,10 @@
-package ocr
+package neural
 
 // FIXME: remove this guy entirely
 
 /*
 #include <stdlib.h>
-#include "ocr.h"
+#include "neural.h"
 */
 import "C"
 import (

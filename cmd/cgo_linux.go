@@ -5,8 +5,8 @@ package cmd
 //
 // This should be kept up to date with:
 //	- internal/camera/cgo.go
-//	- internal/image/cgo.go
-//	- internal/ocr/cgo.go
+//	- internal/imgproc/cgo.go
+//	- internal/neural/cgo.go
 
 /*
 #cgo CXXFLAGS: -std=c++17

@@ -1,5 +1,5 @@
-#ifndef _BEHOLDER_OCR_H
-#define _BEHOLDER_OCR_H
+#ifndef _BEHOLDER_NEURAL_H
+#define _BEHOLDER_NEURAL_H
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -80,4 +80,4 @@ bool Tess_SetImage(Tess t, const Img* img);
 } // end extern "C"
 #endif
 
-#endif // _BEHOLDER_OCR_H
+#endif // _BEHOLDER_NEURAL_H

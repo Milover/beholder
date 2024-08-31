@@ -1,8 +1,8 @@
-package ocr
+package neural
 
 /*
 #include <stdlib.h>
-#include "ocr.h"
+#include "neural.h"
 */
 import "C"
 import (
@@ -80,7 +80,7 @@ func RegisterNetwork(typ Type, keyword string, fn Factory) {
 func NewNetwork(t Type) (Network, error) {
 	f, ok := networkFactoryMap[t]
 	if !ok {
-		return nil, fmt.Errorf("ocr.GetNetwork: %w", ErrType)
+		return nil, fmt.Errorf("neural.GetNetwork: %w", ErrType)
 	}
 	return f(), nil
 }

@@ -1,8 +1,8 @@
-package ocr
+package neural
 
 /*
 #include <stdlib.h>
-#include "ocr.h"
+#include "neural.h"
 */
 import "C"
 import (
@@ -17,7 +17,7 @@ import (
 	"github.com/Milover/beholder/internal/enumutils"
 	"github.com/Milover/beholder/internal/mem"
 	"github.com/Milover/beholder/internal/models"
-	"github.com/Milover/beholder/internal/ocr/model"
+	"github.com/Milover/beholder/internal/neural/model"
 )
 
 func init() {
@@ -154,7 +154,7 @@ func (t Tesseract) Clear() {
 // Internally stored results are cleared by the C-API when Inference is called.
 func (t Tesseract) Inference(img models.Image, res *models.Result) error {
 	if err := t.setImage(img); err != nil {
-		return fmt.Errorf("ocr.Tesseract.Inference: %w: %w", ErrInference, err)
+		return fmt.Errorf("neural.Tesseract.Inference: %w: %w", ErrInference, err)
 	}
 	ar := &mem.Arena{}
 	defer ar.Free()
@@ -164,7 +164,7 @@ func (t Tesseract) Inference(img models.Image, res *models.Result) error {
 		unsafe.Pointer(C.ResArr_Delete)),
 	)
 	if unsafe.Pointer(results) == nil {
-		return fmt.Errorf("ocr.Tesseract.Inference: %w", ErrInference)
+		return fmt.Errorf("neural.Tesseract.Inference: %w", ErrInference)
 	}
 	// allocate and reset if necessary
 	nLines := uint64(results.count)
@@ -239,7 +239,7 @@ func (t Tesseract) Init() error {
 	}
 
 	if ok := C.Tess_Init(t.p, &in); !ok {
-		return errors.New("ocr.Tesseract.Init: could not initialize tesseract")
+		return errors.New("neural.Tesseract.Init: could not initialize tesseract")
 	}
 	return nil
 }
@@ -247,7 +247,7 @@ func (t Tesseract) Init() error {
 // IsValid is function used as an assertion that t is able to be initialized.
 func (t Tesseract) IsValid() error {
 	if t.p == (C.Tess)(nil) {
-		return fmt.Errorf("ocr.Tesseract.IsValid: %w", ErrAPIPtr)
+		return fmt.Errorf("neural.Tesseract.IsValid: %w", ErrAPIPtr)
 	}
 	for _, c := range t.ConfigPaths {
 		if _, err := os.Stat(c); err != nil {
@@ -270,7 +270,7 @@ func (t Tesseract) setImage(img models.Image) error {
 		C.size_t(img.BitsPerPixel),
 	}
 	if ok := C.Tess_SetImage(t.p, &raw); !ok {
-		return errors.New("ocr.Tesseract.setImage: could not set image")
+		return errors.New("neural.Tesseract.setImage: could not set image")
 	}
 	return nil
 }
@@ -283,7 +283,7 @@ func (t *Tesseract) setPatterns() (string, error) {
 	if len(t.Patterns) == 0 {
 		return "", nil
 	}
-	f, err := os.CreateTemp("", "ocr_patterns_")
+	f, err := os.CreateTemp("", "tesseract_patterns_")
 	if err != nil {
 		return "", err
 	}

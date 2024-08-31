@@ -2,7 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "ocr.h"
+#include "neural.h"
 
 void ResArr_Delete(void* r) {
 	if (r) {

@@ -1,7 +1,7 @@
 // Package imgproc provides common image processing utilities.
 package imgproc
 
-// Changes here should be mirrored in internal/ocr/cgo.go.
+// Changes here should be mirrored in internal/neural/cgo.go.
 
 /*
 #cgo CXXFLAGS: -std=c++17

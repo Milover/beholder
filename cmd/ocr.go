@@ -11,7 +11,7 @@ import (
 
 	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
-	"github.com/Milover/beholder/internal/ocr"
+	"github.com/Milover/beholder/internal/neural"
 	"github.com/Milover/beholder/internal/output"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
@@ -32,7 +32,7 @@ var (
 // OcrApp represents a program for running an OCR pipeline on an image or
 // a set of images read from disc.
 type OCRApp struct {
-	T *ocr.Tesseract     `json:"tesseract"`
+	T *neural.Tesseract  `json:"tesseract"`
 	P *imgproc.Processor `json:"image_processing"`
 	O *output.Output     `json:"output"`
 }
@@ -40,7 +40,7 @@ type OCRApp struct {
 // NewOCRApp creates a new OCR app.
 func NewOCRApp() *OCRApp {
 	return &OCRApp{
-		T: ocr.NewTesseract(),
+		T: neural.NewTesseract(),
 		P: imgproc.NewProcessor(),
 		O: output.NewOutput(),
 	}
