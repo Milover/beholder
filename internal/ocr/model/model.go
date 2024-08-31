@@ -14,14 +14,14 @@ var (
 // Cleanup is a helper function which is used to clean up temporary model files.
 type Cleanup func() error
 
-// embed is an embedded DNN model.
+// embed is an embedded NN model.
 type embed struct {
 	Keyword Model  // NN model keyword
 	Ext     string // NN model file extension
 	Bytes   []byte // raw bytes of the model definition, eg. weights
 }
 
-// embeds holds all embedded DNN models available at runtime.
+// embeds holds all embedded NN models available at runtime.
 //
 // The selection of models embedded depends on build tags used when building
 // the program. Hence 'embeds' is populated at runtime, in init() functions
@@ -49,7 +49,7 @@ func getEmbedID(m Model) int {
 	})
 }
 
-// Model is a DNN model definition handle.
+// Model is a NN model definition handle.
 //
 // A selection of models may be included (embedded) within the program binary
 // which can be used by setting Model to the model keyword.
@@ -57,7 +57,7 @@ func getEmbedID(m Model) int {
 // Model is a file path.
 type Model string
 
-// File returns the file name of the on-disc DNN model definition file, and
+// File returns the file name of the on-disc NN model definition file, and
 // a Cleanup used to clean up any temporary files.
 //
 // Cleanup should be called once the model file is no longer needed,

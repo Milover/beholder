@@ -23,7 +23,7 @@ var (
 	ErrAPIPtr    = errors.New("nil API pointer")      // uninitialized C-API error
 )
 
-// Network is a generic deep neural network used for image processing.
+// Network is a generic neural network used for image processing.
 //
 // WARNING: a Network usually contains C-managed resources, hence, when
 // it is no longer needed, [Network.Delete] must be called to correctly
@@ -205,17 +205,17 @@ var (
 //
 // It is usually embedded into other concrete types since most implementations
 // have similar functionality and requirements, thus making implementing new
-// DNN models fairly painless.
+// NN models fairly painless.
 //
 // WARNING: network contains C-managed resources so when it is no longer needed,
 // [network.Delete] must be called to release the resources and clean up.
 type network struct {
-	// Backend is the DNN computation backend.
+	// Backend is the NN computation backend.
 	Backend Backend `json:"backend"`
-	// Target is the DNN computation device.
+	// Target is the NN computation device.
 	Target Target `json:"target"`
 
-	// Model is the DNN model definition handle.
+	// Model is the NN model definition handle.
 	// It can either be an embedded model keyword, or a model file path.
 	Model model.Model `json:"model"`
 	// Config is the network configuration.
