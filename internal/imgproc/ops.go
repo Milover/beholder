@@ -1,8 +1,8 @@
-package image
+package imgproc
 
 /*
 #include <stdlib.h>
-#include "operations.h"
+#include "ops.h"
 */
 import "C"
 import (

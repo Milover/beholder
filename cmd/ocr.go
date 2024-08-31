@@ -9,7 +9,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/Milover/beholder/internal/image"
+	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/ocr"
 	"github.com/Milover/beholder/internal/output"
@@ -32,16 +32,16 @@ var (
 // OcrApp represents a program for running an OCR pipeline on an image or
 // a set of images read from disc.
 type OCRApp struct {
-	T *ocr.Tesseract   `json:"tesseract"`
-	P *image.Processor `json:"image_processing"`
-	O *output.Output   `json:"output"`
+	T *ocr.Tesseract     `json:"tesseract"`
+	P *imgproc.Processor `json:"image_processing"`
+	O *output.Output     `json:"output"`
 }
 
 // NewOCRApp creates a new OCR app.
 func NewOCRApp() *OCRApp {
 	return &OCRApp{
 		T: ocr.NewTesseract(),
-		P: image.NewProcessor(),
+		P: imgproc.NewProcessor(),
 		O: output.NewOutput(),
 	}
 }
@@ -90,7 +90,7 @@ func (app *OCRApp) Run(filename string, res *models.Result) error {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err := app.P.DecodeImage(buf, image.RMGrayscale); err != nil {
+	if err := app.P.DecodeImage(buf, imgproc.RMGrayscale); err != nil {
 		return err
 	}
 	res.Timings.Set("decode", sw.Lap())

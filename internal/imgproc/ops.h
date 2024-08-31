@@ -1,5 +1,5 @@
-#ifndef _BEHOLDER_IMAGE_H
-#define _BEHOLDER_IMAGE_H
+#ifndef _BEHOLDER_IMGPROC_OPS_H
+#define _BEHOLDER_IMGPROC_OPS_H
 
 #ifdef __cplusplus
 #include "libbeholder.h"
@@ -63,4 +63,4 @@ Thresh Thresh_New(float val, float maxVal, int typ);
 } // end extern "C"
 #endif
 
-#endif // _BEHOLDER_IMAGE_H
+#endif // _BEHOLDER_IMGPROC_OPS_H

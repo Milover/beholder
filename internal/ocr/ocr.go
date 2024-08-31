@@ -10,7 +10,7 @@ import "C"
 import (
 	"io"
 
-	"github.com/Milover/beholder/internal/image"
+	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/stopwatch"
 )
@@ -28,8 +28,8 @@ import (
 // So while this would be somewhat more restrictive, it would probably make
 // using the two less error prone.
 type OCR struct {
-	T *Tesseract       `json:"tesseract"`
-	P *image.Processor `json:"image_processing"`
+	T *Tesseract         `json:"tesseract"`
+	P *imgproc.Processor `json:"image_processing"`
 	// O *output.Output   `json:"output"`
 }
 
@@ -39,7 +39,7 @@ type OCR struct {
 func NewOCR() OCR {
 	return OCR{
 		T: NewTesseract(),
-		P: image.NewProcessor(),
+		P: imgproc.NewProcessor(),
 		//		O: output.NewOutput(),
 	}
 }
@@ -90,7 +90,7 @@ func (o OCR) Run(r io.Reader) (*models.Result, error) {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err = o.P.DecodeImage(buf, image.RMGrayscale); err != nil {
+	if err = o.P.DecodeImage(buf, imgproc.RMGrayscale); err != nil {
 		return res, err
 	}
 	res.Timings.Set("decode", sw.Lap())

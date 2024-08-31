@@ -9,7 +9,7 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/Milover/beholder/internal/image"
+	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
@@ -35,14 +35,14 @@ type id struct {
 // ProcApp represents a program for running an image processing pipeline
 // on an image or a set of images read from disc.
 type ProcApp struct {
-	P *image.Processor `json:"image_processing"`
-	F Filename[id]     `json:"filename"`
+	P *imgproc.Processor `json:"image_processing"`
+	F Filename[id]       `json:"filename"`
 }
 
 // NewProcApp creates a new Proc app.
 func NewProcApp() *ProcApp {
 	return &ProcApp{
-		P: image.NewProcessor(),
+		P: imgproc.NewProcessor(),
 		F: Filename[id]{
 			FString: "img_%v.jpeg",
 			Fields:  []string{"ID"},
@@ -90,7 +90,7 @@ func (app *ProcApp) Run(filename string, imgID id, res *models.Result) error {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err := app.P.DecodeImage(buf, image.RMAnyColor); err != nil {
+	if err := app.P.DecodeImage(buf, imgproc.RMAnyColor); err != nil {
 		return err
 	}
 	res.Timings.Set("decode", sw.Lap())

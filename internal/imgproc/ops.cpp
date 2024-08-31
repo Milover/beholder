@@ -1,6 +1,6 @@
 #include <array>
 
-#include "operations.h"
+#include "ops.h"
 
 AdPad AdPad_New(int pad) {
 	return new beholder::AddPadding {pad};

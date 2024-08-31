@@ -1,8 +1,8 @@
-package image
+package imgproc
 
 /*
 #include <stdlib.h>
-#include "image.h"
+#include "imgproc.h"
 */
 import "C"
 import (
@@ -54,7 +54,7 @@ func NewProcessor() *Processor {
 // WARNING: the image buffer MUST be kept alive until the function returns.
 func (ip Processor) DecodeImage(buf []byte, readMode ReadMode) error {
 	if len(buf) <= 0 {
-		return errors.New("image.Processor.DecodeImage: empty image buffer")
+		return errors.New("imgproc.Processor.DecodeImage: empty image buffer")
 	}
 	ok := C.Proc_DecodeImage(
 		ip.p,
@@ -63,7 +63,7 @@ func (ip Processor) DecodeImage(buf []byte, readMode ReadMode) error {
 		C.int(readMode),
 	)
 	if !ok {
-		return errors.New("image.Processor.DecodeImage: could not decode image")
+		return errors.New("imgproc.Processor.DecodeImage: could not decode image")
 	}
 	return nil
 }
@@ -102,17 +102,17 @@ func (ip Processor) Init() error {
 				return nil, err
 			}
 			if len(op) != 1 {
-				return nil, fmt.Errorf("image.Processor.Init: too many fields %v", op)
+				return nil, fmt.Errorf("imgproc.Processor.Init: too many fields %v", op)
 			}
 			for k, v := range op {
 				f, ok := opFactoryMap[k]
 				if !ok {
-					return nil, fmt.Errorf("image.Processor.Init: bad operation: %v", k)
+					return nil, fmt.Errorf("imgproc.Processor.Init: bad operation: %v", k)
 				}
 				// C will manage this memory, we don't have to clean it up
 				ptr, err := f(v)
 				if err != nil {
-					return nil, fmt.Errorf("image.Processor.Init: %w", err)
+					return nil, fmt.Errorf("imgproc.Processor.Init: %w", err)
 				}
 				ptrs = append(ptrs, ptr)
 			}
@@ -144,7 +144,7 @@ func (ip Processor) Init() error {
 		C.size_t(len(pre)),
 	)
 	if !ok {
-		return errors.New("image.Processor.Init: could not initialize image processing")
+		return errors.New("imgproc.Processor.Init: could not initialize image processing")
 	}
 	return nil
 }
@@ -152,7 +152,7 @@ func (ip Processor) Init() error {
 // IsValid is function used as an assertion that ip is able to be initialized.
 func (ip Processor) IsValid() error {
 	if ip.p == (C.Proc)(nil) {
-		return errors.New("image.Processor.IsValid: nil API pointer")
+		return errors.New("imgproc.Processor.IsValid: nil API pointer")
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (ip Processor) Postprocess(res *models.Result) error {
 		}
 	}
 	if ok := C.Proc_Postprocess(ip.p, &cres[0], C.size_t(len(cres))); !ok {
-		return errors.New("image.Processor.Postprocess: could not postprocess image")
+		return errors.New("imgproc.Processor.Postprocess: could not postprocess image")
 	}
 	return nil
 }
@@ -190,7 +190,7 @@ func (ip Processor) Postprocess(res *models.Result) error {
 // on the current image.
 func (ip Processor) Preprocess() error {
 	if ok := C.Proc_Preprocess(ip.p); !ok {
-		return errors.New("image.Processor.Preprocess: could not preprocess image")
+		return errors.New("imgproc.Processor.Preprocess: could not preprocess image")
 	}
 	return nil
 }
@@ -200,7 +200,7 @@ func (ip Processor) ReadImage(filename string, readMode ReadMode) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
 	if ok := C.Proc_ReadImage(ip.p, cs, C.int(readMode)); !ok {
-		return errors.New("image.Processor.ReadImage: could not read image")
+		return errors.New("imgproc.Processor.ReadImage: could not read image")
 	}
 	return nil
 }
@@ -217,7 +217,7 @@ func (ip Processor) ReceiveRawImage(img models.Image) error {
 		bitsPerPixel: C.size_t(img.BitsPerPixel),
 	}
 	if ok := C.Proc_ReceiveRawImage(ip.p, &ri); !ok {
-		return errors.New("image.Processor.ReceiveRawImage: could not convert image")
+		return errors.New("imgproc.Processor.ReceiveRawImage: could not convert image")
 	}
 	return nil
 }
@@ -244,7 +244,7 @@ func (ip Processor) WriteImage(filename string) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))
 	if ok := C.Proc_WriteImage(ip.p, cs); !ok {
-		return errors.New("image.Processor.WriteImage: could not write image")
+		return errors.New("imgproc.Processor.WriteImage: could not write image")
 	}
 	return nil
 }

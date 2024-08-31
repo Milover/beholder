@@ -183,10 +183,10 @@ func TestCamera(t *testing.T) {
 			// setup
 			p := struct {
 				C *Camera `json:"camera"`
-				//IP *image.Processor `json:"image_processor"`
+				//IP *imgproc.Processor `json:"image_processor"`
 			}{
 				C: NewCamera(),
-				//IP: image.NewProcessor(),
+				//IP: imgproc.NewProcessor(),
 			}
 			defer func() {
 				p.C.Delete()

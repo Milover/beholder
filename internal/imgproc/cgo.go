@@ -1,4 +1,5 @@
-package image
+// Package imgproc provides common image processing utilities.
+package imgproc
 
 // Changes here should be mirrored in internal/ocr/cgo.go.
 

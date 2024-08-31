@@ -1,5 +1,5 @@
-#ifndef _BEHOLDER_IMAGE_H
-#define _BEHOLDER_IMAGE_H
+#ifndef _BEHOLDER_IMGPROC_H
+#define _BEHOLDER_IMGPROC_H
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -38,4 +38,4 @@ bool Proc_WriteImage(Proc p, const char* filename);
 } // end extern "C"
 #endif
 
-#endif // _BEHOLDER_IMAGE_H
+#endif // _BEHOLDER_IMGPROC_H

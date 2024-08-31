@@ -2,8 +2,7 @@
 #include <vector>
 #include <string>
 
-#include "image.h"
-
+#include "imgproc.h"
 
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags) {
 	if (!p) {
