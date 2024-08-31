@@ -1,6 +1,4 @@
-// Package neutral defines data types used by other packages to exchange data
-// without imposing C dependencies.
-package neutral
+package models
 
 import (
 	"time"

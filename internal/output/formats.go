@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/Milover/beholder/internal/enumutils"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 )
 
 var (
@@ -67,7 +67,7 @@ func newOutputer(o OutFmtType, wc io.WriteCloser) (Outputer, error) {
 // outNone is a dummy Outputer.
 type outNone struct{}
 
-func (o outNone) Write(*neutral.Result) error {
+func (o outNone) Write(*models.Result) error {
 	return nil
 }
 
@@ -93,7 +93,7 @@ type outCSV struct {
 	hdr bool
 }
 
-func (o *outCSV) Write(r *neutral.Result) error {
+func (o *outCSV) Write(r *models.Result) error {
 	nLines := len(r.Text)
 	record := make([]string, 0, 2+2*nLines)
 	if !o.hdr {
@@ -147,7 +147,7 @@ type outJSON struct {
 	b *bufio.Writer
 }
 
-func (o outJSON) Write(r *neutral.Result) error {
+func (o outJSON) Write(r *models.Result) error {
 	return o.w.Encode(r)
 }
 

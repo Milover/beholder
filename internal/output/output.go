@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 )
 
 // ResultWriter is a buffered Result writer.
 // It writes a formatted Results to an underlying output target (io.WriteCloser).
 type ResultWriter interface {
-	Write(*neutral.Result) error
+	Write(*models.Result) error
 	Flush() error
 }
 
@@ -69,6 +69,6 @@ func (o *Output) Init() error {
 
 // Write writes a Result to the underlying output target using the
 // underlying Outputer.
-func (o *Output) Write(r *neutral.Result) error {
+func (o *Output) Write(r *models.Result) error {
 	return o.o.Write(r)
 }

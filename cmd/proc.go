@@ -10,7 +10,7 @@ import (
 	"runtime"
 
 	"github.com/Milover/beholder/internal/image"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
 )
@@ -70,7 +70,7 @@ func (app *ProcApp) Init() error {
 
 // Run is a function that runs the image processing pipeline for
 // a single image file: reading and preprocessing.
-func (app *ProcApp) Run(filename string, imgID id, res *neutral.Result) error {
+func (app *ProcApp) Run(filename string, imgID id, res *models.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
 	res.TimeStamp = sw.Start

@@ -18,7 +18,7 @@ import (
 
 	"github.com/Milover/beholder/internal/chrono"
 	"github.com/Milover/beholder/internal/mem"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 )
 
 // Parameter is a GenICam parameter.
@@ -115,8 +115,8 @@ type Camera struct {
 
 	// Result is the acquisition result.
 	// It is reset after each call to Acquire(), and has a non-nil
-	// [neutral.Image.Buffer] only after successful acquisitions.
-	Result neutral.Image `json:"-"`
+	// [models.Image.Buffer] only after successful acquisitions.
+	Result models.Image `json:"-"`
 
 	p C.Cam
 }
@@ -140,7 +140,7 @@ func NewCamera() *Camera {
 // an unrecoverable error is one which requires explicit handling,
 // eg. the camera device was detached.
 func (c *Camera) Acquire() error {
-	c.Result = neutral.Image{}
+	c.Result = models.Image{}
 	ok := C.Cam_Acquire(c.p, (C.size_t)(c.AcquisitionTimeout.Milliseconds()))
 	if !ok {
 		return fmt.Errorf("camera.Camera.Acquire: %w", ErrAcquisition)
@@ -149,7 +149,7 @@ func (c *Camera) Acquire() error {
 	if unsafe.Pointer(r.buffer) == nil {
 		return fmt.Errorf("camera.Camera.Acquire: could not get raw image data")
 	}
-	c.Result = neutral.Image{
+	c.Result = models.Image{
 		Buffer:       unsafe.Pointer(r.buffer),
 		ID:           uint64(r.id),
 		Timestamp:    time.Now(),

@@ -10,7 +10,7 @@ import (
 	"runtime"
 
 	"github.com/Milover/beholder/internal/image"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/ocr"
 	"github.com/Milover/beholder/internal/output"
 	"github.com/Milover/beholder/internal/stopwatch"
@@ -70,7 +70,7 @@ func (app *OCRApp) Init() error {
 
 // Run is a function that runs the OCR pipeline for a single image file:
 // reading, preprocessing, recognition and postprocessing.
-func (app *OCRApp) Run(filename string, res *neutral.Result) error {
+func (app *OCRApp) Run(filename string, res *models.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
 	res.TimeStamp = sw.Start

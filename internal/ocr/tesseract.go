@@ -16,7 +16,7 @@ import (
 
 	"github.com/Milover/beholder/internal/enumutils"
 	"github.com/Milover/beholder/internal/mem"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/ocr/model"
 )
 
@@ -152,7 +152,7 @@ func (t Tesseract) Clear() {
 // Before calling Inference, t must be initialized by calling [Tesseract.Init].
 //
 // Internally stored results are cleared by the C-API when Inference is called.
-func (t Tesseract) Inference(img neutral.Image, res *neutral.Result) error {
+func (t Tesseract) Inference(img models.Image, res *models.Result) error {
 	if err := t.setImage(img); err != nil {
 		return fmt.Errorf("ocr.Tesseract.Inference: %w: %w", ErrInference, err)
 	}
@@ -183,7 +183,7 @@ func (t Tesseract) Inference(img neutral.Image, res *neutral.Result) error {
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
 		res.Confidences = append(res.Confidences, float64(r.confidence))
-		res.Boxes = append(res.Boxes, neutral.Rectangle{
+		res.Boxes = append(res.Boxes, models.Rectangle{
 			Left:   int64(r.box.left),
 			Top:    int64(r.box.top),
 			Right:  int64(r.box.right),
@@ -259,7 +259,7 @@ func (t Tesseract) IsValid() error {
 
 // setImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
-func (t Tesseract) setImage(img neutral.Image) error {
+func (t Tesseract) setImage(img models.Image) error {
 	raw := C.Img{
 		C.size_t(img.ID),
 		C.int(img.Rows),

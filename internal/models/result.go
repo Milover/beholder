@@ -1,4 +1,4 @@
-package neutral
+package models
 
 import (
 	"time"

@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/Milover/beholder/internal/chrono"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 )
 
 // Stats holds various program statistics.
 type Stats struct {
-	Result *neutral.Result
-	// AvgTimings is a map of averaged [neutral.Result.Timings]
+	Result *models.Result
+	// AvgTimings is a map of averaged [models.Result.Timings]
 	AvgTimings chrono.Timings
 	// InitDuration is the time elapsed while initializing the OCR pipeline.
 	InitDuration time.Duration
@@ -23,7 +23,7 @@ type Stats struct {
 // NewStats creates a new ready to use Stats.
 func NewStats() *Stats {
 	return &Stats{
-		Result: neutral.NewResult(),
+		Result: models.NewResult(),
 	}
 }
 

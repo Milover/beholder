@@ -13,7 +13,7 @@ import (
 	"unsafe"
 
 	"github.com/Milover/beholder/internal/mem"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 )
 
 type ReadMode int
@@ -73,10 +73,10 @@ func (ip *Processor) Delete() {
 	C.Proc_Delete(ip.p)
 }
 
-// GetRawImage returns the currently stored image as a neutral.Image.
-func (ip Processor) GetRawImage() neutral.Image {
+// GetRawImage returns the currently stored image as a [models.Image].
+func (ip Processor) GetRawImage() models.Image {
 	raw := C.Proc_GetRawImage(ip.p)
-	return neutral.Image{
+	return models.Image{
 		ID:           uint64(raw.id),
 		Timestamp:    time.Now(),
 		Buffer:       unsafe.Pointer(raw.buffer),
@@ -162,7 +162,7 @@ func (ip Processor) IsValid() error {
 // Note that Postprocess is usually only run after text detection/recognition
 // since some postprocessing operations may depend on detection/recognition
 // results.
-func (ip Processor) Postprocess(res *neutral.Result) error {
+func (ip Processor) Postprocess(res *models.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
@@ -206,7 +206,7 @@ func (ip Processor) ReadImage(filename string, readMode ReadMode) error {
 }
 
 // WriteAcquisitionResult writes 'r' to disc in PNG format.
-func (ip Processor) ReceiveRawImage(img neutral.Image) error {
+func (ip Processor) ReceiveRawImage(img models.Image) error {
 	ri := C.Img{
 		id:           C.size_t(img.ID),
 		rows:         C.int(img.Rows),

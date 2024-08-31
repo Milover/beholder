@@ -1,4 +1,4 @@
-package neutral
+package models
 
 // A Rectangle has four vertices.
 type Rectangle struct {

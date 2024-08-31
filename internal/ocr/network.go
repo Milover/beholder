@@ -13,7 +13,7 @@ import (
 
 	"github.com/Milover/beholder/internal/enumutils"
 	"github.com/Milover/beholder/internal/mem"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/ocr/model"
 )
 
@@ -43,7 +43,7 @@ type Network interface {
 	//
 	// Internally stored results are cleared by the C-API when
 	// Inference is called.
-	Inference(neutral.Image, *neutral.Result) error
+	Inference(models.Image, *models.Result) error
 	// Init initializes the Network (C-allocated API) with configuration data.
 	Init() error
 	// TODO: do we need a Config() call?
@@ -220,7 +220,7 @@ func (n *network) Delete() {
 // Before calling Inference, n must be initialized by calling [network.Init].
 //
 // Internally stored results are cleared by the C-API when Inference is called.
-func (n network) Inference(img neutral.Image, res *neutral.Result) error {
+func (n network) Inference(img models.Image, res *models.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
@@ -256,7 +256,7 @@ func (n network) Inference(img neutral.Image, res *neutral.Result) error {
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
 		res.Confidences = append(res.Confidences, float64(r.confidence))
-		res.Boxes = append(res.Boxes, neutral.Rectangle{
+		res.Boxes = append(res.Boxes, models.Rectangle{
 			Left:   int64(r.box.left),
 			Top:    int64(r.box.top),
 			Right:  int64(r.box.right),
