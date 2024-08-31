@@ -20,29 +20,50 @@ import (
 	"github.com/Milover/beholder/internal/ocr/model"
 )
 
-var (
-	ErrRecognition = errors.New("could not detect/recognize text")
-)
+func init() {
+	RegisterNetwork(TypeTesseract, "tesseract", func() Network { return NewTesseract() })
+}
+
+const TypeTesseract Type = 1 // tesseract OCR models
 
 // PSegMode is the page segmentation mode.
 type PSegMode int
 
+// String returns a string representation of m.
+func (m PSegMode) String() string {
+	s, ok := pSegModeMap[m]
+	if !ok {
+		return "unknown"
+	}
+	return s
+}
+
+// UnmarshallJSON unmarshals m from JSON.
+func (m *PSegMode) UnmarshalJSON(data []byte) error {
+	return enumutils.UnmarshalJSON(data, m, invPSegModeMap)
+}
+
+// MarshallJSON marshals m into JSON.
+func (m PSegMode) MarshalJSON() ([]byte, error) {
+	return enumutils.MarshalJSON(m, pSegModeMap)
+}
+
 const (
 	// FIXME: yolo
-	PSMOSDOnly PSegMode = iota
-	PSMAutoOSD
-	PSMAutoOnly
-	PSMAuto
-	PSMSingleColumn
-	PSMSingleBlockVertText
-	PSMSingleBlock
-	PSMSingleLine
-	PSMSingleWord
-	PSMCircleWord
-	PSMSingleChar
-	PSMSparseText
-	PSMSparseTextOSD
-	PSMRawLine
+	PSMOSDOnly             PSegMode = iota // orientation and script detection only
+	PSMAutoOSD                             // automatic page segmentation with orientation and script detection (OSD)
+	PSMAutoOnly                            // automatic page segmentation, but no OSD, or OCR
+	PSMAuto                                // fully automatic page segmentation, but no OSD
+	PSMSingleColumn                        // assume a single column of text of variable sizes
+	PSMSingleBlockVertText                 // assume a single uniform block of vertically aligned text
+	PSMSingleBlock                         // assume a single uniform block of text
+	PSMSingleLine                          // treat image as a single text line
+	PSMSingleWord                          // treat image as a single word
+	PSMCircleWord                          // treat image as a single word in a circle
+	PSMSingleChar                          // treat image as a single character
+	PSMSparseText                          // find as much text as possible in no particular order
+	PSMSparseTextOSD                       // sparse text with OSD
+	PSMRawLine                             // treat image as a single text line, bypassing Tesseract-specific hacks
 )
 
 var (
@@ -65,30 +86,27 @@ var (
 	invPSegModeMap = enumutils.Invert(pSegModeMap)
 )
 
-func (m *PSegMode) UnmarshalJSON(data []byte) error {
-	return enumutils.UnmarshalJSON(data, m, invPSegModeMap)
-}
-
-func (m PSegMode) MarshalJSON() ([]byte, error) {
-	return enumutils.MarshalJSON(m, pSegModeMap)
-}
-
-// Tesseract is a handle for the tesseract API
-// and contains API configuration data.
-// WARNING: Tesseract holds a pointer to C-allocated memory,
-// so when it is no longer needed, Delete must be called to release
-// the memory and clean up.
+// Tesseract is a text detection and recognition [Network] using
+// the [Tesseract OCR] model (engine).
+//
+// WARNING: Tesseract contains C-managed resources so when it is no longer
+// needed, [Tesseract.Delete] must be called to release the resources and
+// clean up.
+//
+// [Tesseract OCR]: https://github.com/tesseract-ocr/tesseract
 type Tesseract struct {
-	// ConfigurationPaths is a list of configuration file paths.
+	// ConfigPaths is a list of configuration file paths.
 	ConfigPaths []string `json:"config_paths"`
 	// Model is the tesseract OCR  model.
 	// It can be either an embedded model keyword, or a model file name.
 	Model model.Model `json:"model"`
 	// PageSegMode is the page segmentation mode.
 	PageSegMode PSegMode `json:"page_seg_mode"`
-	// Patterns is a list of Tesseract user-patterns.
-	// For more info about the usage and format, see:
-	// https://github.com/tesseract-ocr/tesseract/blob/main/src/dict/trie.h#L184
+	// Patterns is a list of Tesseract [user patterns].
+	// For more info about the usage and format, see [trie.h].
+	//
+	// [user patterns]: https://tesseract-ocr.github.io/tessdoc/APIExample-user_patterns.html
+	// [trie.h]: https://github.com/tesseract-ocr/tesseract/blob/main/src/dict/trie.h#L184
 	Patterns []string `json:"patterns"`
 	// Variables are runtime settable variables.
 	// Here are some commonly used variables and their values:
@@ -99,8 +117,8 @@ type Tesseract struct {
 	//	"tessedit_char_whitelist":   ".,:;0123456789"
 	Variables map[string]string `json:"variables"`
 
-	// p is a pointer to the C++ API class.
-	p C.Tess
+	typ Type   // NN model type
+	p   C.Tess // pointer to the C++ API class.
 }
 
 // NewTesseract constructs (C call) a new tesseract API with sensible defaults.
@@ -112,7 +130,8 @@ func NewTesseract() *Tesseract {
 			"load_system_dawg": "0",
 			"load_freq_dawg":   "0",
 		},
-		p: C.Tess_New(),
+		typ: TypeTesseract,
+		p:   C.Tess_New(),
 	}
 }
 
@@ -128,13 +147,15 @@ func (t Tesseract) Clear() {
 	C.Tess_Clear(t.p)
 }
 
-// Recognize runs a new detect/recognize job on the current image.
-// Before calling Recognize, t should be initialized with [Tesseract.Init], and
-// have an image set with [Tesseract.SetImage].
+// Inference runs the inferencing step on the supplied image. Inferencing
+// includes both text detection and text recognition.
+// Before calling Inference, t must be initialized by calling [Tesseract.Init].
 //
-// [Tesseract.Clear] should be called before each new Recognize call, however
-// [Tesseract.SetImage] also clears previous results.
-func (t Tesseract) Recognize(res *neutral.Result) error {
+// Internally stored results are cleared by the C-API when Inference is called.
+func (t Tesseract) Inference(img neutral.Image, res *neutral.Result) error {
+	if err := t.setImage(img); err != nil {
+		return fmt.Errorf("ocr.Tesseract.Inference: %w: %w", ErrInference, err)
+	}
 	ar := &mem.Arena{}
 	defer ar.Free()
 
@@ -143,7 +164,7 @@ func (t Tesseract) Recognize(res *neutral.Result) error {
 		unsafe.Pointer(C.ResArr_Delete)),
 	)
 	if unsafe.Pointer(results) == nil {
-		return fmt.Errorf("ocr.Tesseract.Recognize: %w", ErrRecognition)
+		return fmt.Errorf("ocr.Tesseract.Inference: %w", ErrInference)
 	}
 	// allocate and reset if necessary
 	nLines := uint64(results.count)
@@ -226,7 +247,7 @@ func (t Tesseract) Init() error {
 // IsValid is function used as an assertion that t is able to be initialized.
 func (t Tesseract) IsValid() error {
 	if t.p == (C.Tess)(nil) {
-		return errors.New("ocr.Tesseract.IsValid: nil API pointer")
+		return fmt.Errorf("ocr.Tesseract.IsValid: %w", ErrAPIPtr)
 	}
 	for _, c := range t.ConfigPaths {
 		if _, err := os.Stat(c); err != nil {
@@ -236,10 +257,9 @@ func (t Tesseract) IsValid() error {
 	return nil
 }
 
-// SetImage sets the image on which text detection/recognition will be run.
+// setImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
-// FIXME: bytesPerPixel should be automatically determined.
-func (t Tesseract) SetImage(img neutral.Image, bytesPerPixel int) error {
+func (t Tesseract) setImage(img neutral.Image) error {
 	raw := C.Img{
 		C.size_t(img.ID),
 		C.int(img.Rows),
@@ -250,7 +270,7 @@ func (t Tesseract) SetImage(img neutral.Image, bytesPerPixel int) error {
 		C.size_t(img.BitsPerPixel),
 	}
 	if ok := C.Tess_SetImage(t.p, &raw); !ok {
-		return errors.New("ocr.Tesseract.SetImage: could not set image")
+		return errors.New("ocr.Tesseract.setImage: could not set image")
 	}
 	return nil
 }
@@ -282,4 +302,9 @@ func (t *Tesseract) setPatterns() (string, error) {
 	t.Variables["user_patterns_file"] = f.Name()
 
 	return f.Name(), nil
+}
+
+// Type returns the NN model type of t.
+func (t Tesseract) Type() Type {
+	return t.typ
 }

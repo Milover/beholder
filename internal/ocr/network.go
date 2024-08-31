@@ -31,8 +31,6 @@ var (
 //
 // TODO: move Init and Delete to a C-API interface.
 type Network interface {
-	// Type returns the type of the [Network].
-	Type() Type
 	// Clear clears results held internally by the C-API.
 	// The Network should still be valid and initialized after calling Clear.
 	Clear()
@@ -49,43 +47,8 @@ type Network interface {
 	// Init initializes the Network (C-allocated API) with configuration data.
 	Init() error
 	// TODO: do we need a Config() call?
-}
-
-// Type is the type of model a [Network] uses.
-type Type int
-
-const (
-	TypeTessseract = iota // tesseract OCR models
-	TypeEAST              // east text detection models
-	TypeYOLOv8            // YOLOv8 object detection models
-)
-
-var (
-	typeMap = map[Type]string{
-		TypeTessseract: "tesseract",
-		TypeEAST:       "east",
-		TypeYOLOv8:     "yolov8",
-	}
-	invTypeMap = enumutils.Invert(typeMap)
-)
-
-// String returns a string representation of t.
-func (t Type) String() string {
-	s, ok := typeMap[t]
-	if !ok {
-		return "unknown"
-	}
-	return s
-}
-
-// UnmarshallJSON unmarshals t from JSON.
-func (t *Type) UnmarshalJSON(data []byte) error {
-	return enumutils.UnmarshalJSON(data, t, invTypeMap)
-}
-
-// MarshallJSON marshals t into JSON.
-func (t Type) MarshalJSON() ([]byte, error) {
-	return enumutils.MarshalJSON(t, typeMap)
+	// Type returns the type of the [Network].
+	Type() Type
 }
 
 // Backend is a [Network] computation backends. See the [OpenCV docs] for
@@ -226,8 +189,8 @@ type network struct {
 	// TODO: this shouldn't be here
 	Classes []string `json:"classes"`
 
-	// p is a pointer to the C++ API class.
-	p C.Det
+	typ Type  // NN model type
+	p   C.Det // pointer to the C++ API class.
 }
 
 // newNetwork constructs (C call) a new uninitialized network.
@@ -238,6 +201,7 @@ func newNetwork() network {
 		Backend: BackendDefault,
 		Target:  TargetCPU,
 		Config:  NewConfig(),
+		typ:     TypeUnknown,
 	}
 }
 
@@ -355,4 +319,9 @@ func (n network) IsValid() error {
 		return err
 	}
 	return nil
+}
+
+// Type returns the NN model type of n.
+func (n network) Type() Type {
+	return n.typ
 }

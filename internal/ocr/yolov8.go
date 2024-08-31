@@ -5,6 +5,12 @@ package ocr
 */
 import "C"
 
+func init() {
+	RegisterNetwork(TypeYOLOv8, "yolov8", func() Network { return NewYOLOv8() })
+}
+
+const TypeYOLOv8 Type = 2 // YOLOv8 object detection models
+
 // YOLOv8 is an object detection [Network] using the [YOLOv8] model.
 //
 // The [Network] interface is implemented by the embedded [network], so the
@@ -23,6 +29,7 @@ type YOLOv8 struct {
 // when no longer needed.
 func NewYOLOv8() *YOLOv8 {
 	y := &YOLOv8{network: newNetwork()}
+	y.typ = TypeYOLOv8
 	y.p = C.Det_NewYOLOv8()
 	// YOLOv8 expects pixel values to be [0, 1], see:
 	// https://docs.ultralytics.com/guides/preprocessing_annotated_data/#normalizing-pixel-values

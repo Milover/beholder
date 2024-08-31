@@ -98,13 +98,9 @@ func (app *OCRApp) Run(filename string, res *neutral.Result) error {
 	if err := app.P.Preprocess(); err != nil {
 		return err
 	}
-	// FIXME: bytes per pixel should be automagically determined
-	if err := app.T.SetImage(app.P.GetRawImage(), 1); err != nil {
-		return err
-	}
 	res.Timings.Set("preprocess", sw.Lap())
 
-	if err := app.T.Recognize(res); err != nil {
+	if err := app.T.Inference(app.P.GetRawImage(), res); err != nil {
 		return err
 	}
 	res.Timings.Set("ocr", sw.Lap())

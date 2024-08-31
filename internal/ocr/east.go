@@ -5,6 +5,12 @@ package ocr
 */
 import "C"
 
+func init() {
+	RegisterNetwork(TypeEAST, "east", func() Network { return NewEAST() })
+}
+
+const TypeEAST Type = 3 // EAST text detection models
+
 // EAST is a text detection [Network] using the [EAST] model.
 //
 // The [Network] interface is implemented by the embedded [network], so the
@@ -23,6 +29,7 @@ type EAST struct {
 // when no longer needed.
 func NewEAST() *EAST {
 	e := &EAST{network: newNetwork()}
+	e.typ = TypeEAST
 	e.p = C.Det_NewEAST()
 	// EAST expects a specific mean normalization value, see:
 	// https://docs.opencv.org/4.10.0/d4/d43/tutorial_dnn_text_spotting.html

@@ -1,5 +1,7 @@
 package ocr
 
+// FIXME: remove this guy entirely
+
 /*
 #include <stdlib.h>
 #include "ocr.h"
@@ -96,12 +98,9 @@ func (o OCR) Run(r io.Reader) (*neutral.Result, error) {
 	if err := o.P.Preprocess(); err != nil {
 		return res, err
 	}
-	if err := o.T.SetImage(o.P.GetRawImage(), 1); err != nil {
-		return res, err
-	}
 	res.Timings.Set("preprocess", sw.Lap())
 
-	if err = o.T.Recognize(res); err != nil {
+	if err = o.T.Inference(o.P.GetRawImage(), res); err != nil {
 		return res, err
 	}
 	res.Timings.Set("ocr", sw.Lap())
