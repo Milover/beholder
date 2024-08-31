@@ -243,7 +243,7 @@ func newNetwork() network {
 
 // Clear clears results held internally by the C-API.
 // Note that n is still valid and initialized after calling Clear.
-func (n *network) Clear() {
+func (n network) Clear() {
 	C.Det_Clear(n.p)
 }
 
@@ -256,7 +256,7 @@ func (n *network) Delete() {
 // Before calling Inference, n must be initialized by calling [network.Init].
 //
 // Internally stored results are cleared by the C-API when Inference is called.
-func (n *network) Inference(img neutral.Image, res *neutral.Result) error {
+func (n network) Inference(img neutral.Image, res *neutral.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
@@ -304,7 +304,7 @@ func (n *network) Inference(img neutral.Image, res *neutral.Result) error {
 
 // Init initializes the C-allocated API with the configuration data,
 // if n is valid.
-func (n *network) Init() error {
+func (n network) Init() error {
 	if err := n.IsValid(); err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (n *network) Init() error {
 }
 
 // IsValid asserts that n can be initialized.
-func (n *network) IsValid() error {
+func (n network) IsValid() error {
 	if n.p == (C.Det)(nil) {
 		return ErrAPIPtr
 	}
