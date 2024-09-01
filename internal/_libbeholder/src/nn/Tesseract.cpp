@@ -72,7 +72,7 @@ bool Tesseract::detectText()
 	do
 	{
 		Result r {};
-		auto b {r.box.ref()};
+		auto& b {r.box.ref()};
 		if (iter->BoundingBox(level, &b.left, &b.top, &b.right, &b.bottom))
 		{
 			res_.emplace_back(std::move(r));
