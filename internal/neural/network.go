@@ -47,8 +47,6 @@ type Network interface {
 	// Init initializes the Network (C-allocated API) with configuration data.
 	Init() error
 	// TODO: do we need a Config() call?
-	// Type returns the type of the [Network].
-	Type() Type
 }
 
 // Backend is a [Network] computation backends. See the [OpenCV docs] for
@@ -189,8 +187,7 @@ type network struct {
 	// TODO: this shouldn't be here
 	Classes []string `json:"classes"`
 
-	typ Type  // NN model type
-	p   C.Det // pointer to the C++ API class.
+	p C.Det // pointer to the C++ API class.
 }
 
 // newNetwork constructs (C call) a new uninitialized network.
@@ -201,7 +198,6 @@ func newNetwork() network {
 		Backend: BackendDefault,
 		Target:  TargetCPU,
 		Config:  NewConfig(),
-		typ:     TypeUnknown,
 	}
 }
 
@@ -319,9 +315,4 @@ func (n network) IsValid() error {
 		return err
 	}
 	return nil
-}
-
-// Type returns the NN model type of n.
-func (n network) Type() Type {
-	return n.typ
 }

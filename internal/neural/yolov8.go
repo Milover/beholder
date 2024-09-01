@@ -24,13 +24,18 @@ type YOLOv8 struct {
 	network // the underlying network
 }
 
+// newYOLOv8CPtr is a helper function which wraps the C-call which allocates
+// a new YOLOv8 C-API and returns a pointer to it.
+func newYOLOv8CPtr() C.Det {
+	return C.Det_NewYOLOv8()
+}
+
 // NewYOLOv8 constructs (C call) a new YOLOv8 object detection network.
 // WARNING: [YOLOv8.Delete] must be called to release the memory
 // when no longer needed.
 func NewYOLOv8() *YOLOv8 {
 	y := &YOLOv8{network: newNetwork()}
-	y.typ = TypeYOLOv8
-	y.p = C.Det_NewYOLOv8()
+	y.p = newYOLOv8CPtr()
 	// YOLOv8 expects pixel values to be [0, 1], see:
 	// https://docs.ultralytics.com/guides/preprocessing_annotated_data/#normalizing-pixel-values
 	y.Config.Scale = 1.0 / 255.0

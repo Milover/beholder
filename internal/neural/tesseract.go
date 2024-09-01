@@ -26,66 +26,6 @@ func init() {
 
 const TypeTesseract Type = 1 // tesseract OCR models
 
-// PSegMode is the page segmentation mode.
-type PSegMode int
-
-// String returns a string representation of m.
-func (m PSegMode) String() string {
-	s, ok := pSegModeMap[m]
-	if !ok {
-		return "unknown"
-	}
-	return s
-}
-
-// UnmarshallJSON unmarshals m from JSON.
-func (m *PSegMode) UnmarshalJSON(data []byte) error {
-	return enumutils.UnmarshalJSON(data, m, invPSegModeMap)
-}
-
-// MarshallJSON marshals m into JSON.
-func (m PSegMode) MarshalJSON() ([]byte, error) {
-	return enumutils.MarshalJSON(m, pSegModeMap)
-}
-
-const (
-	// FIXME: yolo
-	PSMOSDOnly             PSegMode = iota // orientation and script detection only
-	PSMAutoOSD                             // automatic page segmentation with orientation and script detection (OSD)
-	PSMAutoOnly                            // automatic page segmentation, but no OSD, or OCR
-	PSMAuto                                // fully automatic page segmentation, but no OSD
-	PSMSingleColumn                        // assume a single column of text of variable sizes
-	PSMSingleBlockVertText                 // assume a single uniform block of vertically aligned text
-	PSMSingleBlock                         // assume a single uniform block of text
-	PSMSingleLine                          // treat image as a single text line
-	PSMSingleWord                          // treat image as a single word
-	PSMCircleWord                          // treat image as a single word in a circle
-	PSMSingleChar                          // treat image as a single character
-	PSMSparseText                          // find as much text as possible in no particular order
-	PSMSparseTextOSD                       // sparse text with OSD
-	PSMRawLine                             // treat image as a single text line, bypassing Tesseract-specific hacks
-)
-
-var (
-	pSegModeMap = map[PSegMode]string{
-		PSMOSDOnly:             "osd_only",
-		PSMAutoOSD:             "auto_osd",
-		PSMAutoOnly:            "auto_only",
-		PSMAuto:                "auto",
-		PSMSingleColumn:        "single_column",
-		PSMSingleBlockVertText: "single_block_vert_text",
-		PSMSingleBlock:         "single_block",
-		PSMSingleLine:          "single_line",
-		PSMSingleWord:          "single_word",
-		PSMCircleWord:          "circle_word",
-		PSMSingleChar:          "single_char",
-		PSMSparseText:          "sparse_text",
-		PSMSparseTextOSD:       "sparse_text_osd",
-		PSMRawLine:             "raw_line",
-	}
-	invPSegModeMap = enumutils.Invert(pSegModeMap)
-)
-
 // Tesseract is a text detection and recognition [Network] using
 // the [Tesseract OCR] model (engine).
 //
@@ -117,8 +57,13 @@ type Tesseract struct {
 	//	"tessedit_char_whitelist":   ".,:;0123456789"
 	Variables map[string]string `json:"variables"`
 
-	typ Type   // NN model type
-	p   C.Tess // pointer to the C++ API class.
+	p C.Tess // pointer to the C++ API class.
+}
+
+// newTesseractCPtr is a helper function which wraps the C-call which allocates
+// a new Tesseract C-API and returns a pointer to it.
+func newTesseractCPtr() C.Tess {
+	return C.Tess_New()
 }
 
 // NewTesseract constructs (C call) a new tesseract API with sensible defaults.
@@ -126,12 +71,8 @@ type Tesseract struct {
 func NewTesseract() *Tesseract {
 	return &Tesseract{
 		PageSegMode: PSMSingleBlock,
-		Variables: map[string]string{
-			"load_system_dawg": "0",
-			"load_freq_dawg":   "0",
-		},
-		typ: TypeTesseract,
-		p:   C.Tess_New(),
+		Variables:   map[string]string{},
+		p:           newTesseractCPtr(),
 	}
 }
 
@@ -304,7 +245,62 @@ func (t *Tesseract) setPatterns() (string, error) {
 	return f.Name(), nil
 }
 
-// Type returns the NN model type of t.
-func (t Tesseract) Type() Type {
-	return t.typ
+// PSegMode is the page segmentation mode.
+type PSegMode int
+
+// String returns a string representation of m.
+func (m PSegMode) String() string {
+	s, ok := pSegModeMap[m]
+	if !ok {
+		return "unknown"
+	}
+	return s
 }
+
+// UnmarshallJSON unmarshals m from JSON.
+func (m *PSegMode) UnmarshalJSON(data []byte) error {
+	return enumutils.UnmarshalJSON(data, m, invPSegModeMap)
+}
+
+// MarshallJSON marshals m into JSON.
+func (m PSegMode) MarshalJSON() ([]byte, error) {
+	return enumutils.MarshalJSON(m, pSegModeMap)
+}
+
+const (
+	// FIXME: yolo
+	PSMOSDOnly             PSegMode = iota // orientation and script detection only
+	PSMAutoOSD                             // automatic page segmentation with orientation and script detection (OSD)
+	PSMAutoOnly                            // automatic page segmentation, but no OSD, or OCR
+	PSMAuto                                // fully automatic page segmentation, but no OSD
+	PSMSingleColumn                        // assume a single column of text of variable sizes
+	PSMSingleBlockVertText                 // assume a single uniform block of vertically aligned text
+	PSMSingleBlock                         // assume a single uniform block of text
+	PSMSingleLine                          // treat image as a single text line
+	PSMSingleWord                          // treat image as a single word
+	PSMCircleWord                          // treat image as a single word in a circle
+	PSMSingleChar                          // treat image as a single character
+	PSMSparseText                          // find as much text as possible in no particular order
+	PSMSparseTextOSD                       // sparse text with OSD
+	PSMRawLine                             // treat image as a single text line, bypassing Tesseract-specific hacks
+)
+
+var (
+	pSegModeMap = map[PSegMode]string{
+		PSMOSDOnly:             "osd_only",
+		PSMAutoOSD:             "auto_osd",
+		PSMAutoOnly:            "auto_only",
+		PSMAuto:                "auto",
+		PSMSingleColumn:        "single_column",
+		PSMSingleBlockVertText: "single_block_vert_text",
+		PSMSingleBlock:         "single_block",
+		PSMSingleLine:          "single_line",
+		PSMSingleWord:          "single_word",
+		PSMCircleWord:          "circle_word",
+		PSMSingleChar:          "single_char",
+		PSMSparseText:          "sparse_text",
+		PSMSparseTextOSD:       "sparse_text_osd",
+		PSMRawLine:             "raw_line",
+	}
+	invPSegModeMap = enumutils.Invert(pSegModeMap)
+)
