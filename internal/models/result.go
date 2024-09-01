@@ -20,6 +20,8 @@ type Result struct {
 	// a object class tag assigned by an object detector.
 	Text []string `json:"result"`
 	// Expected is the expected Text.
+	//
+	// TODO: will this ever be used?
 	Expected []string `json:"expected"`
 	// Confidences is a list of confidences associated with each Result item.
 	//
@@ -30,9 +32,13 @@ type Result struct {
 	Status ResultStatus `json:"status"`
 	// TimeStamp is the time at which the result was created, which is usually
 	// the time at which the processing pipeline started.
+	//
+	// TODO: move to the 'PipelineMessage' type
 	TimeStamp time.Time `json:"timestamp"`
 	// Timings are the named durations of various parts of the processing
 	// pipeline.
+	//
+	// TODO: should this be somewhere else?
 	Timings chrono.Timings `json:"-"`
 }
 
