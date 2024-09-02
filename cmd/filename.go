@@ -10,6 +10,11 @@ import (
 	"unsafe"
 )
 
+// id is a helper type, so that Filename can receive an arbitrary string.
+type id struct {
+	ID string // an arbitrary string ID
+}
+
 // getter is function that retrieves a value from a type as a formatted string.
 type getter func(unsafe.Pointer) any
 

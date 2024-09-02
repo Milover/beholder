@@ -27,11 +27,6 @@ var (
 	}
 )
 
-// id is a helper type, so that Filename can receive an arbitrary string.
-type id struct {
-	ID string // an arbitrary string ID
-}
-
 // ProcApp represents a program for running an image processing pipeline
 // on an image or a set of images read from disc.
 type ProcApp struct {
