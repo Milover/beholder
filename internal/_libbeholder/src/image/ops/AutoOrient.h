@@ -7,25 +7,28 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An automatic image cropping operation.
+	An automatic image orientation operation.
 
 SourceFiles
-	AutoCrop.cpp
+	AutoOrient.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_AUTO_CROP_OP_H
-#define BEHOLDER_AUTO_CROP_OP_H
+#ifndef BEHOLDER_AUTO_ORIENT_OP_H
+#define BEHOLDER_AUTO_ORIENT_OP_H
 
 #include <vector>
 
-#include "AutoOrient.h"
+#include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
 namespace cv
 {
 	class Mat;
+	class RotatedRect;
+	template<typename T>
+	class Point_;	// for Point2f, i.e. Point_<float>
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -34,12 +37,12 @@ namespace beholder
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class AutoCrop Declaration
+                        Class AutoOrient Declaration
 \*---------------------------------------------------------------------------*/
 
-class AutoCrop
+class AutoOrient
 :
-	public AutoOrient
+	public ProcessingOp
 {
 protected:
 
@@ -56,41 +59,79 @@ protected:
 			const std::vector<Result>&
 		) const override;
 
+		//- Execute implementation helper
+		bool executeImpl
+		(
+			const cv::Mat& in,
+			cv::Mat& out,
+			cv::RotatedRect& box,
+			cv::Point_<float>& center
+		) const;
+
 public:
+
+	//- Public data
+
+		//- Kernel size
+		int kernelSize {50};
+		//- Dimensions used for text box detection.
+		//	Potential text boxes with smaller dimensions are discarded.
+		float textHeight {50};
+		float textWidth {50};
+		//- Padding added to the cropped image
+		float padding {10.0};
+		//- Gradient kernel size
+		//	XXX: is there a reason why we maed it 'const' originally?
+		int gradientKernelSize {3};
 
 	//- Constructors
 
 		//- Default constructor
-		AutoCrop() = default;
+		AutoOrient() = default;
 
 		//- Default constructor
-		AutoCrop(int kS, float tH, float tW, float pad)
+		AutoOrient(int kS, float tH, float tW, float pad)
 		:
-			AutoOrient(kS, tH, tW, pad)
+			ProcessingOp(),
+			kernelSize {kS},
+			textHeight {tH},
+			textWidth {tW},
+			padding {pad}
 		{}
 
 		//- Default copy constructor
-		AutoCrop(const AutoCrop&) = default;
+		AutoOrient(const AutoOrient&) = default;
 
 		//- Default move constructor
-		AutoCrop(AutoCrop&&) = default;
+		AutoOrient(AutoOrient&&) = default;
 
 	//- Destructor
-	virtual ~AutoCrop() = default;
+	virtual ~AutoOrient() = default;
 
 	//- Member functions
 
 	//- Member operators
 
 		//- Default copy assignment
-		AutoCrop& operator=(const AutoCrop&) = default;
+		AutoOrient& operator=(const AutoOrient&) = default;
 
 		//- Default move assignment
-		AutoCrop& operator=(AutoCrop&&) = default;
+		AutoOrient& operator=(AutoOrient&&) = default;
 
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+
+void findTextBox
+(
+	const cv::Mat& in,
+	int kSize,
+	float txtHeight,
+	float txtWidth,
+	float padding,
+	int gKSize,
+	cv::RotatedRect& returnValue
+);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
