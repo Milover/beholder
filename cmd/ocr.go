@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strings"
 
 	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
@@ -32,23 +33,31 @@ var (
 // OcrApp represents a program for running an OCR pipeline on an image or
 // a set of images read from disc.
 type OCRApp struct {
+	Y *neural.YOLOv8     `json:"yolov8"`
 	T *neural.Tesseract  `json:"tesseract"`
 	P *imgproc.Processor `json:"image_processing"`
 	O *output.Output     `json:"output"`
+	F Filename[id]       `json:"filename"`
 }
 
 // NewOCRApp creates a new OCR app.
 func NewOCRApp() *OCRApp {
 	return &OCRApp{
+		Y: neural.NewYOLOv8(),
 		T: neural.NewTesseract(),
 		P: imgproc.NewProcessor(),
 		O: output.NewOutput(),
+		F: Filename[id]{
+			FString: "img_%v.jpeg",
+			Fields:  []string{"ID"},
+		},
 	}
 }
 
 // Finalize releases resources held by the OCR app, flushes all buffer,
 // closes all files and/or connections.
 func (app *OCRApp) Finalize() error {
+	app.Y.Delete()
 	app.T.Delete()
 	app.P.Delete()
 	return app.O.Close()
@@ -56,6 +65,9 @@ func (app *OCRApp) Finalize() error {
 
 // Init initializes the OCR app by applying the configuration.
 func (app *OCRApp) Init() error {
+	if err := app.Y.Init(); err != nil {
+		return err
+	}
 	if err := app.T.Init(); err != nil {
 		return err
 	}
@@ -65,12 +77,15 @@ func (app *OCRApp) Init() error {
 	if err := app.O.Init(); err != nil {
 		return err
 	}
+	if err := app.F.Init(id{}); err != nil {
+		return err
+	}
 	return nil
 }
 
 // Run is a function that runs the OCR pipeline for a single image file:
 // reading, preprocessing, recognition and postprocessing.
-func (app *OCRApp) Run(filename string, res *models.Result) error {
+func (app *OCRApp) Run(filename string, imgID id, res *models.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
 	res.TimeStamp = sw.Start
@@ -90,19 +105,41 @@ func (app *OCRApp) Run(filename string, res *models.Result) error {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err := app.P.DecodeImage(buf, imgproc.RMGrayscale); err != nil {
+	if err := app.P.DecodeImage(buf, imgproc.RMColor); err != nil {
 		return err
 	}
 	res.Timings.Set("decode", sw.Lap())
 
-	if err := app.P.Preprocess(); err != nil {
+	// detect
+	if err := app.Y.Inference(app.P.GetRawImage(), res); err != nil {
 		return err
 	}
-	res.Timings.Set("preprocess", sw.Lap())
+	res.Timings.Set("yolo", sw.Lap())
 
-	if err := app.T.Inference(app.P.GetRawImage(), res); err != nil {
-		return err
+	// loop for each ROI
+	tRes := models.NewResult()
+	for i := range res.Boxes {
+		app.P.SetROI(res.Boxes[i])
+		if err := app.P.Preprocess(); err != nil {
+			return err
+		}
+		//res.Timings.Set("preprocess", sw.Lap())
+		if err := app.T.Inference(app.P.GetRawImage(), tRes); err != nil {
+			return err
+		}
+		// adjust results
+		res.Text[i] = strings.Join(tRes.Text, " ")
+		for _, c := range tRes.Confidences {
+			res.Confidences[i] *= c / 100.0
+		}
+		// XXX: remove
+		if err := app.P.WriteImage(fmt.Sprintf("tmp_%v_%d.png", imgID.ID, i)); err != nil {
+			return err
+		}
+		// XXX: remove
+		app.P.ResetROI()
 	}
+	// end ROI loop
 	res.Timings.Set("ocr", sw.Lap())
 
 	if err := app.P.Postprocess(res); err != nil {
@@ -119,6 +156,13 @@ func (app *OCRApp) Run(filename string, res *models.Result) error {
 	// FIXME: this is only temporary, usually we don't want to flush after
 	// each write, but it makes the output nicer
 	if err := app.O.Flush(); err != nil {
+		return err
+	}
+	var fname string
+	if fname, err = app.F.Get(&imgID); err != nil {
+		return err
+	}
+	if err := app.P.WriteImage(fname); err != nil {
 		return err
 	}
 	res.Timings.Set("output", sw.Lap())
@@ -164,7 +208,8 @@ func runOCR(cmd *cobra.Command, args []string) error {
 	count := int64(0) // No. results to average
 	switch {
 	case info.Mode().IsRegular():
-		if err = app.Run(cliFile, stats.Result); err != nil {
+		id := id{ID: fmt.Sprintf("%07d", count)}
+		if err = app.Run(cliFile, id, stats.Result); err != nil {
 			return err
 		}
 		stats.Accumulate(stats.Result.Timings)
@@ -181,8 +226,14 @@ func runOCR(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		for _, filename := range filenames {
-			if err := app.Run(path.Join(dir.Name(), filename), stats.Result); err != nil {
-				return err
+			id := id{ID: fmt.Sprintf("%07d", count)}
+			file := path.Join(dir.Name(), filename)
+
+			log.Printf("processing (%d/%d): %v", count+1, len(filenames), file)
+			if err := app.Run(file, id, stats.Result); err != nil {
+				//return err
+				log.Println("processing error:", err)
+				continue
 			}
 			stats.Accumulate(stats.Result.Timings)
 			count++
