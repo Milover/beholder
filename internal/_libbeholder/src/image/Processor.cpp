@@ -41,28 +41,31 @@ namespace beholder
 
 Processor::Processor()
 :
-	img_ {new cv::Mat{}}
-{}
+	img_ {new cv::Mat{}},
+	roi_ {new cv::Mat{}}
+{
+	*roi_ = *img_;
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Processor::~Processor()
-{
-	delete img_;
-}
+{}
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 bool Processor::decodeImage(void* buffer, int bufSize, int flags)
 {
 	*img_ = cv::Mat{1, bufSize, CV_8UC1, buffer};
-	cv::imdecode(*img_, flags, img_);	// yolo
-	return img_->data != NULL;
+	cv::imdecode(*img_, flags, img_.get());	// yolo
+	*roi_ = *img_;
+	//return roi_->data != NULL;
+	return roi_->data != nullptr;	// XXX: this should be ok
 }
 
 const cv::Mat& Processor::getImage() const
 {
-	return *img_;
+	return *roi_;
 }
 
 std::size_t Processor::getImageID() const
@@ -76,13 +79,13 @@ RawImage Processor::getRawImage() const
 	return RawImage
 	{
 		id_,
-		img_->rows,
-		img_->cols,
-		img_->elemSize() == 1ul ? static_cast<std::int64_t>(PxType::Mono8)
+		roi_->rows,
+		roi_->cols,
+		roi_->elemSize() == 1ul ? static_cast<std::int64_t>(PxType::Mono8)
 								: static_cast<std::int64_t>(PxType::BGR8packed),
-		static_cast<void*>(img_->data),
-		img_->step1(),
-		img_->elemSize() * 8	// bytes to bits
+		static_cast<void*>(roi_->data),
+		roi_->step1(),
+		roi_->elemSize() * 8	// bytes to bits
 	};
 }
 
@@ -91,7 +94,7 @@ bool Processor::postprocess(const std::vector<Result>& res)
 	for (const auto& o : postprocessing)
 	{
 		// FIXME: should ask weather to overwrite or use a new output image
-		if (!o->operator()(*img_, *img_, res))
+		if (!o->operator()(*roi_, *roi_, res))
 		{
 			// FIXME: should give info on what failed
 			return false;
@@ -105,7 +108,7 @@ bool Processor::preprocess()
 	for (const auto& o : preprocessing)
 	{
 		// FIXME: should ask weather to overwrite or use a new output image
-		if (!o->operator()(*img_, *img_))
+		if (!o->operator()(*roi_, *roi_))
 		{
 			// FIXME: should give info on what failed
 			return false;
@@ -139,10 +142,12 @@ bool Processor::receiveRawImage(const RawImage& raw)
 	if (info->colorConvCode == -1)
 	{
 		tmp.copyTo(*img_);
+		*roi_ = *img_;	// XXX: not sure
 	}
 	else
 	{
 		cv::cvtColor(tmp, *img_, info->colorConvCode, info->outChannels);
+		*roi_ = *img_;	// XXX: not sure
 	}
 	return true;
 }
@@ -150,12 +155,34 @@ bool Processor::receiveRawImage(const RawImage& raw)
 bool Processor::readImage(const std::string& path, int flags)
 {
 	*img_ = cv::imread(path, flags);
-	return img_->data != NULL;
+	*roi_ = *img_;
+	//return img_->data != NULL;
+	return img_->data != nullptr;	// XXX: this should be ok
+}
+
+void Processor::resetROI() const
+{
+	*roi_ = *img_;
+}
+
+void Processor::setROI(const Rectangle& roi) const
+{
+	const auto& r {roi.cRef()};
+	*roi_ = img_->operator()
+	(
+		cv::Rect
+		{
+			r.left,
+			r.top,
+			r.right - r.left,
+			r.bottom - r.top
+		}
+	);
 }
 
 void Processor::showImage(const std::string& title) const
 {
-	cv::imshow(title, *img_);
+	cv::imshow(title, *roi_);
 	cv::waitKey();
 }
 
@@ -166,7 +193,7 @@ bool Processor::writeImage(const std::string& filename) const
 		cv::IMWRITE_PNG_COMPRESSION, 0,				// lowest compression level
 		cv::IMWRITE_JPEG2000_COMPRESSION_X1000, 0	// lowest compression level
 	};
-	return cv::imwrite(filename, *img_, flags);
+	return cv::imwrite(filename, *roi_, flags);
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //

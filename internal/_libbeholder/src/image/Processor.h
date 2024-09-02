@@ -22,9 +22,11 @@ SourceFiles
 #include <utility>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "ProcessingOp.h"
 #include "RawImage.h"
+#include "Rectangle.h"
 #include "Result.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
@@ -50,8 +52,10 @@ private:
 	// Private data
 
 		//- An image
-		//	NOTE: a unique_ptr would be nicer, but cgo keeps complaining
-		cv::Mat* img_;
+		std::unique_ptr<cv::Mat> img_;
+
+		//- The active image ROI
+		std::unique_ptr<cv::Mat> roi_;
 
 		//- The camera assigned ID of the current image.
 		//	FIXME: only images received from a camera will have an ID.
@@ -120,6 +124,14 @@ public:
 
 		//- Read an image from disc
 		bool readImage(const std::string& path, int flags);
+
+		//- Reset the region of interest, i.e. set the ROI to the whole image
+		//	FIXME: this is incorrectly implemented
+		void resetROI() const;
+
+		//- Set the region of interest
+		//	FIXME: this is incorrectly implemented
+		void setROI(const Rectangle& roi) const;
 
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
