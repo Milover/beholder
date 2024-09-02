@@ -90,6 +90,20 @@ bool Proc_ReceiveRawImage(Proc p, const Img* img) {
 	return p->receiveRawImage(beholder::RawImage {*img});
 }
 
+void Proc_ResetROI(Proc p) {
+	if (!p) {
+		return;
+	}
+	p->resetROI();
+}
+
+void Proc_SetROI(Proc p, const Rect* roi) {
+	if (!p) {
+		return;
+	}
+	p->setROI(*roi);
+}
+
 void Proc_ShowImage(Proc p, const char* title) {
 	if (!p) {
 		return;

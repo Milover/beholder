@@ -222,6 +222,22 @@ func (ip Processor) ReceiveRawImage(img models.Image) error {
 	return nil
 }
 
+// ResetROI resets the region of interest back to the whole image.
+func (ip Processor) ResetROI() {
+	C.Proc_ResetROI(ip.p)
+}
+
+// SetROI sets the region of interest to the region specified by roi.
+func (ip Processor) SetROI(roi models.Rectangle) {
+	r := C.Rect{
+		left:   C.int(roi.Left),
+		top:    C.int(roi.Top),
+		right:  C.int(roi.Right),
+		bottom: C.int(roi.Bottom),
+	}
+	C.Proc_SetROI(ip.p, &r)
+}
+
 // ShowImage renders the current image in a new window and
 // waits for a key press.
 //

@@ -24,20 +24,27 @@ type opFactory func(json.RawMessage) (unsafe.Pointer, error)
 var opFactoryMap = map[string]opFactory{
 	"add_padding":                   NewAddPadding,
 	"auto_crop":                     NewAutoCrop,
+	"auto_orient":                   NewAutoOrient,
 	"clahe":                         NewCLAHE,
 	"crop":                          NewCrop,
+	"deblur":                        NewDeblur,
 	"div_gaussian_blur":             NewDivGaussianBlur,
 	"draw_bounding_boxes":           NewDrawBoundingBoxes,
+	"draw_labels":                   NewDrawLabels,
 	"equalize_histogram":            NewEqualizeHistogram,
+	"fast_nl_means_denoise":         NewFastNlMeansDenoise,
 	"gaussian_blur":                 NewGaussianBlur,
+	"grayscale":                     NewGrayscale,
 	"invert":                        NewInvert,
 	"landscape":                     NewLandscape,
 	"median_blur":                   NewMedianBlur,
 	"morphology":                    NewMorphology,
 	"normalize_brightness_contrast": NewNormBC,
+	"rescale":                       NewRescale,
 	"resize":                        NewResize,
 	"rotate":                        NewRotate,
 	"threshold":                     NewThreshold,
+	"unsharp_mask":                  NewUnsharpMask,
 }
 
 // addPadding adds uniform (white) padding to the border of an image.
@@ -67,9 +74,9 @@ func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
 
 // autoCrop represents an automatic image cropping operation.
 // It currently uses morphologic gradients to detect text boxes and
-// then crops the image.
+// then orients and crops the image.
 type autoCrop struct {
-	// KernelSize is the size of the kernel used for connecting text blobs,
+	// KernelSize is the size of the kernel used for connecting text blobs.
 	KernelSize int `json:"kernel_size"`
 	// TextWidth is the minium width of the blob for it to be considered text.
 	TextWidth float32 `json:"text_width"`
@@ -102,6 +109,50 @@ func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	// TextWidth and TextHeight accept all values
 	return unsafe.Pointer(C.AuCrp_New(
+		C.int(op.KernelSize),
+		C.float(op.TextWidth),
+		C.float(op.TextHeight),
+		C.float(op.Padding),
+	)), nil
+}
+
+// autoOrient represents an automatic image orientation operation.
+// It currently uses morphologic gradients to detect text boxes and
+// then orients the image.
+type autoOrient struct {
+	// KernelSize is the size of the kernel used for connecting text blobs.
+	KernelSize int `json:"kernel_size"`
+	// TextWidth is the minium width of the blob for it to be considered text.
+	TextWidth float32 `json:"text_width"`
+	// TextHeight is the minium height of the blob for it to be considered text.
+	TextHeight float32 `json:"text_height"`
+	// Padding is the additional padding added to the detected text box.
+	Padding float32 `json:"padding"`
+}
+
+// NewAutoOrient creates an automaticcropping operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewAutoOrient(m json.RawMessage) (unsafe.Pointer, error) {
+	op := autoOrient{
+		KernelSize: 50,
+		TextWidth:  50,
+		TextHeight: 50,
+		Padding:    10,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.KernelSize <= 0 {
+		return nil, errors.New("imgproc.NewAutoOrient: bad kernel size")
+	}
+	if op.Padding < 0 {
+		return nil, errors.New("imgproc.NewAutoOrient: bad padding")
+	}
+	// TextWidth and TextHeight accept all values
+	return unsafe.Pointer(C.AuOrien_New(
 		C.int(op.KernelSize),
 		C.float(op.TextWidth),
 		C.float(op.TextHeight),
@@ -171,6 +222,37 @@ func NewCrop(m json.RawMessage) (unsafe.Pointer, error) {
 		C.int(op.Top),
 		C.int(op.Width),
 		C.int(op.Height),
+	)), nil
+}
+
+// deblur represents an out-of-focus image deblurring operation.
+// See the [OpenCV example] for more information.
+//
+// [OpenCV example]: https://docs.opencv.org/4.10.0/de/d3c/tutorial_out_of_focus_deblur_filter.html
+type deblur struct {
+	Radius int `json:"radius"` // point spread function (PSF) radius
+	SNR    int `json:"snr"`    // signal-to-noise ratio
+}
+
+// NewDeblur creates a deblurring operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewDeblur(m json.RawMessage) (unsafe.Pointer, error) {
+	op := deblur{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Radius <= 0 {
+		return nil, errors.New("imgproc.NewDeblur: bad radius")
+	}
+	if op.SNR <= 0 {
+		return nil, errors.New("imgproc.NewDeblur: bad signal-to-noise ratio")
+	}
+	return unsafe.Pointer(C.Dblr_New(
+		C.int(op.Radius),
+		C.int(op.SNR),
 	)), nil
 }
 
@@ -256,8 +338,74 @@ func NewDrawBoundingBoxes(m json.RawMessage) (unsafe.Pointer, error) {
 	)), nil
 }
 
+// drawLabels represents a postprocessing operation which draws text labels
+// at the top left corner of the object bounding box.
+type drawLabels struct {
+	Color     [4]float32 `json:"color"`      // font color
+	FontScale float64    `json:"font_scale"` // font size multiplier
+	Thickness int        `json:"thickness"`  // font line thickness
+}
+
+// NewDrawLabels creates a drawLabels operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewDrawLabels(m json.RawMessage) (unsafe.Pointer, error) {
+	op := drawLabels{
+		Color:     [4]float32{0, 0, 0, 0},
+		FontScale: 1.0,
+		Thickness: 2,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.FontScale <= 0 {
+		return nil, errors.New("imgproc.NewDrawLabels: bad font scale")
+	}
+	if op.Thickness <= 0 {
+		return nil, errors.New("imgproc.NewDrawLabels: bad thickness")
+	}
+	return unsafe.Pointer(C.DrawLbl_New(
+		(*C.float)(&op.Color[0]),
+		C.double(op.FontScale),
+		C.int(op.Thickness),
+	)), nil
+}
+
 // equalizeHistogram represents a global image histogram equalization operation.
 type equalizeHistogram struct{}
+
+// fastNlMeansDenoise is a denoising operation using the
+// Non-local Means Denoising algorithm.
+//
+// [Non-local Means Denoising]: https://docs.opencv.org/4.10.0/d1/d79/group__photo__denoise.html#ga0db3ea0715152e56081265014b139bec
+type fastNlMeansDenoise struct {
+	// Weight is the parameter regulating the filter strength.
+	// Bigger values remove more noise and more image detail, smaller values
+	// preserve more detail and noise.
+	//
+	// A loose guideline for typical values is the range [5, 15].
+	Weight float32 `json:"weight"`
+}
+
+// NewFastNlMeansDenoise creates a Non-local Means Denoising operation with
+// default values, unmarshals runtime data into it and then constructs
+// a C-class representing  the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewFastNlMeansDenoise(m json.RawMessage) (unsafe.Pointer, error) {
+	op := fastNlMeansDenoise{
+		Weight: 10,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Weight <= 0 {
+		return nil, errors.New("imgproc.NewFastNlMeansDenoise: bad weight")
+	}
+	return unsafe.Pointer(C.FNlMDenoise_New(C.float(op.Weight))), nil
+}
 
 // NewEqualizeHistogram creates a global image histogram equalization operation
 // with default values, unmarshals runtime data into it and then
@@ -311,6 +459,23 @@ func NewGaussianBlur(m json.RawMessage) (unsafe.Pointer, error) {
 		C.float(op.SigmaX),
 		C.float(op.SigmaY),
 	)), nil
+}
+
+// grayscale converts any color image to a single-channel gray scale image.
+type grayscale struct{}
+
+// NewGrayscale creates a grayscale operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewGrayscale(m json.RawMessage) (unsafe.Pointer, error) {
+	op := grayscale{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	// no input validation required
+	return unsafe.Pointer(C.Gray_New()), nil
 }
 
 // invert represents a bitwise inversion operation.
@@ -480,8 +645,8 @@ func NewMorphology(m json.RawMessage) (unsafe.Pointer, error) {
 
 // normBC represents an automatic brigthness and contrast adjustment operation.
 type normBC struct {
-	// Clip percentage.
-	ClipPct float32 `json:"clip_pct"`
+	ClipLowPct  float32 `json:"clip_low_pct"`  // low-value side clip percentage
+	ClipHighPct float32 `json:"clip_high_pct"` // high-value side clip percentage
 }
 
 // NewNormBC creates a normBC operation with default values,
@@ -491,14 +656,45 @@ type normBC struct {
 // hence C.free should NOT be called on the returned pointer.
 func NewNormBC(m json.RawMessage) (unsafe.Pointer, error) {
 	op := normBC{
-		ClipPct: 0.5,
+		ClipLowPct:  0.25,
+		ClipHighPct: 0.25,
 	}
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
+	if op.ClipLowPct < 0 || op.ClipLowPct > 100 {
+		return nil, errors.New("imgproc.NewNormBC: bad clip-low percentage")
+	}
+	if op.ClipHighPct < 0 || op.ClipHighPct > 100 {
+		return nil, errors.New("imgproc.NewNormBC: bad clip-high percentage")
+	}
 	// all values accepted, no input validation required
 	return unsafe.Pointer(C.NormBC_New(
-		C.float(op.ClipPct),
+		C.float(op.ClipLowPct),
+		C.float(op.ClipHighPct),
+	)), nil
+}
+
+// rescale represents an image rescaling operation.
+type rescale struct {
+	Scale float64 `json:"scale"`
+}
+
+// NewRescale creates a rescaling operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewRescale(m json.RawMessage) (unsafe.Pointer, error) {
+	op := rescale{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Scale <= 0 {
+		return nil, errors.New("imgproc.NewRescale: bad scale")
+	}
+	return unsafe.Pointer(C.Rsl_New(
+		C.double(op.Scale),
 	)), nil
 }
 
@@ -622,5 +818,42 @@ func NewThreshold(m json.RawMessage) (unsafe.Pointer, error) {
 		C.float(op.Value),
 		C.float(op.MaxValue),
 		C.int(op.Type[0]+op.Type[1]),
+	)), nil
+}
+
+// unsharpMask performs image sharpening using the "unsharp mask" algorithm.
+// See the following resources for more information:
+//   - [OpenCV example] (the current implementation)
+//   - [stackoverflow thread] on image sharpening
+//   - [Digital unsharp masking] on Wikipedia
+//
+// [OpenCV example]: https://docs.opencv.org/4.10.0/d1/d10/classcv_1_1MatExpr.html#details
+// [stackoverflow thread]: https://stackoverflow.com/questions/4993082/how-can-i-sharpen-an-image-in-opencv
+// [Digital unsharp masking]: https://en.wikipedia.org/wiki/Unsharp_masking#Digital_unsharp_masking
+type unsharpMask struct {
+	Sigma     float64 `json:"sigma"`
+	Threshold float64 `json:"threshold"`
+	Amount    float64 `json:"amount"`
+}
+
+// NewUnsharpMask creates a unsharp mask operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewUnsharpMask(m json.RawMessage) (unsafe.Pointer, error) {
+	op := unsharpMask{
+		Sigma:     1.0,
+		Threshold: 5.0,
+		Amount:    1.0,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	// FIXME: check values
+	return unsafe.Pointer(C.UnshMsk_New(
+		C.double(op.Sigma),
+		C.double(op.Threshold),
+		C.double(op.Amount),
 	)), nil
 }
