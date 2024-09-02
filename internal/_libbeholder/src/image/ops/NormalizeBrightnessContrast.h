@@ -60,8 +60,10 @@ public:
 
 	//- Public data
 
-		//- Clip percentage
-		float clipPct {0.5};
+		//- Low-value side clip percentage
+		float clipLowPct {0.25};
+		//- High-value side percentage
+		float clipHighPct {0.25};
 
 	//- Constructors
 
@@ -69,10 +71,20 @@ public:
 		NormalizeBrightnessContrast() = default;
 
 		//- Default constructor
+		//	Clip 'cPct' of image values in total, symmetrically from both sides
 		NormalizeBrightnessContrast(float cPct)
 		:
 			ProcessingOp(),
-			clipPct {cPct}
+			clipLowPct {cPct/2.0f},
+			clipHighPct {cPct/2.0f}
+		{}
+
+		//- Default constructor
+		NormalizeBrightnessContrast(float cLowPct, float cHighPct)
+		:
+			ProcessingOp(),
+			clipLowPct {cLowPct},
+			clipHighPct {cHighPct}
 		{}
 
 		//- Default copy constructor
@@ -105,7 +117,8 @@ bool normalizeBrightnessContrast
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	float clipPct = 0.5
+	float clipLowPct = 0.25,
+	float clipHighPct = 0.25
 );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

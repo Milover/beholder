@@ -29,7 +29,7 @@ namespace beholder
 
 bool NormalizeBrightnessContrast::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	return normalizeBrightnessContrast(in, out, clipPct);
+	return normalizeBrightnessContrast(in, out, clipLowPct, clipHighPct);
 }
 
 bool NormalizeBrightnessContrast::execute
@@ -54,7 +54,8 @@ bool normalizeBrightnessContrast
 (
 	const cv::Mat& in,
 	cv::Mat& out,
-	float clipPct
+	float clipLowPct,
+	float clipHighPct
 )
 {
 	// compute histogram
@@ -76,20 +77,21 @@ bool normalizeBrightnessContrast
 
 	// locate clip points
 	float max {acc.back()};
-	clipPct *= max / 100.0;	// convert from pct. to actual value
-	clipPct /= 2.0;			// because we clip from both sides
+	clipLowPct *= max / 100.0;	// convert from pct. to actual value
+	clipHighPct *= max / 100.0;	// convert from pct. to actual value
+	//clipPct /= 2.0;			// because we clip from both sides
 
 	// FIXME: this is looks kinda dumb
 	// locate left cut
 	int min_gray {0};
-	while (acc[min_gray] < clipPct)
+	while (acc[min_gray] < clipLowPct)
 	{
 		++min_gray;
 	}
 
 	// locate right cut
 	int max_gray {histSize[0] - 1};
-	while (acc[max_gray] >= (max - clipPct))
+	while (acc[max_gray] >= (max - clipHighPct))
 	{
 		--max_gray;
 	}
