@@ -1,0 +1,122 @@
+{
+	"tst_camera_test_image": "internal/neural/testdata/images/sawlog_2.png",
+	"output": {
+		"format": "json",
+		"target": "stdout"
+	},
+	"filename": {
+		"f_string": "img_%v_%v.jpeg",
+		"fields": [
+			"Timestamp",
+			"ID"
+		]
+	},
+	"cameras": [
+		{
+			"type": "emulated",
+			"serial_number": "pick-first",
+			"acquisition_timeout": "3s",
+			"trigger": {
+				"timeout": "3s",
+				"period": "3s"
+			},
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Software"},
+				{"name": "ExposureMode",       "value": "Timed"},
+				{"name": "ExposureTimeAbs",    "value": "10000"}
+			]
+		}
+	],
+	"yolov8": {
+		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-1280px.onnx",
+		"config": {
+			"size": 1280,
+			"confidence_threshold": 0.85
+		}
+	},
+	"tesseract": {
+		"config_paths": [],
+		"model": "internal/neural/model/_internal/tesseract/dflt/eng.traineddata",
+		"page_seg_mode": "single_block",
+		"variables": {
+			"load_system_dawg": "0",
+			"load_freq_dawg": "0",
+			"tessedit_char_whitelist": "ABCDEFGHIJKLMNOPRSTUVZ-0123456789"
+		},
+		"patterns": [
+			"\\d\\d\\d\\d\\d",
+			"\\A\\A-\\A\\A-\\d"
+		]
+	},
+	"image_processing": {
+		"preprocessing": [
+			{
+				"rescale": {
+					"scale": 3
+				}
+			},
+			{
+				"invert": null
+			},
+			{
+				"grayscale": null
+			},
+			{
+				"normalize_brightness_contrast": {
+					"clip_high_pct": 0.25
+				}
+			},
+			{
+				"div_gaussian_blur": {
+					"scale_factor": 255,
+					"sigma_x": 30,
+					"sigma_y": 30,
+					"kernel_width": 0,
+					"kernel_height": 0
+				}
+			},
+			{
+				"threshold": {
+					"value": 0,
+					"max_value": 255,
+					"type": [ "binary", "otsu" ]
+				}
+			},
+			{
+				"auto_crop": {
+					"kernel_size": 50,
+					"text_width": 50,
+					"text_height": 20,
+					"padding": 5
+				}
+			},
+			{
+				"morphology": {
+					"kernel_type": "rectangle",
+					"kernel_width": 3,
+					"kernel_height": 3,
+					"type": "open",
+					"iterations": 1
+				}
+			}
+		],
+		"postprocessing": [
+			{
+				"draw_bounding_boxes": {
+					"color": [0, 255, 0, 0],
+					"thickness": 2
+				}
+			},
+			{
+				"draw_labels": {
+					"color": [0, 255, 0, 0],
+					"font_scale": 0.65,
+					"thickness": 2
+				}
+			}
+		]
+	}
+}

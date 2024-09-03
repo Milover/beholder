@@ -28,11 +28,15 @@ func NewStats() *Stats {
 }
 
 // Accumulate is a function which accumulates timings.
+//
+// FIXME: this is a stupid function and the way we're doing this now makes
+// no sense.
 func (s *Stats) Accumulate(ts chrono.Timings) {
 	if len(s.AvgTimings) == 0 {
 		s.AvgTimings = make([]chrono.Timing, 0, len(ts))
 		s.AvgTimings = append(s.AvgTimings, ts...)
 	} else {
+		// BUG: need bounds checking here
 		for i := range ts {
 			s.AvgTimings[i].Value += ts[i].Value
 		}

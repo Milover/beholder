@@ -37,6 +37,7 @@ func init() {
 	rootCmd.AddCommand(ocrCmd)
 	rootCmd.AddCommand(camCmd)
 	rootCmd.AddCommand(procCmd)
+	rootCmd.AddCommand(demoCmd)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

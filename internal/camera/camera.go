@@ -313,8 +313,22 @@ func (c Camera) TstFailBuffers(count uint64) error {
 // The image format must be either PNG or TIF. This is a limitation imposed by
 // pylon.
 //
-// NOTE: this function works only with emulated cameras and
-// is for internal use only.
+// NOTE: this function works only with emulated cameras and is intended
+// for internal use only.
+//
+// BUG: we need to also set camera ROI to the full image, otherwise the image
+// gets clipped, i.e. something like:
+//
+//	err = c.SetParameters(Parameters{
+//		Parameter{Name: "Width", Value: imgWidth},
+//		Parameter{Name: "Height", Value: imgHeight},
+//		Parameter{Name: "OffsetX", Value: "0"},
+//		Parameter{Name: "OffsetY", Value: "0"},
+//	})
+//
+// however, since we usually don't have info about the image until everything
+// gets initialized, we might have to set/reset the ROI "manually" once the
+// camera is attached.
 func (c Camera) TstSetImage(path string) error {
 	if c.Type != Emulated {
 		return fmt.Errorf("camera.Camera.TstSetImage: non-emulated camera type: %q", c.Type)
