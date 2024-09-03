@@ -46,6 +46,18 @@ void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const
 	{
 		std::cerr << "could not set default pixel format" << std::endl;
 	}
+
+	// reset image ROI
+	if
+	(
+		!Pylon::CIntegerParameter {nodemap, "Width"}.TrySetToMaximum()
+	 || !Pylon::CIntegerParameter {nodemap, "Height"}.TrySetToMaximum()
+	 || !Pylon::CIntegerParameter {nodemap, "OffsetX"}.TrySetToMinimum()
+	 || !Pylon::CIntegerParameter {nodemap, "OffsetY"}.TrySetToMinimum()
+	)
+	{
+		std::cerr << "could not reset image ROI" << std::endl;
+	}
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
