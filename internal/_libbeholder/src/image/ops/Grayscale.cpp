@@ -29,7 +29,6 @@ namespace beholder
 
 bool Grayscale::execute(const cv::Mat& in, cv::Mat& out) const
 {
-
 	cv::cvtColor(in, out, cv::COLOR_BGR2GRAY, 1);
 	return true;
 }

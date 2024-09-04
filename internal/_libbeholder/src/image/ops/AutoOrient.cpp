@@ -127,7 +127,15 @@ void findTextBox
 	cv::RotatedRect& returnValue
 )
 {
-	cv::Mat img {in.clone()};
+	cv::Mat img {};
+	if (in.channels() > 1)
+	{
+		cv::cvtColor(in, img, cv::COLOR_BGR2GRAY, 1);
+	}
+	else
+	{
+		in.copyTo(img);
+	}
 	cv::RotatedRect box {};
 	cv::Mat kernel;
 
