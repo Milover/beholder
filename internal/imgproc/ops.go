@@ -23,6 +23,7 @@ type opFactory func(json.RawMessage) (unsafe.Pointer, error)
 // factory functions.
 var opFactoryMap = map[string]opFactory{
 	"add_padding":                   NewAddPadding,
+	"adaptive_threshold":            NewAdaptiveThreshold,
 	"auto_crop":                     NewAutoCrop,
 	"auto_orient":                   NewAutoOrient,
 	"clahe":                         NewCLAHE,
@@ -69,6 +70,73 @@ func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	return unsafe.Pointer(C.AdPad_New(
 		C.int(op.Padding),
+	)), nil
+}
+
+// adThreshType is an adaptive threshold type.
+type adThreshType int
+
+const (
+	AdThreshMean adThreshType = iota
+	AdThreshGaussian
+)
+
+var (
+	adThreshTypeMap = map[adThreshType]string{
+		AdThreshMean:     "mean",
+		AdThreshGaussian: "gaussian",
+	}
+	invAdThreshTypeMap = enumutils.Invert(adThreshTypeMap)
+)
+
+func (t *adThreshType) UnmarshalJSON(data []byte) error {
+	return enumutils.UnmarshalJSON(data, t, invAdThreshTypeMap)
+}
+
+func (t adThreshType) MarshalJSON() ([]byte, error) {
+	return enumutils.MarshalJSON(t, adThreshTypeMap)
+}
+
+// adaptiveThreshold is an adaptive thresholding operation.
+type adaptiveThreshold struct {
+	// MaxValue is the value assigned to pixels satisfying the thresholding
+	// condition.
+	MaxValue float64 `json:"max_value"`
+	// Size is the pixel neighbourhood used to compute the threshold value
+	// for a pixel: 3, 5, 7...
+	KernelSize int `json:"kernel_size"`
+	// Const is a constant subtracted from the mean.
+	Const float64 `json:"const"`
+	// Type is the adaptive thresholding algorithm type.
+	Type adThreshType `json:"type"`
+}
+
+// NewAdaptiveThreshold creates an adaptive threshold operation with default
+// values, unmarshals runtime data into it and then constructs a C-class
+// representing the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewAdaptiveThreshold(m json.RawMessage) (unsafe.Pointer, error) {
+	op := adaptiveThreshold{
+		MaxValue:   255.0,
+		KernelSize: 11,  // magic
+		Const:      2.0, // magic
+		Type:       AdThreshGaussian,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.MaxValue < 0.0 || op.MaxValue > 255.01 {
+		return nil, errors.New("imgproc.NewAdaptiveThreshold: bad max value")
+	}
+	if op.KernelSize < 3 || op.KernelSize%2 != 1 {
+		return nil, errors.New("imgproc.NewAdaptiveThreshold: bad kernel size")
+	}
+	return unsafe.Pointer(C.AdThresh_New(
+		C.double(op.MaxValue),
+		C.int(op.KernelSize),
+		C.double(op.Const),
+		C.int(op.Type),
 	)), nil
 }
 

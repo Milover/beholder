@@ -8,6 +8,7 @@ extern "C" {
 
 #ifdef __cplusplus
 typedef beholder::AddPadding* AdPad;
+typedef beholder::AdaptiveThreshold* AdThresh;
 typedef beholder::AutoCrop* AuCrp;
 typedef beholder::AutoOrient* AuOrien;
 typedef beholder::CLAHE* CLH;
@@ -32,6 +33,7 @@ typedef beholder::Threshold* Thresh;
 typedef beholder::UnsharpMask* UnshMsk;
 #else
 typedef void* AdPad;
+typedef void* AdThresh;
 typedef void* AuCrp;
 typedef void* AuOrien;
 typedef void* CLH;
@@ -57,6 +59,7 @@ typedef void* UnshMsk;
 #endif
 
 AdPad AdPad_New(int pad);
+AdThresh AdThresh_New(double max, int sz, double cnst, int typ);
 AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding);
 AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding);
 CLH CLH_New(float lim, int tRows, int tCols);

@@ -6,6 +6,10 @@ AdPad AdPad_New(int pad) {
 	return new beholder::AddPadding {pad};
 }
 
+AdThresh AdThresh_New(double max, int sz, double cnst, int typ) {
+	return new beholder::AdaptiveThreshold {max, sz, cnst, typ};
+}
+
 AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding) {
 	return new beholder::AutoCrop {kSize, txtHeight, txtWidth, padding};
 }
