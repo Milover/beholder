@@ -20,12 +20,15 @@ type Trigger struct {
 	// Timeout is the duration for which to wait for the camera to become ready
 	// to accept a trigger before sending the trigger signal.
 	Timeout chrono.Duration `json:"timeout"`
+
 	// Period is the triggering period, i.e. when Execute() is called,
 	// the routine will sleep until, at least, Period time has passed after
 	// the last trigger execution.
+	//
 	// WARNING: the period is respected loosely, exact execution timings
 	// should not be expected.
 	Period chrono.Duration `json:"period"`
+
 	// WaitAfter is the wait duration after triggering.
 	// It is used to allow for the camera to receive the trigger signal and
 	// execute the corresponding action. Usually this is not necessary,

@@ -58,6 +58,14 @@ void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const
 	{
 		std::cerr << "could not reset image ROI" << std::endl;
 	}
+
+	// see comments on Camera::isAcquiring() for more info
+	const char* modes[] {"Continuous"};
+	Pylon::CEnumParameter acquisitionMode {nodemap, "AcquisitionMode"};
+	if (!acquisitionMode.TrySetValue(modes))
+	{
+		std::cerr << "could not set continuous acquisition mode" << std::endl;
+	}
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
