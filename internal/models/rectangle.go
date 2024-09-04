@@ -20,6 +20,23 @@ func (r Rectangle) In(s Rectangle) bool {
 		r.Bottom < s.Bottom
 }
 
+// Offset moves the rectangle by x and y.
+func (r *Rectangle) Move(x, y int64) {
+	r.Left += x
+	r.Top += y
+	r.Right += x
+	r.Bottom += y
+}
+
+// Resize enlarges or shrinks r uniformly in all directions by an amount a,
+// while keeping the center of r fixed.
+func (r *Rectangle) Resize(a int64) {
+	r.Left -= a
+	r.Top -= a
+	r.Right += a
+	r.Bottom += a
+}
+
 // Overlap computes the overlapping area between r and s
 func (r Rectangle) Overlap(s Rectangle) int64 {
 	return (min(r.Right, s.Right) - max(r.Left, s.Left)) *
