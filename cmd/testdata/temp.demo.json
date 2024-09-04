@@ -1,11 +1,10 @@
 {
-	"tst_camera_test_image": "internal/neural/testdata/images/sawlog_2.png",
 	"output": {
 		"format": "json",
 		"target": "stdout"
 	},
 	"filename": {
-		"f_string": "img_%v_%v.jpeg",
+		"f_string": "web/static/img_%v_%v.jpeg",
 		"fields": [
 			"Timestamp",
 			"ID"
@@ -13,12 +12,13 @@
 	},
 	"cameras": [
 		{
-			"type": "emulated",
+			"no_reboot": true,
+			"type": "gige",
 			"serial_number": "pick-first",
 			"acquisition_timeout": "3s",
 			"trigger": {
 				"timeout": "3s",
-				"period": "3s"
+				"period": "0s"
 			},
 			"parameters": [
 				{"name": "AcquisitionMode",    "value": "Continuous"},
@@ -31,10 +31,10 @@
 		}
 	],
 	"yolov8": {
-		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-1280px.onnx",
+		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-640px.onnx",
 		"config": {
-			"size": 1280,
-			"confidence_threshold": 0.85
+			"size": 640,
+			"confidence_threshold": 0.8
 		}
 	},
 	"tesseract": {
@@ -54,11 +54,6 @@
 	"image_processing": {
 		"preprocessing": [
 			{
-				"rescale": {
-					"scale": 3
-				}
-			},
-			{
 				"invert": null
 			},
 			{
@@ -70,12 +65,11 @@
 				}
 			},
 			{
-				"div_gaussian_blur": {
-					"scale_factor": 255,
-					"sigma_x": 30,
-					"sigma_y": 30,
-					"kernel_width": 0,
-					"kernel_height": 0
+				"gaussian_blur": {
+					"kernel_width": 7,
+					"kernel_height": 7,
+					"sigma_x": 0,
+					"sigma_y": 0
 				}
 			},
 			{
@@ -87,19 +81,10 @@
 			},
 			{
 				"auto_crop": {
-					"kernel_size": 50,
-					"text_width": 50,
+					"kernel_size": 10,
+					"text_width": 20,
 					"text_height": 20,
 					"padding": 5
-				}
-			},
-			{
-				"morphology": {
-					"kernel_type": "rectangle",
-					"kernel_width": 3,
-					"kernel_height": 3,
-					"type": "open",
-					"iterations": 1
 				}
 			}
 		],
@@ -113,7 +98,7 @@
 			{
 				"draw_labels": {
 					"color": [0, 255, 0, 0],
-					"font_scale": 0.65,
+					"font_scale": 1.5,
 					"thickness": 2
 				}
 			}
