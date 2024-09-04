@@ -62,6 +62,8 @@ public:
 
 		//- Kernel size
 		int padding {10};
+		//- Pixel value to use for padding
+		double padValue {255.0};
 
 	//- Constructors
 
@@ -69,10 +71,10 @@ public:
 		AddPadding() = default;
 
 		//- Default constructor
-		AddPadding(int pad)
+		AddPadding(int pad, double pv)
 		:
-			ProcessingOp(),
-			padding {pad}
+			padding {pad},
+			padValue {pv}
 		{}
 
 		//- Default copy constructor

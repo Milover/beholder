@@ -64,9 +64,9 @@ public:
 		AutoCrop() = default;
 
 		//- Default constructor
-		AutoCrop(int kS, float tH, float tW, float pad)
+		AutoCrop(int kS, float tH, float tW, float pad, double padV)
 		:
-			AutoOrient(kS, tH, tW, pad)
+			AutoOrient(kS, tH, tW, pad, padV)
 		{}
 
 		//- Default copy constructor

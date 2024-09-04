@@ -2,20 +2,20 @@
 
 #include "ops.h"
 
-AdPad AdPad_New(int pad) {
-	return new beholder::AddPadding {pad};
+AdPad AdPad_New(int pad, double padV) {
+	return new beholder::AddPadding {pad, padV};
 }
 
 AdThresh AdThresh_New(double max, int sz, double cnst, int typ) {
 	return new beholder::AdaptiveThreshold {max, sz, cnst, typ};
 }
 
-AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding) {
-	return new beholder::AutoCrop {kSize, txtHeight, txtWidth, padding};
+AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding, double padV) {
+	return new beholder::AutoCrop {kSize, txtHeight, txtWidth, padding, padV};
 }
 
-AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding) {
-	return new beholder::AutoOrient {kSize, txtHeight, txtWidth, padding};
+AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding, double padV) {
+	return new beholder::AutoOrient {kSize, txtHeight, txtWidth, padding, padV};
 }
 
 CLH CLH_New(float lim, int tRows, int tCols) {

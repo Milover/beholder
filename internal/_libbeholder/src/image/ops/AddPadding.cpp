@@ -40,7 +40,7 @@ bool AddPadding::execute(const cv::Mat& in, cv::Mat& out) const
 		padding,
 		padding,
 		cv::BORDER_ISOLATED,
-		cv::Scalar {255, 255, 255}
+		cv::Scalar::all(padValue)
 	);
 	out = tmp;
 	return true;

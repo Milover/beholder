@@ -17,6 +17,7 @@ SourceFiles
 #ifndef BEHOLDER_AUTO_ORIENT_OP_H
 #define BEHOLDER_AUTO_ORIENT_OP_H
 
+#include <array>
 #include <vector>
 
 #include "ProcessingOp.h"
@@ -80,6 +81,8 @@ public:
 		float textWidth {50};
 		//- Padding added to the cropped image
 		float padding {10.0};
+		//- The pixel value used for padding
+		double padValue {255.0};
 		//- Gradient kernel size
 		//	XXX: is there a reason why we maed it 'const' originally?
 		int gradientKernelSize {3};
@@ -90,13 +93,14 @@ public:
 		AutoOrient() = default;
 
 		//- Default constructor
-		AutoOrient(int kS, float tH, float tW, float pad)
+		AutoOrient(int kS, float tH, float tW, float pad, double padV)
 		:
 			ProcessingOp(),
 			kernelSize {kS},
 			textHeight {tH},
 			textWidth {tW},
-			padding {pad}
+			padding {pad},
+			padValue {padV}
 		{}
 
 		//- Default copy constructor

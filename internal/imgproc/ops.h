@@ -1,6 +1,8 @@
 #ifndef _BEHOLDER_IMGPROC_OPS_H
 #define _BEHOLDER_IMGPROC_OPS_H
 
+#include "stdbool.h"
+
 #ifdef __cplusplus
 #include "libbeholder.h"
 extern "C" {
@@ -58,10 +60,10 @@ typedef void* Thresh;
 typedef void* UnshMsk;
 #endif
 
-AdPad AdPad_New(int pad);
+AdPad AdPad_New(int pad, double padV);
 AdThresh AdThresh_New(double max, int sz, double cnst, int typ);
-AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding);
-AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding);
+AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding, double padV);
+AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding, double padV);
 CLH CLH_New(float lim, int tRows, int tCols);
 Crp Crp_New(int left, int top, int width, int height);
 Dblr Dblr_New(int radius, int snr);
