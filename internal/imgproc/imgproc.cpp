@@ -104,6 +104,13 @@ void Proc_SetROI(Proc p, const Rect* roi) {
 	p->setROI(*roi);
 }
 
+void Proc_SetRotatedROI(Proc p, const Rect* roi, double ang) {
+	if (!p) {
+		return;
+	}
+	p->setRotatedROI(*roi, ang);
+}
+
 void Proc_ShowImage(Proc p, const char* title) {
 	if (!p) {
 		return;

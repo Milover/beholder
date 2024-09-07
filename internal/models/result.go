@@ -14,6 +14,8 @@ import (
 type Result struct {
 	// Boxes is a list of bounding boxes detected by a processing pipeline.
 	Boxes []Rectangle `json:"boxes"`
+	// Angles are the bounding box rotation angles.
+	Angles []float64 `json:"angles"`
 	// Text is a list of strings associated with each Box.
 	//
 	// A Text string could, for example, be the text recognized by OCR or
@@ -53,6 +55,7 @@ func (r *Result) Reset() {
 	r.Expected = r.Expected[:0]
 	r.Confidences = r.Confidences[:0]
 	r.Boxes = r.Boxes[:0]
+	r.Angles = r.Angles[:0]
 	r.Status = RSNone
 	r.TimeStamp = time.Time{}
 	r.Timings.Reset()

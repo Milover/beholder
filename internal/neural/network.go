@@ -220,45 +220,14 @@ func (n network) Inference(img models.Image, res *models.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
-	raw := C.Img{
-		C.size_t(img.ID),
-		C.int(img.Rows),
-		C.int(img.Cols),
-		C.int64_t(img.PixelType),
-		img.Buffer,
-		C.size_t(img.Step),
-		C.size_t(img.BitsPerPixel),
-	}
+	raw := toCImg(img)
 	results := (*C.ResArr)(ar.Store(
 		unsafe.Pointer(C.Det_Detect(n.p, &raw)),
 		unsafe.Pointer(C.ResArr_Delete)))
 	if unsafe.Pointer(results) == nil {
 		return ErrInference
 	}
-	// allocate and reset if necessary
-	nRes := uint64(results.count)
-	if uint64(cap(res.Boxes)) < nRes {
-		diff := int(nRes - uint64(cap(res.Boxes)))
-		res.Text = slices.Grow(res.Text, diff)
-		res.Confidences = slices.Grow(res.Confidences, diff)
-		res.Boxes = slices.Grow(res.Boxes, diff)
-	}
-	// FIXME: we probably shouldn't do this here
-	res.Text = res.Text[:0]
-	res.Confidences = res.Confidences[:0]
-	res.Boxes = res.Boxes[:0]
-	// populate the result
-	resultsSl := unsafe.Slice(results.array, nRes)
-	for _, r := range resultsSl {
-		res.Text = append(res.Text, C.GoString(r.text))
-		res.Confidences = append(res.Confidences, float64(r.confidence))
-		res.Boxes = append(res.Boxes, models.Rectangle{
-			Left:   int64(r.box.left),
-			Top:    int64(r.box.top),
-			Right:  int64(r.box.right),
-			Bottom: int64(r.box.bottom),
-		})
-	}
+	fromCRes(results, res)
 	return nil
 }
 
@@ -315,4 +284,48 @@ func (n network) IsValid() error {
 		return err
 	}
 	return nil
+}
+
+// toCImg returns a copy of img as a C-image.
+func toCImg(img models.Image) C.Img {
+	return C.Img{
+		C.size_t(img.ID),
+		C.int(img.Rows),
+		C.int(img.Cols),
+		C.int64_t(img.PixelType),
+		img.Buffer,
+		C.size_t(img.Step),
+		C.size_t(img.BitsPerPixel),
+	}
+}
+
+// fromCRes copies a C-Result array into res.
+func fromCRes(cRes *C.ResArr, res *models.Result) {
+	// allocate and reset if necessary
+	nLines := uint64(cRes.count)
+	if uint64(cap(res.Text)) < nLines {
+		diff := int(nLines - uint64(cap(res.Text)))
+		res.Text = slices.Grow(res.Text, diff)
+		res.Confidences = slices.Grow(res.Confidences, diff)
+		res.Angles = slices.Grow(res.Angles, diff)
+		res.Boxes = slices.Grow(res.Boxes, diff)
+	}
+	// FIXME: we probably shouldn't do this here
+	res.Text = res.Text[:0]
+	res.Confidences = res.Confidences[:0]
+	res.Angles = res.Angles[:0]
+	res.Boxes = res.Boxes[:0]
+	// populate the result
+	resultsSl := unsafe.Slice(cRes.array, nLines)
+	for _, r := range resultsSl {
+		res.Text = append(res.Text, C.GoString(r.text))
+		res.Confidences = append(res.Confidences, float64(r.confidence))
+		res.Angles = append(res.Angles, float64(r.boxRotAngle))
+		res.Boxes = append(res.Boxes, models.Rectangle{
+			Left:   int64(r.box.left),
+			Top:    int64(r.box.top),
+			Right:  int64(r.box.right),
+			Bottom: int64(r.box.bottom),
+		})
+	}
 }
