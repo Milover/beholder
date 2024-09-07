@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"os/signal"
@@ -41,6 +42,7 @@ var (
 type DemoApp struct {
 	Cs camera.Array           `json:"cameras"`
 	Y  *neural.YOLOv8         `json:"yolov8"`
+	E  *neural.EAST           `json:"east"`
 	T  *neural.Tesseract      `json:"tesseract"`
 	P  *imgproc.Processor     `json:"image_processing"`
 	O  *output.Output         `json:"output"`
@@ -55,6 +57,7 @@ type DemoApp struct {
 func NewDemoApp() *DemoApp {
 	return &DemoApp{
 		Y: neural.NewYOLOv8(),
+		E: neural.NewEAST(),
 		T: neural.NewTesseract(),
 		P: imgproc.NewProcessor(),
 		O: output.NewOutput(),
@@ -73,6 +76,7 @@ func NewDemoApp() *DemoApp {
 func (app *DemoApp) Finalize() error {
 	app.Cs.Delete()
 	app.Y.Delete()
+	app.E.Delete()
 	app.T.Delete()
 	app.P.Delete()
 	return app.O.Close()
@@ -92,6 +96,9 @@ func (app *DemoApp) Init() error {
 		log.Println("set test image: ", app.TstImg)
 	}
 	if err := app.Y.Init(); err != nil {
+		return err
+	}
+	if err := app.E.Init(); err != nil {
 		return err
 	}
 	if err := app.T.Init(); err != nil {
@@ -120,28 +127,49 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 	}
 	res.Timings.Set("yolo", sw.Lap())
 
-	// loop for each ROI
-	tRes := models.NewResult()
+	// loop for each yolo ROI
 	for i := range res.Boxes {
+		res.Boxes[i].Resize(int64(math.Floor(0.05 * float64(min(res.Boxes[i].Height(), res.Boxes[i].Width())))))
+		//res.Boxes[i].Resize(15)
 		app.P.SetROI(res.Boxes[i])
-		if err := app.P.Preprocess(); err != nil {
-			app.P.ResetROI()
-			return err
+
+		eRes := models.NewResult()
+		if err := app.E.Inference(app.P.GetRawImage(), eRes); err != nil {
+			log.Printf("text detection error: %v", err)
+			continue
 		}
-		//res.Timings.Set("preprocess", sw.Lap())
-		if err := app.T.Inference(app.P.GetRawImage(), tRes); err != nil {
-			app.P.ResetROI()
-			log.Printf("OCR error: %v", err)
-			//return err
+		if err := app.P.WriteImage(fmt.Sprintf("east_%v_%v.jpeg", app.P.GetRawImage().ID, i)); err != nil {
+			log.Printf("uh-oh")
 		}
-		// adjust results
-		res.Text[i] = strings.Join(tRes.Text, " ")
-		for _, c := range tRes.Confidences {
-			res.Confidences[i] *= c / 100.0
+
+		// loop for each east ROI
+		tRes := models.NewResult()
+		var ts []string
+		for ei, eb := range eRes.Boxes {
+			eb.Move(res.Boxes[i].Left, res.Boxes[i].Top)
+			eb.Resize(int64(math.Floor(0.05 * float64(min(eb.Height(), eb.Width())))))
+			app.P.SetRotatedROI(eb, eRes.Angles[ei])
+
+			if err := app.P.Preprocess(); err != nil {
+				app.P.ResetROI()
+				return err
+			}
+			// DEBUG: remove
+			if err := app.P.WriteImage(fmt.Sprintf("tess_%v_%v_%v.jpeg", app.P.GetRawImage().ID, ei, i)); err != nil {
+				log.Printf("uh-oh")
+			}
+			// DEBUG: remove
+			if err := app.T.Inference(app.P.GetRawImage(), tRes); err != nil {
+				log.Printf("text recognition error: %v", err)
+			}
+			ts = append(ts, tRes.Text...)
+			for _, tc := range tRes.Confidences {
+				res.Confidences[i] *= tc / 100.0
+			}
 		}
-		app.P.ResetROI()
+		res.Text[i] = strings.Join(ts, " ")
 	}
-	// end ROI loop
+	app.P.ResetROI()
 	res.Timings.Set("ocr", sw.Lap())
 
 	if err := app.P.Postprocess(res); err != nil {

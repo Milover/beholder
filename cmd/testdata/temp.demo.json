@@ -26,7 +26,7 @@
 				{"name": "TriggerMode",        "value": "On"},
 				{"name": "TriggerSource",      "value": "Software"},
 				{"name": "ExposureMode",       "value": "Timed"},
-				{"name": "ExposureTimeAbs",    "value": "10000"}
+				{"name": "ExposureTimeAbs",    "value": "30000"}
 			]
 		}
 	],
@@ -37,10 +37,16 @@
 			"confidence_threshold": 0.8
 		}
 	},
+	"east": {
+		"model": "internal/neural/model/_internal/east/east.pb",
+		"config": {
+			"size": 320
+		}
+	},
 	"tesseract": {
 		"config_paths": [],
 		"model": "internal/neural/model/_internal/tesseract/dflt/eng.traineddata",
-		"page_seg_mode": "single_block",
+		"page_seg_mode": "single_line",
 		"variables": {
 			"load_system_dawg": "0",
 			"load_freq_dawg": "0",
@@ -54,20 +60,22 @@
 	"image_processing": {
 		"preprocessing": [
 			{
-				"invert": null
+				"resize_to_height": {
+					"height": 50
+				}
 			},
 			{
 				"grayscale": null
 			},
 			{
 				"normalize_brightness_contrast": {
-					"clip_high_pct": 0.25
+					"clip_low_pct": 0.25
 				}
 			},
 			{
 				"gaussian_blur": {
-					"kernel_width": 7,
-					"kernel_height": 7,
+					"kernel_width": 3,
+					"kernel_height": 3,
 					"sigma_x": 0,
 					"sigma_y": 0
 				}
@@ -80,12 +88,7 @@
 				}
 			},
 			{
-				"auto_crop": {
-					"kernel_size": 10,
-					"text_width": 20,
-					"text_height": 20,
-					"padding": 5
-				}
+				"invert": null
 			}
 		],
 		"postprocessing": [
