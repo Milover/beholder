@@ -10,12 +10,14 @@ License
 
 #include <vector>
 
+#include <opencv2/core/fast_math.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "Grayscale.h"
-#include "ProcessingOp.h"
+#include "ResizeToHeight.h"
 #include "Result.h"
+#include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -27,13 +29,31 @@ namespace beholder
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Grayscale::execute(const cv::Mat& in, cv::Mat& out) const
+bool ResizeToHeight::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	cv::cvtColor(in, out, cv::COLOR_BGR2GRAY, 1);
+	double ratio
+	{
+		static_cast<double>(in.cols)
+	  / static_cast<double>(in.rows)
+	};
+	int width {cvRound(height * ratio)};
+
+	// we usually shrink images
+	int interp {cv::INTER_AREA};
+	if (width*height > in.rows*in.cols)
+	{
+		// when we're enlarging, usually the quality is already pretty bad
+		// and the image should be pretty small so INTER_CUBIC should
+		// in general be better for our use cases than INTER_LINEAR even
+		// though it's slower
+		interp = cv::INTER_CUBIC;
+	}
+
+	cv::resize(in, out, cv::Size {width, height}, 0, 0, interp);
 	return true;
 }
 
-bool Grayscale::execute
+bool ResizeToHeight::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,

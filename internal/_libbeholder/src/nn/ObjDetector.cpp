@@ -132,6 +132,7 @@ bool ObjDetector::detect(const RawImage& raw)
 			{
 				text,
 				Rectangle {r.x, r.y, r.x + r.width, r.y + r.height},
+				buf_->tAngles[id],
 				static_cast<double>(buf_->tConfidences[id])
 			}
 		);

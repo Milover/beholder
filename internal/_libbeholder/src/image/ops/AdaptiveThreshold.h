@@ -7,17 +7,16 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An automatic image orientation operation.
+	An adaptive thresholding operation.
 
 SourceFiles
-	AutoOrient.cpp
+	AdaptiveThreshold.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_AUTO_ORIENT_OP_H
-#define BEHOLDER_AUTO_ORIENT_OP_H
+#ifndef BEHOLDER_ADAPTIVE_THRESHOLD_OP_H
+#define BEHOLDER_ADAPTIVE_THRESHOLD_OP_H
 
-#include <array>
 #include <vector>
 
 #include "ProcessingOp.h"
@@ -27,9 +26,6 @@ SourceFiles
 namespace cv
 {
 	class Mat;
-	class RotatedRect;
-	template<typename T>
-	class Point_;	// for Point2f, i.e. Point_<float>
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -38,10 +34,10 @@ namespace beholder
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class AutoOrient Declaration
+                        Class AdaptiveThreshold Declaration
 \*---------------------------------------------------------------------------*/
 
-class AutoOrient
+class AdaptiveThreshold
 :
 	public ProcessingOp
 {
@@ -50,92 +46,66 @@ protected:
 	// Protected member functions
 
 		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
+		bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
 		//- Execute the processing operation
-		virtual bool execute
+		bool execute
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
 			const std::vector<Result>&
 		) const override;
 
-		//- Execute implementation helper
-		bool executeImpl
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			cv::RotatedRect& box,
-			cv::Point_<float>& center
-		) const;
-
 public:
 
 	//- Public data
 
+		//- Max value
+		double maxValue {255.0};
 		//- Kernel size
-		int kernelSize {50};
-		//- Dimensions used for text box detection.
-		//	Potential text boxes with smaller dimensions are discarded.
-		float textHeight {50};
-		float textWidth {50};
-		//- Padding added to the cropped image
-		float padding {10.0};
-		//- The pixel value used for padding
-		double padValue {255.0};
-		//- Gradient kernel size
-		//	XXX: is there a reason why we maed it 'const' originally?
-		int gradientKernelSize {3};
+		int size {11};	// XXX: magic
+		//- A constant subtracted from the mean or weighted mean
+		double c {2};	// XXX: magic
+		//- AdaptiveThreshold type
+		//	0 = cv::ADAPTIVE_THRESH_MEAN_C; 1 = cv::ADAPTIVE_THRESH_GAUSSIAN_C
+		int type {1};
 
 	//- Constructors
 
 		//- Default constructor
-		AutoOrient() = default;
+		AdaptiveThreshold() = default;
 
 		//- Default constructor
-		AutoOrient(int kS, float tH, float tW, float pad, double padV)
+		AdaptiveThreshold(double max, int sz, double cnst, int typ)
 		:
-			ProcessingOp(),
-			kernelSize {kS},
-			textHeight {tH},
-			textWidth {tW},
-			padding {pad},
-			padValue {padV}
+			maxValue {max},
+			size {sz},
+			c {cnst},
+			type {typ}
 		{}
 
 		//- Default copy constructor
-		AutoOrient(const AutoOrient&) = default;
+		AdaptiveThreshold(const AdaptiveThreshold&) = default;
 
 		//- Default move constructor
-		AutoOrient(AutoOrient&&) = default;
+		AdaptiveThreshold(AdaptiveThreshold&&) = default;
 
 	//- Destructor
-	virtual ~AutoOrient() = default;
+	virtual ~AdaptiveThreshold() = default;
 
 	//- Member functions
 
 	//- Member operators
 
 		//- Default copy assignment
-		AutoOrient& operator=(const AutoOrient&) = default;
+		AdaptiveThreshold& operator=(const AdaptiveThreshold&) = default;
 
 		//- Default move assignment
-		AutoOrient& operator=(AutoOrient&&) = default;
+		AdaptiveThreshold& operator=(AdaptiveThreshold&&) = default;
 
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-void findTextBox
-(
-	const cv::Mat& in,
-	int kSize,
-	float txtHeight,
-	float txtWidth,
-	float padding,
-	int gKSize,
-	cv::RotatedRect& returnValue
-);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

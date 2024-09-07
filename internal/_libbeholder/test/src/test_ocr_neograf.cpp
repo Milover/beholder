@@ -81,7 +81,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// setup image processor
 	beholder::Processor ip {};
 	// preprocessin
-	ip.preprocessing.emplace_back(new beholder::AutoCrop {35, 50.0, 50.0, 10.0});
+	ip.preprocessing.emplace_back(new beholder::AutoCrop {35, 50.0, 50.0, 10.0, 255.0});
 	ip.preprocessing.emplace_back(new beholder::Resize {205, 34});
 	ip.preprocessing.emplace_back(new beholder::NormalizeBrightnessContrast {1.5});
 	ip.preprocessing.emplace_back(new beholder::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});

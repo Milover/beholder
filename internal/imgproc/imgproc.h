@@ -36,6 +36,7 @@ bool Proc_ReceiveRawImage(Proc p, const Img* img);
 bool Proc_ReadImage(Proc p, const char* filename, int flags);
 void Proc_ResetROI(Proc p);
 void Proc_SetROI(Proc p, const Rect* roi);
+void Proc_SetRotatedROI(Proc p, const Rect* roi, double ang);
 void Proc_ShowImage(Proc p, const char* title);
 bool Proc_WriteImage(Proc p, const char* filename);
 

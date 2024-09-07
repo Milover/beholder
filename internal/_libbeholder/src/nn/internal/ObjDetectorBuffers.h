@@ -42,6 +42,7 @@ public:
     std::vector<cv::Mat> outs;			// forward results
 	// XXX: could also use RotatedRects
 	std::vector<cv::Rect> tBoxes;		// unfiltered blob boxes
+	std::vector<double> tAngles;		// box rotation angles
 	std::vector<int> tClassIDs;			// unfiltered class IDs
 	std::vector<float> tConfidences;	// unfiltered confidences
 	std::vector<int> tNMSIDs;			// IDs used during NMS filtering
@@ -53,6 +54,7 @@ public:
 		{
 			outs.clear();
 			tBoxes.clear();
+			tAngles.clear();
 			tClassIDs.clear();
 			tConfidences.clear();
 			tNMSIDs.clear();

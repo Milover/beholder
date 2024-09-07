@@ -23,6 +23,7 @@ type opFactory func(json.RawMessage) (unsafe.Pointer, error)
 // factory functions.
 var opFactoryMap = map[string]opFactory{
 	"add_padding":                   NewAddPadding,
+	"adaptive_threshold":            NewAdaptiveThreshold,
 	"auto_crop":                     NewAutoCrop,
 	"auto_orient":                   NewAutoOrient,
 	"clahe":                         NewCLAHE,
@@ -42,6 +43,7 @@ var opFactoryMap = map[string]opFactory{
 	"normalize_brightness_contrast": NewNormBC,
 	"rescale":                       NewRescale,
 	"resize":                        NewResize,
+	"resize_to_height":              NewResizeToHeight,
 	"rotate":                        NewRotate,
 	"threshold":                     NewThreshold,
 	"unsharp_mask":                  NewUnsharpMask,
@@ -49,7 +51,8 @@ var opFactoryMap = map[string]opFactory{
 
 // addPadding adds uniform (white) padding to the border of an image.
 type addPadding struct {
-	Padding int `json:"padding"`
+	Padding  int     `json:"padding"`
+	PadValue float64 `json:"pad_value"`
 }
 
 // NewAddPadding creates a new border padding operation with default values,
@@ -64,11 +67,79 @@ func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
 	}
-	if op.Padding < 0 {
-		return nil, errors.New("imgproc.NewAddPadding: bad padding")
+	if op.PadValue < 0 {
+		return nil, errors.New("imgproc.NewAddPadding: bad pad value")
 	}
 	return unsafe.Pointer(C.AdPad_New(
 		C.int(op.Padding),
+		C.double(op.PadValue),
+	)), nil
+}
+
+// adThreshType is an adaptive threshold type.
+type adThreshType int
+
+const (
+	AdThreshMean adThreshType = iota
+	AdThreshGaussian
+)
+
+var (
+	adThreshTypeMap = map[adThreshType]string{
+		AdThreshMean:     "mean",
+		AdThreshGaussian: "gaussian",
+	}
+	invAdThreshTypeMap = enumutils.Invert(adThreshTypeMap)
+)
+
+func (t *adThreshType) UnmarshalJSON(data []byte) error {
+	return enumutils.UnmarshalJSON(data, t, invAdThreshTypeMap)
+}
+
+func (t adThreshType) MarshalJSON() ([]byte, error) {
+	return enumutils.MarshalJSON(t, adThreshTypeMap)
+}
+
+// adaptiveThreshold is an adaptive thresholding operation.
+type adaptiveThreshold struct {
+	// MaxValue is the value assigned to pixels satisfying the thresholding
+	// condition.
+	MaxValue float64 `json:"max_value"`
+	// Size is the pixel neighbourhood used to compute the threshold value
+	// for a pixel: 3, 5, 7...
+	KernelSize int `json:"kernel_size"`
+	// Const is a constant subtracted from the mean.
+	Const float64 `json:"const"`
+	// Type is the adaptive thresholding algorithm type.
+	Type adThreshType `json:"type"`
+}
+
+// NewAdaptiveThreshold creates an adaptive threshold operation with default
+// values, unmarshals runtime data into it and then constructs a C-class
+// representing the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewAdaptiveThreshold(m json.RawMessage) (unsafe.Pointer, error) {
+	op := adaptiveThreshold{
+		MaxValue:   255.0,
+		KernelSize: 11,  // magic
+		Const:      2.0, // magic
+		Type:       AdThreshGaussian,
+	}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.MaxValue < 0.0 || op.MaxValue > 255.01 {
+		return nil, errors.New("imgproc.NewAdaptiveThreshold: bad max value")
+	}
+	if op.KernelSize < 3 || op.KernelSize%2 != 1 {
+		return nil, errors.New("imgproc.NewAdaptiveThreshold: bad kernel size")
+	}
+	return unsafe.Pointer(C.AdThresh_New(
+		C.double(op.MaxValue),
+		C.int(op.KernelSize),
+		C.double(op.Const),
+		C.int(op.Type),
 	)), nil
 }
 
@@ -76,27 +147,23 @@ func NewAddPadding(m json.RawMessage) (unsafe.Pointer, error) {
 // It currently uses morphologic gradients to detect text boxes and
 // then orients and crops the image.
 type autoCrop struct {
-	// KernelSize is the size of the kernel used for connecting text blobs.
-	KernelSize int `json:"kernel_size"`
-	// TextWidth is the minium width of the blob for it to be considered text.
-	TextWidth float32 `json:"text_width"`
-	// TextHeight is the minium height of the blob for it to be considered text.
-	TextHeight float32 `json:"text_height"`
-	// Padding is the additional padding added to the detected text box.
-	Padding float32 `json:"padding"`
+	autoOrient // all fields are the same
 }
 
-// NewAutoCrop creates an automaticcropping operation with default values,
+// NewAutoCrop creates an automatic cropping operation with default values,
 // unmarshals runtime data into it and then constructs a C-class representing
 // the operation.
 // WARNING: the C-allocated memory will be managed by C,
 // hence C.free should NOT be called on the returned pointer.
 func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	op := autoCrop{
-		KernelSize: 50,
-		TextWidth:  50,
-		TextHeight: 50,
-		Padding:    10,
+		autoOrient: autoOrient{
+			KernelSize: 50,
+			TextWidth:  50,
+			TextHeight: 50,
+			Padding:    10,
+			PadValue:   255.0,
+		},
 	}
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
@@ -104,15 +171,16 @@ func NewAutoCrop(m json.RawMessage) (unsafe.Pointer, error) {
 	if op.KernelSize <= 0 {
 		return nil, errors.New("imgproc.NewAutoCrop: bad kernel size")
 	}
-	if op.Padding < 0 {
-		return nil, errors.New("imgproc.NewAutoCrop: bad padding")
+	if op.PadValue < 0 {
+		return nil, errors.New("imgproc.NewAutoCrop: bad pad value")
 	}
-	// TextWidth and TextHeight accept all values
+	// Padding, TextWidth and TextHeight accept all values
 	return unsafe.Pointer(C.AuCrp_New(
 		C.int(op.KernelSize),
 		C.float(op.TextWidth),
 		C.float(op.TextHeight),
 		C.float(op.Padding),
+		C.double(op.PadValue),
 	)), nil
 }
 
@@ -128,6 +196,8 @@ type autoOrient struct {
 	TextHeight float32 `json:"text_height"`
 	// Padding is the additional padding added to the detected text box.
 	Padding float32 `json:"padding"`
+	// PadValue is the pixel value used for padding.
+	PadValue float64 `json:"pad_value"`
 }
 
 // NewAutoOrient creates an automaticcropping operation with default values,
@@ -141,6 +211,7 @@ func NewAutoOrient(m json.RawMessage) (unsafe.Pointer, error) {
 		TextWidth:  50,
 		TextHeight: 50,
 		Padding:    10,
+		PadValue:   255.0,
 	}
 	if err := json.Unmarshal(m, &op); err != nil {
 		return nil, err
@@ -148,15 +219,16 @@ func NewAutoOrient(m json.RawMessage) (unsafe.Pointer, error) {
 	if op.KernelSize <= 0 {
 		return nil, errors.New("imgproc.NewAutoOrient: bad kernel size")
 	}
-	if op.Padding < 0 {
-		return nil, errors.New("imgproc.NewAutoOrient: bad padding")
+	if op.PadValue < 0 {
+		return nil, errors.New("imgproc.NewAutoOrient: bad pad value")
 	}
-	// TextWidth and TextHeight accept all values
+	// Padding, TextWidth and TextHeight accept all values
 	return unsafe.Pointer(C.AuOrien_New(
 		C.int(op.KernelSize),
 		C.float(op.TextWidth),
 		C.float(op.TextHeight),
 		C.float(op.Padding),
+		C.double(op.PadValue),
 	)), nil
 }
 
@@ -722,6 +794,30 @@ func NewResize(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	return unsafe.Pointer(C.Rsz_New(
 		C.int(op.Width),
+		C.int(op.Height),
+	)), nil
+}
+
+// resizeToHeight resizes the image to the specified height while keeping
+// the original aspect ratio.
+type resizeToHeight struct {
+	Height int `json:"height"`
+}
+
+// NewResizeToHeight creates a resize operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewResizeToHeight(m json.RawMessage) (unsafe.Pointer, error) {
+	op := resizeToHeight{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Height <= 0 {
+		return nil, errors.New("imgproc.NewResizeToHeight: bad height")
+	}
+	return unsafe.Pointer(C.RszToH_New(
 		C.int(op.Height),
 	)), nil
 }

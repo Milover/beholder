@@ -173,6 +173,9 @@ func (ip Processor) Postprocess(res *models.Result) error {
 		cres[i].box.top = C.int(res.Boxes[i].Top)
 		cres[i].box.right = C.int(res.Boxes[i].Right)
 		cres[i].box.bottom = C.int(res.Boxes[i].Bottom)
+		if len(res.Angles) > i {
+			cres[i].boxRotAngle = C.double(res.Angles[i])
+		}
 		if len(res.Text) > i {
 			cres[i].text = (*C.char)(ar.CopyStr(res.Text[i]))
 		}
@@ -236,6 +239,18 @@ func (ip Processor) SetROI(roi models.Rectangle) {
 		bottom: C.int(roi.Bottom),
 	}
 	C.Proc_SetROI(ip.p, &r)
+}
+
+// SetRoteedROI sets the region of interest to the region specified by roi
+// rotated by ang degrees about it's center.
+func (ip Processor) SetRotatedROI(roi models.Rectangle, ang float64) {
+	r := C.Rect{
+		left:   C.int(roi.Left),
+		top:    C.int(roi.Top),
+		right:  C.int(roi.Right),
+		bottom: C.int(roi.Bottom),
+	}
+	C.Proc_SetRotatedROI(ip.p, &r, C.double(ang))
 }
 
 // ShowImage renders the current image in a new window and

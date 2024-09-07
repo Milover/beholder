@@ -7,17 +7,16 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An automatic image orientation operation.
+	An image brightness and contrast normalization operation.
 
 SourceFiles
-	AutoOrient.cpp
+	ResizeToHeight.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_AUTO_ORIENT_OP_H
-#define BEHOLDER_AUTO_ORIENT_OP_H
+#ifndef BEHOLDER_RESIZE_TO_HEIGHT_OP_H
+#define BEHOLDER_RESIZE_TO_HEIGHT_OP_H
 
-#include <array>
 #include <vector>
 
 #include "ProcessingOp.h"
@@ -27,9 +26,6 @@ SourceFiles
 namespace cv
 {
 	class Mat;
-	class RotatedRect;
-	template<typename T>
-	class Point_;	// for Point2f, i.e. Point_<float>
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -38,10 +34,10 @@ namespace beholder
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class AutoOrient Declaration
+                        Class ResizeToHeight Declaration
 \*---------------------------------------------------------------------------*/
 
-class AutoOrient
+class ResizeToHeight
 :
 	public ProcessingOp
 {
@@ -50,92 +46,56 @@ protected:
 	// Protected member functions
 
 		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
+		bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
 		//- Execute the processing operation
-		virtual bool execute
+		bool execute
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
 			const std::vector<Result>&
 		) const override;
 
-		//- Execute implementation helper
-		bool executeImpl
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			cv::RotatedRect& box,
-			cv::Point_<float>& center
-		) const;
-
 public:
 
 	//- Public data
 
-		//- Kernel size
-		int kernelSize {50};
-		//- Dimensions used for text box detection.
-		//	Potential text boxes with smaller dimensions are discarded.
-		float textHeight {50};
-		float textWidth {50};
-		//- Padding added to the cropped image
-		float padding {10.0};
-		//- The pixel value used for padding
-		double padValue {255.0};
-		//- Gradient kernel size
-		//	XXX: is there a reason why we maed it 'const' originally?
-		int gradientKernelSize {3};
+		//- New image height
+		int height;
 
 	//- Constructors
 
 		//- Default constructor
-		AutoOrient() = default;
+		ResizeToHeight() = default;
 
 		//- Default constructor
-		AutoOrient(int kS, float tH, float tW, float pad, double padV)
+		ResizeToHeight(int h)
 		:
-			ProcessingOp(),
-			kernelSize {kS},
-			textHeight {tH},
-			textWidth {tW},
-			padding {pad},
-			padValue {padV}
+			height {h}
 		{}
 
 		//- Default copy constructor
-		AutoOrient(const AutoOrient&) = default;
+		ResizeToHeight(const ResizeToHeight&) = default;
 
 		//- Default move constructor
-		AutoOrient(AutoOrient&&) = default;
+		ResizeToHeight(ResizeToHeight&&) = default;
 
 	//- Destructor
-	virtual ~AutoOrient() = default;
+	virtual ~ResizeToHeight() = default;
 
 	//- Member functions
 
 	//- Member operators
 
 		//- Default copy assignment
-		AutoOrient& operator=(const AutoOrient&) = default;
+		ResizeToHeight& operator=(const ResizeToHeight&) = default;
 
 		//- Default move assignment
-		AutoOrient& operator=(AutoOrient&&) = default;
+		ResizeToHeight& operator=(ResizeToHeight&&) = default;
 
 };
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-void findTextBox
-(
-	const cv::Mat& in,
-	int kSize,
-	float txtHeight,
-	float txtWidth,
-	float padding,
-	int gKSize,
-	cv::RotatedRect& returnValue
-);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

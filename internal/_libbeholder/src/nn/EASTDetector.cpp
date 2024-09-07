@@ -97,8 +97,12 @@ void EASTDetector::extract()
 				{
 					0.5f * (p1 + p3),
 					cv::Size2f(w, h),
-					-angle * 180.0f / static_cast<float>(CV_PI)
-				}.boundingRect()	// XXX: throwing away orientation data here
+					0.0
+				}.boundingRect()
+			);
+			buf_->tAngles.emplace_back
+			(
+				static_cast<double>(-angle) * 180.0 / CV_PI
 			);
 			buf_->tConfidences.emplace_back(conf);
 		}

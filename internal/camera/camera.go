@@ -10,6 +10,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -38,15 +39,15 @@ type Parameters []Parameter
 // the caller does not need to call [mem.Arena.Store] for pars.
 // When the caller calls [mem.Arena.Free] on ar, all memory
 // allocated by makeCPars is released.
-func (p Parameters) makeCPars(ar *mem.Arena) (pars unsafe.Pointer, nPars uint64) {
-	nPars = uint64(len(p))
-	pars = ar.Malloc(nPars * uint64(unsafe.Sizeof(C.Par{})))
+func (p Parameters) makeCPars(ar *mem.Arena) (*C.Par, C.size_t) {
+	nPars := uint64(len(p))
+	pars := ar.Malloc(nPars * uint64(unsafe.Sizeof(C.Par{})))
 	parsSlice := unsafe.Slice((*C.Par)(pars), nPars)
 	for i, par := range p {
 		parsSlice[i].name = (*C.char)(ar.CopyStr(par.Name))
 		parsSlice[i].value = (*C.char)(ar.CopyStr(par.Value))
 	}
-	return pars, nPars
+	return (*C.Par)(pars), C.size_t(nPars)
 }
 
 const (
@@ -117,6 +118,13 @@ type Camera struct {
 	// It is reset after each call to Acquire(), and has a non-nil
 	// [models.Image.Buffer] only after successful acquisitions.
 	Result models.Image `json:"-"`
+
+	// NoReboot toggles whether to reboot the camera device when attached.
+	// This should always be set to false, since the reboot clears
+	// any previous errors or inconsistent states on the device.
+	//
+	// However, impatient developers might find it handy in some cases.
+	NoReboot bool `json:"no_reboot"`
 
 	p C.Cam
 }
@@ -191,6 +199,26 @@ func (c *Camera) Delete() {
 }
 
 // IsAcquiring reports the image acquisition status of the camera.
+//
+// BUG: when 'AcquisitionMode' is set to 'SingleFrame' and an image is acquired
+// this will report true, even though the camera won't be able to acquire
+// new images.
+// As an added bonus, acquisition cannot be restarted by calling
+// [Camera.StartAcquisition] because it also uses IsAcquiring internally ---
+// pylon does not allow calling [Camera.StartAcquisition] if acquisition has
+// already started, which also gets checked by calling the pylon internal
+// equivalent to IsAcquiring.
+//
+// So we have the following options:
+//  1. don't use the 'SingleFrame' acquisition mode, which is ok in most cases,
+//     but not obvious
+//  2. when using 'SingleFrame' acquisition, call [Camera.StopAcquisition]
+//     explicitly, which is even less obvious and entirely impractical
+//  3. some other very smart and complicated solution
+//
+// For the time being we're going with the option 1. and just filtering the
+// 'AcquisitionMode' from the camera parameters, i.e. 'AcquisitionMode' is
+// effectively hard-coded to 'Continuous' for the time being.
 func (c Camera) IsAcquiring() bool {
 	return bool(C.Cam_IsAcquiring(c.p))
 }
@@ -254,12 +282,24 @@ func (c *Camera) Init() error {
 		}
 		c.SN = sn
 	}
-	sn := (*C.char)(ar.CopyStr(c.SN))
+	in := C.CamInit{
+		sn:     (*C.char)(ar.CopyStr(c.SN)),
+		reboot: C.bool(!c.NoReboot),
+	}
 
+	// override 'AcquisitionMode', see the docs for [Camera.IsAcquiring]
+	for i := range c.Parameters {
+		if c.Parameters[i].Name == "AcquisitionMode" &&
+			c.Parameters[i].Value != "Continuous" {
+			log.Println("warning: 'AcquisitionMode' overridden to 'Continuous';",
+				"see camera.Camera.IsAcquiring docs for more info")
+			c.Parameters[i].Value = "Continuous"
+		}
+	}
 	// handle parameters
-	pars, nPars := c.Parameters.makeCPars(ar)
+	in.pars, in.nPars = c.Parameters.makeCPars(ar)
 
-	if ok := C.Cam_Init(c.p, sn, (*C.Par)(pars), C.size_t(nPars), tl.p); !ok {
+	if ok := C.Cam_Init(c.p, tl.p, &in); !ok {
 		return errors.New("camera.Camera.Init: could not initialize camera")
 	}
 	return nil
@@ -310,11 +350,11 @@ func (c Camera) TstFailBuffers(count uint64) error {
 // containing image files, in which case the directory should only contain
 // image files and no subdirectories.
 //
-// The image format must be either PNG or TIF. This is a limitation imposed by
+// The image format must be either PNG or TIFF. This is a limitation imposed by
 // pylon.
 //
-// NOTE: this function works only with emulated cameras and
-// is for internal use only.
+// NOTE: this function works only with emulated cameras and is intended
+// for internal use only.
 func (c Camera) TstSetImage(path string) error {
 	if c.Type != Emulated {
 		return fmt.Errorf("camera.Camera.TstSetImage: non-emulated camera type: %q", c.Type)

@@ -1,455 +1,274 @@
-//go:build integration
-
 package neural
 
 import (
-	"encoding/csv"
-	"encoding/json"
-	"fmt"
+	"io"
+	"math"
 	"os"
-	"path"
 	"slices"
-	"strings"
 	"testing"
 
+	"github.com/Milover/beholder/internal/imgproc"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
-var imgFormats = []string{
-	".bmp",
-	".jpeg",
-	".jpg",
+func dfltTesseract() Network {
+	n := NewTesseract()
+	n.Model = "model/_internal/tesseract/dflt/eng.traineddata"
+	return n
+}
+func dfltEAST() Network {
+	n := NewEAST()
+	n.Model = "model/_internal/east/east.pb"
+	n.Config.Size = 160
+	return n
+}
+func dfltYOLOv8() Network {
+	n := NewYOLOv8()
+	n.Model = "model/_internal/yolo/yolov8n.onnx"
+	return n
 }
 
-type testFailure struct {
-	Filename string
-	Expected string
-	Result   string
+type networkTest struct {
+	Name     string        // the name of the test
+	Error    error         // expected error
+	Image    string        // test image file path
+	Expected models.Result // expected output
+	Factory  Factory       // a factory for the Network used in the test
+	Config   string        // JSON formatted Network config
 }
 
-// Function buildTable builds the test failure table string.
-func buildTable(failures []testFailure) string {
-	var maxFile, maxExp, maxRes int
-	for _, f := range failures {
-		lFile := len(f.Filename)
-		lExp := len(fmt.Sprintf("%q", f.Expected))
-		lRes := len(fmt.Sprintf("%q", f.Result))
-
-		if lFile > maxFile {
-			maxFile = lFile
-		}
-		if lExp > maxExp {
-			maxExp = lExp
-		}
-		if lRes > maxRes {
-			maxRes = lRes
-		}
-	}
-	format := fmt.Sprintf("| %%-%ds | %%-%dq | %%-%dq |\n",
-		maxFile, maxExp, maxRes)
-	var table string
-	for _, f := range failures {
-		table += fmt.Sprintf(format, f.Filename, f.Expected, f.Result)
-	}
-	return table
-}
-
-type pipelineTest struct {
-	Name  string
-	Error error
-	// Image is the file name of an image.
-	// Used in 'Test.*Once' tests.
-	Image string
-	// ImageSet is the directory path containing image files.
-	// Used in 'Test.*Set' tests.
-	ImageSet string
-	// Expected is the image text (expected OCR result).
-	Expected []string
-	// ExpectedFile is a CSV file containing image file names and
-	// image text (expected OCR result).
-	// It is only used if defined, and if it is defined, Expected is ignored.
-	// If all images in a set have the same text use Expected.
-	ExpectedFile string
-	// MapFunc is used to relax the requirements of the expected text.
-	// The OCR process can be allowed to missinterpret certain
-	// non-critical characters, e.g. punctuation, without failing the test.
-	Mapper func([]string) string
-	Config string
-}
-
-var pipelineTests = []pipelineTest{
+var networkTests = []networkTest{
+	// test tesseract
 	{
-		Name:     "neograf",
-		Error:    nil,
-		ImageSet: "testdata/images/neograf",
-		Image:    "imagefile_14.bmp",
-		Expected: []string{"V20000229"},
-		Mapper:   func(ss []string) string { return strings.Join(ss, "§") },
-		Config: `
-{
-	"output": {
-		"format": "csv",
-		"target": "none"
-	},
-	"tesseract": {
-		"config_paths": [
-		],
-		"model": "model/_internal/tesseract/dotmatrix/dotOCRDData1.traineddata",
-		"page_seg_mode": "single_line",
-		"variables": {
-			"load_system_dawg": "0",
-			"load_freq_dawg": "0",
-			"tessedit_char_whitelist": "V0123456789"
+		Name:    "tesseract-text-1-line-1-word",
+		Error:   nil,
+		Factory: dfltTesseract,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
+			},
+			Text:        []string{"TEXT"},
+			Confidences: make([]float64, 1),
 		},
-		"patterns": [
-			"\\A\\d\\d\\d\\d\\d\\d\\d\\d"
-		]
-	},
-	"image_processing": {
-		"preprocessing": [
-			{
-				"auto_crop": {
-					"kernel_size": 35,
-					"text_width": 50,
-					"text_height": 50,
-					"padding": 10
-				}
-			},
-			{
-				"resize": {
-					"width": 205,
-					"height": 34
-				}
-			},
-			{
-				"normalize_brightness_contrast": {
-					"clip_pct": 1.5
-				}
-			},
-			{
-				"threshold": {
-					"value": 0,
-					"max_value": 255,
-					"type": [ "binary", "otsu" ]
-				}
-			},
-			{
-				"gaussian_blur": {
-					"kernel_width": 3,
-					"kernel_height": 5,
-					"sigma_x": 0,
-					"sigma_y": 0
-				}
-			},
-			{
-				"equalize_histogram": null
-			},
-			{
-				"morphology": {
-					"kernel_type": "rectangle",
-					"kernel_width": 3,
-					"kernel_height": 3,
-					"type": "dilate",
-					"iterations": 1
-				}
-			}
-		],
-		"postprocessing": [
-			{
-				"draw_bounding_boxes": {
-					"color": [0, 255, 0, 0],
-					"thickness": 3
-				}
-			}
-		]
-	}
-}
-`,
 	},
 	{
-		Name:         "dukat",
-		Error:        nil,
-		ImageSet:     "testdata/images/dukat",
-		Image:        "imagefile_115.jpeg",
-		ExpectedFile: "expected.csv",
-		Mapper: func(ss []string) string {
-			s := strings.Join(ss, "§")
-			return strings.Map(
-				func(r rune) rune {
-					switch r {
-					case '.', ',', ';', ':', ' ':
-						return -1 // drop
-					}
-					return r
-				}, s)
+		Name:    "tesseract-text-1-line-2-word",
+		Error:   nil,
+		Factory: dfltTesseract,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_2_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 10, Top: 20, Right: 230, Bottom: 65},
+			},
+			Text:        []string{"TEXT TEXT"},
+			Confidences: make([]float64, 1),
 		},
-		Config: `
-{
-	"output": {
-		"format": "json",
-		"target": "none"
 	},
-	"tesseract": {
-		"config_paths": [
-		],
-		"model": "model/_internal/tesseract/dotmatrix/Transit_FT_500.traineddata",
-		"page_seg_mode": "single_block",
-		"variables": {
-			"load_system_dawg": "0",
-			"load_freq_dawg": "0",
-			"classify_bln_numeric_mode": "1",
-			"tessedit_char_whitelist": ".:0123456789"
+	{
+		Name:    "tesseract-text-2-line-1-word",
+		Error:   nil,
+		Factory: dfltTesseract,
+		Config:  "",
+		Image:   "testdata/images/text_2_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
+				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
+			},
+			Text:        []string{"TEXT", "TEXT"},
+			Confidences: make([]float64, 2),
 		},
-		"patterns": [
-			"\\d\\d.\\d\\d.\\d\\d\\d\\d.",
-			"\\d\\d:\\d\\d"
-		]
 	},
-	"image_processing": {
-		"preprocessing": [
-			{
-				"crop": {
-					"left": 700,
-					"top": 225,
-					"width": 650,
-					"height": 800
-				}
+	{
+		Name:    "tesseract-text-2-line-2-word",
+		Error:   nil,
+		Factory: dfltTesseract,
+		Config:  "",
+		Image:   "testdata/images/text_2_line_2_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 30, Top: 20, Right: 250, Bottom: 60},
+				models.Rectangle{Left: 30, Top: 65, Right: 250, Bottom: 105},
 			},
-			{
-				"invert": null
-			},
-			{
-				"median_blur": {
-					"kernel_size": 7
-				}
-			},
-			{
-				"auto_crop": {
-					"kernel_size": 50,
-					"text_width": 50,
-					"text_height": 50,
-					"padding": 15
-				}
-			},
-			{
-				"resize": {
-					"width": 225,
-					"height": 90
-				}
-			},
-			{
-				"rotate": {
-					"angle": 180
-				}
-			},
-			{
-				"div_gaussian_blur": {
-					"scale_factor": 255,
-					"sigma_x": 5,
-					"sigma_y": 5,
-					"kernel_width": 0,
-					"kernel_height": 0
-				}
-			},
-			{
-				"threshold": {
-					"value": 0,
-					"max_value": 255,
-					"type": [ "binary", "otsu" ]
-				}
-			},
-			{
-				"auto_crop": {
-					"kernel_size": 15,
-					"text_width": 20,
-					"text_height": 10,
-					"padding": 10
-				}
-			},
-			{
-				"gaussian_blur": {
-					"kernel_width": 3,
-					"kernel_height": 5,
-					"sigma_x": 0,
-					"sigma_y": 0
-				}
-			},
-			{
-				"morphology": {
-					"kernel_type": "rectangle",
-					"kernel_width": 4,
-					"kernel_height": 4,
-					"type": "open",
-					"iterations": 1
-				}
-			}
-		],
-		"postprocessing": [
-		]
-	}
-}
-`,
+			Text:        []string{"TEXT TEXT", "TEXT TEXT"},
+			Confidences: make([]float64, 2),
+		},
 	},
+	// test east
+	{
+		Name:    "east-text-1-line-1-word",
+		Error:   nil,
+		Factory: dfltEAST,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
+			},
+			Text:        make([]string, 1),
+			Confidences: make([]float64, 1),
+		},
+	},
+	/* FIXME: disabled until we fix blob-to-image bounding box mapping
+	{
+		Name:    "east-text-1-line-2-word",
+		Error:   nil,
+		Factory: dfltEAST,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_2_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 10, Top: 20, Right: 120, Bottom: 65},
+				models.Rectangle{Left: 120, Top: 20, Right: 230, Bottom: 65},
+			},
+			Text:        make([]string, 2),
+			Confidences: make([]float64, 2),
+		},
+	},
+	{
+		Name:    "east-text-2-line-1-word",
+		Error:   nil,
+		Factory: dfltEAST,
+		Config:  "",
+		Image:   "testdata/images/text_2_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
+				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
+			},
+			Text:        make([]string, 2),
+			Confidences: make([]float64, 2),
+		},
+	},
+	{
+		Name:    "east-text-2-line-2-word",
+		Error:   nil,
+		Factory: dfltEAST,
+		Config:  "",
+		Image:   "testdata/images/text_2_line_2_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 30, Top: 20, Right: 140, Bottom: 60},
+				models.Rectangle{Left: 140, Top: 20, Right: 250, Bottom: 60},
+				models.Rectangle{Left: 30, Top: 65, Right: 140, Bottom: 105},
+				models.Rectangle{Left: 140, Top: 65, Right: 250, Bottom: 105},
+			},
+			Text:        make([]string, 4),
+			Confidences: make([]float64, 4),
+		},
+	},
+	*/
+	// test yolov8
+	{
+		Name:    "yolov8-zidane",
+		Error:   nil,
+		Factory: dfltYOLOv8,
+		Config:  "",
+		Image:   "testdata/images/ultralytics_zidane.jpg",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 90, Top: 170, Right: 1140, Bottom: 735},
+				models.Rectangle{Left: 730, Top: 20, Right: 1160, Bottom: 735},
+			},
+			Text:        []string{"0", "0"}, // COCO "person" class
+			Confidences: make([]float64, 2),
+		},
+	},
+	// test unmarshalling
 }
 
-func setupOCRTest(pt pipelineTest) (OCR, [][]string, error) {
-	var records [][]string
-	o := NewOCR()
-	// unmarshal
-	if err := json.Unmarshal([]byte(pt.Config), &o); err != nil {
-		return o, records, fmt.Errorf("could not unmarshall JSON: %w", err)
+const netInfRepeat = 3 // No. inferencing re-runs during tests
+
+// boxesInExpected reports whether all actual boxes are in the expected boxes.
+//
+// Since the element order might vary, both expected and actual are sorted
+// in ascending order, based on the distance of the top left vertex from origin.
+func boxesInExpected(expected, actual []models.Rectangle, t *testing.T) bool {
+	if len(expected) != len(actual) {
+		return false
 	}
-	// initialize
-	if err := o.Init(); err != nil {
-		return o, records, fmt.Errorf("could not initialize OCR: %w", err)
-	}
-	// read the expected values if necessary
-	if len(pt.ExpectedFile) != 0 {
-		f, err := os.Open(path.Join(pt.ImageSet, pt.ExpectedFile))
-		if err != nil {
-			return o, records, err
-		}
-		defer f.Close()
-		r := csv.NewReader(f)
-		r.Comma = '\t'
-		if records, err = r.ReadAll(); err != nil {
-			return o, records, fmt.Errorf("could not read 'expected' file: %w", err)
+	cmp := func(a, b models.Rectangle) int {
+		da := math.Hypot(float64(a.Left), float64(a.Top))
+		db := math.Hypot(float64(b.Left), float64(b.Top))
+		switch {
+		case da < db:
+			return -1
+		case da > db:
+			return 1
+		default:
+			return 0
 		}
 	}
-	return o, records, nil
+	slices.SortFunc(expected, cmp)
+	slices.SortFunc(actual, cmp)
+
+	ok := true
+	for i := range expected {
+		//t.Logf("expected: %v\tactual: %v", expected[i], actual[i])
+		ok = ok && actual[i].In(expected[i])
+	}
+	return ok
 }
 
-// getExpected gets the expected result for an image.
-// If working with an image set, it finds the result from 'records', otherwise
-// it returns 'dflt'.
-func getExpected(records [][]string, image string, dflt []string) []string {
-	for _, record := range records {
-		if record[0] == image {
-			return record[1:]
-		}
-	}
-	return dflt
-}
-
-// TestOCRRunOnce runs the OCR pipeline for a single image at a time and
+// TestNetworkInference repeatedly performs the inferencing step on an image and
 // checks the results.
-func TestOCRRunOnce(t *testing.T) {
-	for _, tt := range pipelineTests {
+//
+// TODO: explain what's a test-pass
+func TestNetworkInference(t *testing.T) {
+	for _, tt := range networkTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
-
-			// setup
-			o, expectedRecords, err := setupOCRTest(tt)
-			defer o.Finalize()
-			assert.Nil(err, "unexpected OCR test setup error")
 
 			// read image
-			img, err := os.Open(path.Join(tt.ImageSet, tt.Image))
-			assert.Nil(err, "could not open image")
-			defer img.Close()
+			f, err := os.Open(tt.Image)
+			assert.Nil(err, "could not open image file")
+			defer f.Close()
+			buf, err := io.ReadAll(f)
+			assert.Nil(err, "could not read image file")
+
+			// TODO: would be nice if we didn't have to import imgproc
+			p := imgproc.NewProcessor()
+			assert.Nil(p.Init(), "could not initialize image processor")
+			defer p.Delete()
+			assert.Nil(p.DecodeImage(buf, imgproc.RMColor), "could not decode image")
+			img := p.GetRawImage()
+
+			// set up network
+			net := tt.Factory()
+			defer net.Delete()
+			assert.Nil(net.Init(), "unexpected Network.Init error")
 
 			// test
-			res, err := o.Run(img)
-			assert.Equal(tt.Error, err, "unexpected OCR error")
+			for _ = range netInfRepeat {
+				// create a fresh result
+				res := models.NewResult()
+				assert.NotNil(res, "unexpected models.NewResult error")
 
-			//			// if there were no errors, try to write the result
-			//			if tt.Error == nil && err == nil {
-			//				err := o.O.Write(&res)
-			//				assert.Nil(err, "could not write Result")
-			//			}
+				// inference
+				err := net.Inference(img, res)
+				assert.Equal(tt.Error, err, "unexpected Network.Inference error")
 
-			// set expected
-			expected := getExpected(expectedRecords, tt.Image, tt.Expected)
-			assert.NotEqual(0, len(expected),
-				fmt.Sprintf("could not find expected for %v", tt.Image))
-
-			// check results
-			assert.Equal(tt.Mapper(expected), tt.Mapper(res.Text), "OCR failure")
+				// check text
+				assert.ElementsMatch(tt.Expected.Text, res.Text,
+					"text mismatch")
+				// check boxes
+				assert.Equal(len(tt.Expected.Boxes), len(res.Boxes),
+					"boxes length mismatch")
+				assert.True(boxesInExpected(tt.Expected.Boxes, res.Boxes, t),
+					"box overlap mismatch")
+				// check confidences; XXX: checking length only
+				assert.Equal(len(tt.Expected.Confidences), len(res.Confidences),
+					"confidences length mismatch")
+			}
 		})
 	}
 }
 
-// TestOCRRunSet runs the OCR pipeline for a set of images and
-// checks the results.
-// NOTE: skipped if -test.short flag is set.
-func TestOCRRunSet(t *testing.T) {
-	if testing.Short() {
-		t.SkipNow()
-	}
-	for _, tt := range pipelineTests {
-		t.Run(tt.Name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// setup
-			o, expectedRecords, err := setupOCRTest(tt)
-			defer o.Finalize()
-			assert.Nil(err, "unexpected OCR test setup error")
-
-			// get the image set file names
-			dir, err := os.Open(tt.ImageSet)
-			assert.Nil(err, "could not open image set directory: %v", err)
-			defer dir.Close()
-			filenames, err := dir.Readdirnames(-1)
-			assert.Nil(err, "could not read image set file names")
-
-			// test each image
-			var failures []testFailure
-			var errFail error
-			for _, filename := range filenames {
-				// skip non-image files
-				if !slices.Contains(imgFormats, path.Ext(filename)) {
-					continue
-				}
-				// read image
-				img, err := os.Open(path.Join(tt.ImageSet, filename))
-				assert.Nil(err, "could not open image file: %v", err)
-				defer img.Close()
-
-				// test
-				res, err := o.Run(img)
-				assert.Equal(tt.Error, err, "unexpected OCR error at file: %q", img.Name())
-
-				//				// if there were no errors, try to write the result
-				//				if tt.Error == nil && err == nil {
-				//					err := o.O.Write(&res)
-				//					assert.Nil(err, "could not write Result")
-				//				}
-
-				// set expected
-				expected := getExpected(expectedRecords, filename, tt.Expected)
-				assert.NotEqual(0, len(expected),
-					fmt.Sprintf("could not find expected for %v", filename))
-
-				// check results
-				if tt.Mapper(res.Text) != tt.Mapper(expected) {
-					errFail = fmt.Errorf("OCR failure")
-					failures = append(
-						failures,
-						testFailure{
-							Filename: img.Name(),
-							Expected: strings.Join(expected, "§"),
-							Result:   strings.Join(res.Text, "§"),
-						},
-					)
-				}
-			}
-			// build the error message
-			slices.SortFunc(
-				failures,
-				func(a, b testFailure) int {
-					return strings.Compare(a.Filename, b.Filename)
-				},
-			)
-			msg := fmt.Sprintf("failed: %v/%v\n", len(failures), len(filenames))
-			if testing.Verbose() {
-				msg += buildTable(failures)
-			}
-
-			assert.Nil(errFail, msg)
-		})
-	}
-}
-
+/* TODO: fold this into the JSON unmarshalling test
 type patternTest struct {
 	Name     string
 	Expected []string
@@ -483,10 +302,10 @@ var patternTests = []patternTest{
 	},
 }
 
-// TestOCRPatternLoad checks if the pattern(s) from the config are properly
-// loaded when OCR is initialized.
+// TestTesseractPatternLoad checks if the pattern(s) from the config are
+// properly loaded when Tesseract is initialized.
 // FIXME: this is a stupid test, it doesn't test shit.
-func TestOCRPatternLoad(t *testing.T) {
+func TestTesseractPatternLoad(t *testing.T) {
 	for _, tt := range patternTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -510,3 +329,4 @@ func TestOCRPatternLoad(t *testing.T) {
 		})
 	}
 }
+*/

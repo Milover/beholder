@@ -96,7 +96,8 @@ public:
 		Pylon::IPylonDevice* createDevice
 		(
 			const std::string& designator,
-			DeviceDesignator ddt = DeviceDesignator::SN
+			DeviceDesignator ddt = DeviceDesignator::SN,
+			bool reboot = true
 		) const noexcept;
 
 		//- Find and create a device with the provided designator.
@@ -104,7 +105,8 @@ public:
 		Pylon::IPylonDevice* createDevice
 		(
 			const char* designator,
-			DeviceDesignator ddt = DeviceDesignator::SN
+			DeviceDesignator ddt = DeviceDesignator::SN,
+			bool reboot = true
 		) const noexcept;
 
 		//- Get the serial number of the first device found

@@ -29,6 +29,13 @@ typedef struct {
 	char* value;
 } Par;
 
+typedef struct {
+	const char* sn;
+	Par* pars;
+	size_t nPars;
+	bool reboot;
+} CamInit;
+
 bool Cam_Acquire(Cam c, size_t timeoutMs);
 bool Cam_CmdExecute(Cam c, const char* cmd);
 bool Cam_CmdIsDone(Cam c, const char* cmd);
@@ -37,7 +44,7 @@ Img Cam_GetRawImage(Cam c);
 bool Cam_IsAcquiring(Cam c);
 bool Cam_IsAttached(Cam c);
 bool Cam_IsInitialized(Cam c);
-bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t);
+bool Cam_Init(Cam c, Trans t,  const CamInit* in);
 Cam Cam_New();
 bool Cam_SetParameters(Cam c, Par* pars, size_t nPars);
 bool Cam_StartAcquisition(Cam c);

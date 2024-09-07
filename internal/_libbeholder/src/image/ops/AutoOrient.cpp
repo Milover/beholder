@@ -93,16 +93,15 @@ bool AutoOrient::executeImpl
 	rot.at<double>(0, 2) += static_cast<double>(shift.x);
 	rot.at<double>(1, 2) += static_cast<double>(shift.y);
 
-	// assume a white background
 	cv::warpAffine
 	(
 		in,
 		out,
 		rot,
 		bbox.size(),
-		cv::INTER_NEAREST,
+		cv::INTER_LINEAR,
 		cv::BORDER_CONSTANT,
-		cv::Scalar{255, 255, 255}
+		cv::Scalar::all(padValue)
 	);
 
 	return true;
@@ -127,7 +126,15 @@ void findTextBox
 	cv::RotatedRect& returnValue
 )
 {
-	cv::Mat img {in.clone()};
+	cv::Mat img {};
+	if (in.channels() > 1)
+	{
+		cv::cvtColor(in, img, cv::COLOR_BGR2GRAY, 1);
+	}
+	else
+	{
+		in.copyTo(img);
+	}
 	cv::RotatedRect box {};
 	cv::Mat kernel;
 
@@ -147,7 +154,7 @@ void findTextBox
 	for(const auto& c : contours)
 	{
 		cv::RotatedRect rect {cv::minAreaRect(c)};
-		// we assume that width > height, and to this here
+		// we assume that width > height, and do this here
 		// to reduce confusion when defining runtime parameters
 		if (rect.size.width < rect.size.height)
 		{

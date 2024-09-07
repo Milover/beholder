@@ -18,6 +18,7 @@ License
 #include <vector>
 
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -167,17 +168,76 @@ void Processor::resetROI() const
 
 void Processor::setROI(const Rectangle& roi) const
 {
+	*roi_ = *img_;	// reset ROI
+
 	const auto& r {roi.cRef()};
-	*roi_ = img_->operator()
+	cv::Rect crop
+	{
+		r.left,
+		r.top,
+		r.right - r.left,
+		r.bottom - r.top
+	};
+	// snap to bounds
+	crop.x = crop.x > 0 ? crop.x : 0;
+	crop.x = crop.x < img_->cols ? crop.x : img_->cols - 1;
+	crop.width = crop.x + crop.width <= img_->cols ? crop.width : img_->cols - crop.x;
+
+	crop.y = crop.y > 0 ? crop.y : 0;
+	crop.y = crop.y < img_->rows ? crop.y : img_->rows - 1;
+	crop.height = crop.y + crop.height <= img_->rows ? crop.height : img_->rows - crop.y;
+
+	*roi_ = img_->operator()(crop);
+}
+
+void Processor::setRotatedROI(const Rectangle& roi, double angle) const
+{
+	*roi_ = *img_;	// reset ROI
+
+	const auto& r {roi.cRef()};
+	const cv::Point2f ctr
+	{
+		static_cast<float>(r.left + r.right) / 2.0f,
+		static_cast<float>(r.top + r.bottom) / 2.0f
+	};
+	// adjust transformation matrix by adding a translation from the
+	// center of rotation to the (new) image center,
+	// i.e. center the text box on the image
+	cv::Mat rot {cv::getRotationMatrix2D(ctr, angle, 1.0)};
+	cv::Point2f center
+	{
+		0.5f*(img_->size().width - 1),
+		0.5f*(img_->size().height - 1)
+	};
+	cv::Point2f shift {center - ctr};
+	rot.at<double>(0, 2) += static_cast<double>(shift.x);
+	rot.at<double>(1, 2) += static_cast<double>(shift.y);
+
+	cv::Mat tmp {};
+	cv::warpAffine
 	(
-		cv::Rect
-		{
-			r.left,
-			r.top,
-			r.right - r.left,
-			r.bottom - r.top
-		}
+		*img_,
+		tmp,
+		rot,
+		img_->size(),
+		cv::INTER_LINEAR,
+		cv::BORDER_REPLICATE
 	);
+
+	cv::Rect crop
+	{
+		cv::RotatedRect {center, cv::Size {r.right - r.left, r.bottom - r.top}, 0}.boundingRect()
+	};
+	// snap to bounds
+	crop.x = crop.x > 0 ? crop.x : 0;
+	crop.x = crop.x < tmp.cols ? crop.x : tmp.cols - 1;
+	crop.width = crop.x + crop.width <= tmp.cols ? crop.width : tmp.cols - crop.x;
+
+	crop.y = crop.y > 0 ? crop.y : 0;
+	crop.y = crop.y < tmp.rows ? crop.y : tmp.rows - 1;
+	crop.height = crop.y + crop.height <= tmp.rows ? crop.height : tmp.rows - crop.y;
+
+	*roi_ = tmp(crop);
 }
 
 void Processor::showImage(const std::string& title) const

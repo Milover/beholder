@@ -1,6 +1,8 @@
 #ifndef _BEHOLDER_IMGPROC_OPS_H
 #define _BEHOLDER_IMGPROC_OPS_H
 
+#include "stdbool.h"
+
 #ifdef __cplusplus
 #include "libbeholder.h"
 extern "C" {
@@ -8,6 +10,7 @@ extern "C" {
 
 #ifdef __cplusplus
 typedef beholder::AddPadding* AdPad;
+typedef beholder::AdaptiveThreshold* AdThresh;
 typedef beholder::AutoCrop* AuCrp;
 typedef beholder::AutoOrient* AuOrien;
 typedef beholder::CLAHE* CLH;
@@ -27,11 +30,13 @@ typedef beholder::Morphology* Morph;
 typedef beholder::NormalizeBrightnessContrast* NormBC;
 typedef beholder::Rescale* Rsl;
 typedef beholder::Resize* Rsz;
+typedef beholder::ResizeToHeight* RszToH;
 typedef beholder::Rotate* Rot;
 typedef beholder::Threshold* Thresh;
 typedef beholder::UnsharpMask* UnshMsk;
 #else
 typedef void* AdPad;
+typedef void* AdThresh;
 typedef void* AuCrp;
 typedef void* AuOrien;
 typedef void* CLH;
@@ -52,13 +57,15 @@ typedef void* NormBC;
 typedef void* Rot;
 typedef void* Rsl;
 typedef void* Rsz;
+typedef void* RszToH;
 typedef void* Thresh;
 typedef void* UnshMsk;
 #endif
 
-AdPad AdPad_New(int pad);
-AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding);
-AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding);
+AdPad AdPad_New(int pad, double padV);
+AdThresh AdThresh_New(double max, int sz, double cnst, int typ);
+AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding, double padV);
+AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding, double padV);
 CLH CLH_New(float lim, int tRows, int tCols);
 Crp Crp_New(int left, int top, int width, int height);
 Dblr Dblr_New(int radius, int snr);
@@ -77,6 +84,7 @@ NormBC NormBC_New(float clipLowPct, float clipHighPct);
 Rot Rot_New(float angle);
 Rsl Rsl_New(double scale);
 Rsz Rsz_New(int width, int height);
+RszToH RszToH_New(int height);
 Thresh Thresh_New(float val, float maxVal, int typ);
 UnshMsk UnshMsk_New(double sig, double thresh, double amount);
 

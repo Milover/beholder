@@ -15,6 +15,11 @@ type id struct {
 	ID string // an arbitrary string ID
 }
 
+// String returns i's ID string.
+func (i id) String() string {
+	return i.ID
+}
+
 // getter is function that retrieves a value from a type as a formatted string.
 type getter func(unsafe.Pointer) any
 

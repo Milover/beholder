@@ -13,9 +13,9 @@ License
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "Grayscale.h"
-#include "ProcessingOp.h"
 #include "Result.h"
+#include "ProcessingOp.h"
+#include "AdaptiveThreshold.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -27,13 +27,13 @@ namespace beholder
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Grayscale::execute(const cv::Mat& in, cv::Mat& out) const
+bool AdaptiveThreshold::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	cv::cvtColor(in, out, cv::COLOR_BGR2GRAY, 1);
+	cv::adaptiveThreshold(in, out, maxValue, type, cv::THRESH_BINARY, size, c);
 	return true;
 }
 
-bool Grayscale::execute
+bool AdaptiveThreshold::execute
 (
 	const cv::Mat& in,
 	cv::Mat& out,

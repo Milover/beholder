@@ -57,9 +57,9 @@ private:
 
 	// Private data
 
-		//- Pylon instant camera
+		//- pylon instant camera
 		Pylon::CInstantCamera cam_;
-		//- Pylon grab result
+		//- pylon grab result
 		Pylon::CGrabResultPtr res_;
 
 	// Private Member functions
@@ -165,6 +165,14 @@ public:
 		bool init(Pylon::IPylonDevice* d) noexcept;
 
 		//- Return acquisition state
+		//
+		//	BUG: this checks the pylon grab state, but not the (camera)
+		//	acquisition ('AcquisitionStart/Stop') state, i.e. we could be
+		//	grabbing but not acquiring :D
+		//	This happens, for example, when using the 'SingleFrame'
+		//	'AcquisitionMode': the camera will have executed 'AcquisitionStop'
+		//	internally, but pylon will report: IsGrabbing() == true.
+		//	Hence we should avoid using the 'SingleFrame' acquisition mode.
 		bool isAcquiring() const noexcept;
 
 		//- Check if the camera is initialized (device attached and open).
@@ -177,11 +185,9 @@ public:
 		//	Returns true if no errors ocurred.
 		bool setParams(const ParamList& params) noexcept;
 
-		//- Start image acquisition
-		bool startAcquisition() noexcept;
-
 		//- Start image acquisition and stop after nImages have been acquired.
-		bool startAcquisition(std::size_t nImages) noexcept;
+		//	If nImages is 0, the camera will keep acquiring indefinitely.
+		bool startAcquisition(std::size_t nImages = 0ul) noexcept;
 
 		//- Stop image acquisition
 		void stopAcquisition() noexcept;

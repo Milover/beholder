@@ -81,13 +81,13 @@ bool Cam_IsInitialized(Cam c) {
 	return false;
 }
 
-bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t) {
-	if (!c || !t) {
+bool Cam_Init(Cam c, Trans t, const CamInit* in) {
+	if (!c || !t || !in) {
 		return false;
 	}
 	// create device
 	Pylon::IPylonDevice* d {
-		t->createDevice(sn, beholder::DeviceDesignator::SN)
+		t->createDevice(in->sn, beholder::DeviceDesignator::SN, in->reboot)
 	};
 	// initialize
 	if (!d || !c->init(d)) {
@@ -95,9 +95,9 @@ bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t) {
 	}
 	// set params
 	beholder::ParamList list;	// OPTIMIZE: could avoid copying here
-	list.reserve(nPars);
-	for (auto i {0ul}; i < nPars; ++i) {
-		list.emplace_back(pars[i].name, pars[i].value);
+	list.reserve(in->nPars);
+	for (auto i {0ul}; i < in->nPars; ++i) {
+		list.emplace_back(in->pars[i].name, in->pars[i].value);
 	}
 	// NOTE: we don't technically have to fail
 	return c->setParams(list);

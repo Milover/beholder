@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"slices"
 	"strings"
 	"unsafe"
 
@@ -107,30 +106,7 @@ func (t Tesseract) Inference(img models.Image, res *models.Result) error {
 	if unsafe.Pointer(results) == nil {
 		return fmt.Errorf("neural.Tesseract.Inference: %w", ErrInference)
 	}
-	// allocate and reset if necessary
-	nLines := uint64(results.count)
-	if uint64(cap(res.Text)) < nLines {
-		diff := int(nLines - uint64(cap(res.Text)))
-		res.Text = slices.Grow(res.Text, diff)
-		res.Confidences = slices.Grow(res.Confidences, diff)
-		res.Boxes = slices.Grow(res.Boxes, diff)
-	}
-	// FIXME: we probably shouldn't do this here
-	res.Text = res.Text[:0]
-	res.Confidences = res.Confidences[:0]
-	res.Boxes = res.Boxes[:0]
-	// populate the result
-	resultsSl := unsafe.Slice(results.array, nLines)
-	for _, r := range resultsSl {
-		res.Text = append(res.Text, C.GoString(r.text))
-		res.Confidences = append(res.Confidences, float64(r.confidence))
-		res.Boxes = append(res.Boxes, models.Rectangle{
-			Left:   int64(r.box.left),
-			Top:    int64(r.box.top),
-			Right:  int64(r.box.right),
-			Bottom: int64(r.box.bottom),
-		})
-	}
+	fromCRes(results, res)
 	return nil
 }
 
@@ -201,15 +177,7 @@ func (t Tesseract) IsValid() error {
 // setImage sets the image on which text detection/recognition will be run.
 // It also clears the previous image and detection/recognition results.
 func (t Tesseract) setImage(img models.Image) error {
-	raw := C.Img{
-		C.size_t(img.ID),
-		C.int(img.Rows),
-		C.int(img.Cols),
-		C.int64_t(img.PixelType),
-		img.Buffer,
-		C.size_t(img.Step),
-		C.size_t(img.BitsPerPixel),
-	}
+	raw := toCImg(img)
 	if ok := C.Tess_SetImage(t.p, &raw); !ok {
 		return errors.New("neural.Tesseract.setImage: could not set image")
 	}
