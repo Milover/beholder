@@ -25,7 +25,10 @@ vendor/
 bin/
 
 # Raw OCR test images
-internal/ocr/testdata/images
+internal/neural/testdata/images
+
+# DNN model files (weights)
+internal/neural/model/_internal
 
 # libbeholder stuff
 internal/_libbeholder/bin/

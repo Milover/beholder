@@ -8,8 +8,8 @@ import (
 	"runtime"
 
 	"github.com/Milover/beholder/internal/camera"
-	"github.com/Milover/beholder/internal/image"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/imgproc"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/spf13/cobra"
 )
 
@@ -45,16 +45,16 @@ var (
 // CamApp represents a program for acquiring and outputing images from
 // a camera device.
 type CamApp struct {
-	Cs camera.Array            `json:"cameras"`
-	IP *image.Processor        `json:"image_processing"`
-	F  Filename[neutral.Image] `json:"filename"`
+	Cs camera.Array           `json:"cameras"`
+	IP *imgproc.Processor     `json:"image_processing"`
+	F  Filename[models.Image] `json:"filename"`
 }
 
 // NewCamApp creates a new camera app.
 func NewCamApp() *CamApp {
 	return &CamApp{
-		IP: image.NewProcessor(),
-		F: Filename[neutral.Image]{
+		IP: imgproc.NewProcessor(),
+		F: Filename[models.Image]{
 			FString: "img_%v_%v.png",
 			Fields: []string{
 				"Timestamp",
@@ -78,7 +78,7 @@ func (app *CamApp) Init() error {
 	if err := app.IP.Init(); err != nil {
 		return err
 	}
-	if err := app.F.Init(neutral.Image{}); err != nil {
+	if err := app.F.Init(models.Image{}); err != nil {
 		return err
 	}
 	return nil

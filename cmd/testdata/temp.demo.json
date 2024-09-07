@@ -1,0 +1,110 @@
+{
+	"output": {
+		"format": "json",
+		"target": "stdout"
+	},
+	"filename": {
+		"f_string": "web/static/img_%v_%v.jpeg",
+		"fields": [
+			"Timestamp",
+			"ID"
+		]
+	},
+	"cameras": [
+		{
+			"no_reboot": true,
+			"type": "gige",
+			"serial_number": "pick-first",
+			"acquisition_timeout": "3s",
+			"trigger": {
+				"timeout": "3s",
+				"period": "0s"
+			},
+			"parameters": [
+				{"name": "AcquisitionMode",    "value": "Continuous"},
+				{"name": "TriggerSelector",    "value": "FrameStart"},
+				{"name": "TriggerMode",        "value": "On"},
+				{"name": "TriggerSource",      "value": "Software"},
+				{"name": "ExposureMode",       "value": "Timed"},
+				{"name": "ExposureTimeAbs",    "value": "30000"}
+			]
+		}
+	],
+	"yolov8": {
+		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-640px.onnx",
+		"config": {
+			"size": 640,
+			"confidence_threshold": 0.8
+		}
+	},
+	"east": {
+		"model": "internal/neural/model/_internal/east/east.pb",
+		"config": {
+			"size": 320
+		}
+	},
+	"tesseract": {
+		"config_paths": [],
+		"model": "internal/neural/model/_internal/tesseract/dflt/eng.traineddata",
+		"page_seg_mode": "single_line",
+		"variables": {
+			"load_system_dawg": "0",
+			"load_freq_dawg": "0",
+			"tessedit_char_whitelist": "ABCDEFGHIJKLMNOPRSTUVZ-0123456789"
+		},
+		"patterns": [
+			"\\d\\d\\d\\d\\d",
+			"\\A\\A-\\A\\A-\\d"
+		]
+	},
+	"image_processing": {
+		"preprocessing": [
+			{
+				"resize_to_height": {
+					"height": 50
+				}
+			},
+			{
+				"grayscale": null
+			},
+			{
+				"normalize_brightness_contrast": {
+					"clip_low_pct": 0.25
+				}
+			},
+			{
+				"gaussian_blur": {
+					"kernel_width": 3,
+					"kernel_height": 3,
+					"sigma_x": 0,
+					"sigma_y": 0
+				}
+			},
+			{
+				"threshold": {
+					"value": 0,
+					"max_value": 255,
+					"type": [ "binary", "otsu" ]
+				}
+			},
+			{
+				"invert": null
+			}
+		],
+		"postprocessing": [
+			{
+				"draw_bounding_boxes": {
+					"color": [0, 255, 0, 0],
+					"thickness": 2
+				}
+			},
+			{
+				"draw_labels": {
+					"color": [0, 255, 0, 0],
+					"font_scale": 1.5,
+					"thickness": 2
+				}
+			}
+		]
+	}
+}

@@ -19,7 +19,7 @@ SourceFiles
 
 #include <vector>
 
-#include "ProcessingOp.h"
+#include "AutoOrient.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -39,17 +39,17 @@ namespace beholder
 
 class AutoCrop
 :
-	public ProcessingOp
+	public AutoOrient
 {
 protected:
 
 	// Protected member functions
 
 		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
+		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
 		//- Execute the processing operation
-		bool execute
+		virtual bool execute
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
@@ -58,33 +58,15 @@ protected:
 
 public:
 
-	//- Public data
-
-		//- Kernel size
-		int kernelSize {50};
-		//- Dimensions used for text box detection.
-		//	Potential text boxes with smaller dimensions are discarded.
-		float textHeight {50};
-		float textWidth {50};
-		//- Padding added to the cropped image
-		float padding {10.0};
-		//- Gradient kernel size
-		//	XXX: is there a reason why we maed it 'const' originally?
-		int gradientKernelSize {3};
-
 	//- Constructors
 
 		//- Default constructor
 		AutoCrop() = default;
 
 		//- Default constructor
-		AutoCrop(int kS, float tH, float tW, float pad)
+		AutoCrop(int kS, float tH, float tW, float pad, double padV)
 		:
-			ProcessingOp(),
-			kernelSize {kS},
-			textHeight {tH},
-			textWidth {tW},
-			padding {pad}
+			AutoOrient(kS, tH, tW, pad, padV)
 		{}
 
 		//- Default copy constructor

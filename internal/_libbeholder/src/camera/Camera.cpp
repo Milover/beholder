@@ -20,6 +20,7 @@ License
 #include <pylon/ERegistrationMode.h>
 #include <pylon/ETimeoutHandling.h>
 #include <pylon/Parameter.h>
+#include <pylon/PixelType.h>
 
 #include "Camera.h"
 #include "DefaultConfigurator.h"
@@ -141,7 +142,8 @@ std::optional<RawImage> Camera::getRawImage() noexcept
 				static_cast<int>(res_->GetWidth()),
 				static_cast<std::int64_t>(res_->GetPixelType()),
 				res_->GetBuffer(),
-				res_->GetStride(step) ? step : 0ul
+				res_->GetStride(step) ? step : 0ul,
+				static_cast<std::size_t>(Pylon::BitPerPixel(res_->GetPixelType()))
 			}
 		};
 	}
@@ -269,29 +271,23 @@ bool Camera::setParams(const ParamList& params) noexcept
 	return ok;
 }
 
-bool Camera::startAcquisition() noexcept
-{
-	try
-	{
-		cam_.StartGrabbing();
-		return true;
-	}
-	catch(const Pylon::GenericException& e)
-	{
-		std::cerr << "could not start acquisition: " << e.what() << std::endl;
-	}
-	catch(...)
-	{
-		std::cerr << "could not start acquisition" << std::endl;
-	}
-	return false;
-}
-
 bool Camera::startAcquisition(std::size_t nImages) noexcept
 {
+	// XXX: not sure what happens here if the camera gets disconnected
+	if (isAcquiring())
+	{
+		return true;
+	}
 	try
 	{
-		cam_.StartGrabbing(nImages);
+		if (nImages == 0)
+		{
+			cam_.StartGrabbing();
+		}
+		else
+		{
+			cam_.StartGrabbing(nImages);
+		}
 		return true;
 	}
 	catch(const Pylon::GenericException& e)

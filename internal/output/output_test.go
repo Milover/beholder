@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,10 +19,10 @@ var (
 	resultTSText, _ = resultTS.MarshalText()
 
 	// result is the Result that is used in all tests.
-	result = neutral.Result{
+	result = models.Result{
 		Text:      []string{"some text", "some other text"},
 		Expected:  []string{"some text", "some other text"},
-		Status:    neutral.RSPass,
+		Status:    models.RSPass,
 		TimeStamp: resultTS,
 	}
 

@@ -30,8 +30,17 @@ namespace beholder
 
 bool Resize::execute(const cv::Mat& in, cv::Mat& out) const
 {
-	// we almost exclusively shrink images, hence INTER_AREA should be best
-	cv::resize(in, out, cv::Size(width, height), 0, 0, cv::INTER_AREA);
+	// we usually shrink images
+	int interp {cv::INTER_AREA};
+	if (width*height > in.rows*in.cols)
+	{
+		// when we're enlarging, usually the quality is already pretty bad
+		// and the image should be pretty small so INTER_CUBIC should
+		// in general be better for our use cases than INTER_LINEAR even
+		// though it's slower
+		interp = cv::INTER_CUBIC;
+	}
+	cv::resize(in, out, cv::Size(width, height), 0, 0, interp);
 	return true;
 }
 

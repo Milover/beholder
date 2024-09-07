@@ -40,8 +40,7 @@ bool Threshold::execute
 	const std::vector<Result>&
 ) const
 {
-	cv::threshold(in, out, threshold, maxValue, type);
-	return true;
+	return execute(in, out);
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

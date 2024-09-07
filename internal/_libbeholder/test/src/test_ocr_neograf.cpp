@@ -27,10 +27,10 @@ License
 namespace beholder
 {
 
-// the internal/ocr directory
+// the internal/neural directory
 const std::filesystem::path internalDir
 {
-	std::filesystem::path {__FILE__}.parent_path() / "../../../ocr/"
+	std::filesystem::path {__FILE__}.parent_path() / "../../../neural/"
 };
 
 const std::string testImage
@@ -54,13 +54,13 @@ const std::vector<std::string> expected
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-	// chdir to the go project internal/ocr directory to make our life easier
+	// chdir to the go project internal/neural directory to make our life easier
 	std::filesystem::current_path(beholder::internalDir);
 
 	// setup tesseract
 	beholder::Tesseract t {};
 	//t.configPaths = std::vector<std::string>{"testdata/configs/test_neograf.patterns.config"};
-	t.modelPath = "model/dotmatrix";
+	t.modelPath = "model/_internal/tesseract/dotmatrix";
 	t.model = "dotOCRDData1";
 	t.pageSegMode = 7;
 	t.variables = std::vector<std::pair<std::string, std::string>>
@@ -81,7 +81,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	// setup image processor
 	beholder::Processor ip {};
 	// preprocessin
-	ip.preprocessing.emplace_back(new beholder::AutoCrop {35, 50.0, 50.0, 10.0});
+	ip.preprocessing.emplace_back(new beholder::AutoCrop {35, 50.0, 50.0, 10.0, 255.0});
 	ip.preprocessing.emplace_back(new beholder::Resize {205, 34});
 	ip.preprocessing.emplace_back(new beholder::NormalizeBrightnessContrast {1.5});
 	ip.preprocessing.emplace_back(new beholder::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});

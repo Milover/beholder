@@ -46,6 +46,26 @@ void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const
 	{
 		std::cerr << "could not set default pixel format" << std::endl;
 	}
+
+	// reset image ROI
+	if
+	(
+		!Pylon::CIntegerParameter {nodemap, "Width"}.TrySetToMaximum()
+	 || !Pylon::CIntegerParameter {nodemap, "Height"}.TrySetToMaximum()
+	 || !Pylon::CIntegerParameter {nodemap, "OffsetX"}.TrySetToMinimum()
+	 || !Pylon::CIntegerParameter {nodemap, "OffsetY"}.TrySetToMinimum()
+	)
+	{
+		std::cerr << "could not reset image ROI" << std::endl;
+	}
+
+	// see comments on Camera::isAcquiring() for more info
+	const char* modes[] {"Continuous"};
+	Pylon::CEnumParameter acquisitionMode {nodemap, "AcquisitionMode"};
+	if (!acquisitionMode.TrySetValue(modes))
+	{
+		std::cerr << "could not set continuous acquisition mode" << std::endl;
+	}
 }
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //

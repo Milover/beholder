@@ -96,9 +96,9 @@ func TestArray(t *testing.T) {
 			// setup
 			p := struct {
 				Cs Array `json:"cameras"`
-				//IP *image.Processor `json:"image_processor"`
+				//IP *imgproc.Processor `json:"image_processor"`
 			}{
-				//IP: image.NewProcessor(),
+				//IP: imgproc.NewProcessor(),
 			}
 			defer func() {
 				p.Cs.Delete()

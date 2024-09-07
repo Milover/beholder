@@ -6,6 +6,9 @@
 License
 	See the LICENSE file for license information.
 
+TODO
+	Implement this properly since it's actually super-duper useful.
+
 \*---------------------------------------------------------------------------*/
 
 #include <filesystem>
@@ -30,8 +33,7 @@ License
 namespace beholder
 {
 
-// the internal/ocr directory
-
+// the internal/neural directory
 const std::filesystem::path videoDir
 {
 	"/home/philipp/workspace/transfer"
@@ -55,7 +57,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	cv::Mat frame;
 	fs::path outpath;
 
-	// chdir to the go project internal/ocr directory to make our life easier
+	// chdir to the go project internal/neural directory to make our life easier
 	for (const auto& entry : fs::directory_iterator(beholder::videoDir))
 	{
 		if (!fs::is_regular_file(entry.path()))

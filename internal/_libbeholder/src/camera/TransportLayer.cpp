@@ -154,21 +154,23 @@ bool TransportLayer::init(DeviceClass dc) noexcept
 Pylon::IPylonDevice* TransportLayer::createDevice
 (
 	const std::string& designator,
-	DeviceDesignator ddt
+	DeviceDesignator ddt,
+	bool reboot
 ) const noexcept
 {
-	return createDevice(designator.c_str(), ddt);
+	return createDevice(designator.c_str(), ddt, reboot);
 }
 
 
 Pylon::IPylonDevice* TransportLayer::createDevice
 (
 	const char* designator,
-	DeviceDesignator ddt
+	DeviceDesignator ddt,
+	bool reboot
 ) const noexcept
 {
 	auto d {createDeviceImpl(designator, ddt)};
-	if (!d)
+	if (!reboot || !d)
 	{
 		return d;
 	}

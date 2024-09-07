@@ -18,6 +18,7 @@ License
 #include <vector>
 
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -41,28 +42,31 @@ namespace beholder
 
 Processor::Processor()
 :
-	img_ {new cv::Mat{}}
-{}
+	img_ {new cv::Mat{}},
+	roi_ {new cv::Mat{}}
+{
+	*roi_ = *img_;
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Processor::~Processor()
-{
-	delete img_;
-}
+{}
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 bool Processor::decodeImage(void* buffer, int bufSize, int flags)
 {
 	*img_ = cv::Mat{1, bufSize, CV_8UC1, buffer};
-	cv::imdecode(*img_, flags, img_);	// yolo
-	return img_->data != NULL;
+	cv::imdecode(*img_, flags, img_.get());	// yolo
+	*roi_ = *img_;
+	//return roi_->data != NULL;
+	return roi_->data != nullptr;	// XXX: this should be ok
 }
 
 const cv::Mat& Processor::getImage() const
 {
-	return *img_;
+	return *roi_;
 }
 
 std::size_t Processor::getImageID() const
@@ -76,12 +80,13 @@ RawImage Processor::getRawImage() const
 	return RawImage
 	{
 		id_,
-		img_->rows,
-		img_->cols,
-		img_->elemSize() == 1ul ? static_cast<std::int64_t>(PxType::Mono8)
-							  : static_cast<std::int64_t>(PxType::BGR8packed),
-		static_cast<void*>(img_->data),
-		img_->step1()
+		roi_->rows,
+		roi_->cols,
+		roi_->elemSize() == 1ul ? static_cast<std::int64_t>(PxType::Mono8)
+								: static_cast<std::int64_t>(PxType::BGR8packed),
+		static_cast<void*>(roi_->data),
+		roi_->step1(),
+		roi_->elemSize() * 8	// bytes to bits
 	};
 }
 
@@ -90,7 +95,7 @@ bool Processor::postprocess(const std::vector<Result>& res)
 	for (const auto& o : postprocessing)
 	{
 		// FIXME: should ask weather to overwrite or use a new output image
-		if (!o->operator()(*img_, *img_, res))
+		if (!o->operator()(*roi_, *roi_, res))
 		{
 			// FIXME: should give info on what failed
 			return false;
@@ -104,7 +109,7 @@ bool Processor::preprocess()
 	for (const auto& o : preprocessing)
 	{
 		// FIXME: should ask weather to overwrite or use a new output image
-		if (!o->operator()(*img_, *img_))
+		if (!o->operator()(*roi_, *roi_))
 		{
 			// FIXME: should give info on what failed
 			return false;
@@ -115,32 +120,35 @@ bool Processor::preprocess()
 
 bool Processor::receiveRawImage(const RawImage& raw)
 {
-	id_ = raw.id;
+	const auto& ref {raw.cRef()};
+	id_ = ref.id;
 
-	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
+	auto info {getConversionInfo(static_cast<PxType>(ref.pixelType))};
 	if (!info)
 	{
 		std::cerr << "could not get conversion info (ID: " << id_ << "): "
-				  << "unknown pixel type: " << raw.pixelType << std::endl;
+				  << "unknown pixel type: " << ref.pixelType << std::endl;
 		return false;
 	}
 	cv::Mat tmp
 	{
-		raw.rows,
-		raw.cols,
+		ref.rows,
+		ref.cols,
 		info->inputType,
-		raw.buffer,
-		raw.step > 0ul ? raw.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+		ref.buffer,
+		ref.step > 0ul ? ref.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
 	};
 
 	// convert the color scheme if necessary
 	if (info->colorConvCode == -1)
 	{
 		tmp.copyTo(*img_);
+		*roi_ = *img_;	// XXX: not sure
 	}
 	else
 	{
 		cv::cvtColor(tmp, *img_, info->colorConvCode, info->outChannels);
+		*roi_ = *img_;	// XXX: not sure
 	}
 	return true;
 }
@@ -148,12 +156,93 @@ bool Processor::receiveRawImage(const RawImage& raw)
 bool Processor::readImage(const std::string& path, int flags)
 {
 	*img_ = cv::imread(path, flags);
-	return img_->data != NULL;
+	*roi_ = *img_;
+	//return img_->data != NULL;
+	return img_->data != nullptr;	// XXX: this should be ok
+}
+
+void Processor::resetROI() const
+{
+	*roi_ = *img_;
+}
+
+void Processor::setROI(const Rectangle& roi) const
+{
+	*roi_ = *img_;	// reset ROI
+
+	const auto& r {roi.cRef()};
+	cv::Rect crop
+	{
+		r.left,
+		r.top,
+		r.right - r.left,
+		r.bottom - r.top
+	};
+	// snap to bounds
+	crop.x = crop.x > 0 ? crop.x : 0;
+	crop.x = crop.x < img_->cols ? crop.x : img_->cols - 1;
+	crop.width = crop.x + crop.width <= img_->cols ? crop.width : img_->cols - crop.x;
+
+	crop.y = crop.y > 0 ? crop.y : 0;
+	crop.y = crop.y < img_->rows ? crop.y : img_->rows - 1;
+	crop.height = crop.y + crop.height <= img_->rows ? crop.height : img_->rows - crop.y;
+
+	*roi_ = img_->operator()(crop);
+}
+
+void Processor::setRotatedROI(const Rectangle& roi, double angle) const
+{
+	*roi_ = *img_;	// reset ROI
+
+	const auto& r {roi.cRef()};
+	const cv::Point2f ctr
+	{
+		static_cast<float>(r.left + r.right) / 2.0f,
+		static_cast<float>(r.top + r.bottom) / 2.0f
+	};
+	// adjust transformation matrix by adding a translation from the
+	// center of rotation to the (new) image center,
+	// i.e. center the text box on the image
+	cv::Mat rot {cv::getRotationMatrix2D(ctr, angle, 1.0)};
+	cv::Point2f center
+	{
+		0.5f*(img_->size().width - 1),
+		0.5f*(img_->size().height - 1)
+	};
+	cv::Point2f shift {center - ctr};
+	rot.at<double>(0, 2) += static_cast<double>(shift.x);
+	rot.at<double>(1, 2) += static_cast<double>(shift.y);
+
+	cv::Mat tmp {};
+	cv::warpAffine
+	(
+		*img_,
+		tmp,
+		rot,
+		img_->size(),
+		cv::INTER_LINEAR,
+		cv::BORDER_REPLICATE
+	);
+
+	cv::Rect crop
+	{
+		cv::RotatedRect {center, cv::Size {r.right - r.left, r.bottom - r.top}, 0}.boundingRect()
+	};
+	// snap to bounds
+	crop.x = crop.x > 0 ? crop.x : 0;
+	crop.x = crop.x < tmp.cols ? crop.x : tmp.cols - 1;
+	crop.width = crop.x + crop.width <= tmp.cols ? crop.width : tmp.cols - crop.x;
+
+	crop.y = crop.y > 0 ? crop.y : 0;
+	crop.y = crop.y < tmp.rows ? crop.y : tmp.rows - 1;
+	crop.height = crop.y + crop.height <= tmp.rows ? crop.height : tmp.rows - crop.y;
+
+	*roi_ = tmp(crop);
 }
 
 void Processor::showImage(const std::string& title) const
 {
-	cv::imshow(title, *img_);
+	cv::imshow(title, *roi_);
 	cv::waitKey();
 }
 
@@ -164,29 +253,30 @@ bool Processor::writeImage(const std::string& filename) const
 		cv::IMWRITE_PNG_COMPRESSION, 0,				// lowest compression level
 		cv::IMWRITE_JPEG2000_COMPRESSION_X1000, 0	// lowest compression level
 	};
-	return cv::imwrite(filename, *img_, flags);
+	return cv::imwrite(filename, *roi_, flags);
 }
 
 // * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
 
 std::unique_ptr<cv::Mat> rawToMatPtr(const RawImage& raw)
 {
-	auto info {getConversionInfo(static_cast<PxType>(raw.pixelType))};
+	const auto& ref {raw.cRef()};
+	auto info {getConversionInfo(static_cast<PxType>(ref.pixelType))};
 	if (!info)
 	{
-		std::cerr << "could not get conversion info (ID: " << raw.id << "): "
-				  << "unknown pixel type: " << raw.pixelType << std::endl;
+		std::cerr << "could not get conversion info (ID: " << ref.id << "): "
+				  << "unknown pixel type: " << ref.pixelType << std::endl;
 		return nullptr;
 	}
 	return std::unique_ptr<cv::Mat>
 	{
 		new cv::Mat
 		{
-			raw.rows,
-			raw.cols,
+			ref.rows,
+			ref.cols,
 			info->inputType,
-			raw.buffer,
-			raw.step > 0ul ? raw.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
+			ref.buffer,
+			ref.step > 0ul ? ref.step : static_cast<std::size_t>(cv::Mat::AUTO_STEP)
 		}
 	};
 }

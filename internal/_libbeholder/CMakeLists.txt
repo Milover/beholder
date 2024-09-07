@@ -83,9 +83,10 @@ file(
 	BEHOLDER_SRC
 	CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/src/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/capi/*.cpp"
 	"${PROJECT_SOURCE_DIR}/src/image/*.cpp"
 	"${PROJECT_SOURCE_DIR}/src/image/ops/*.cpp"
-	"${PROJECT_SOURCE_DIR}/src/ocr/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/nn/*.cpp"
 )
 
 file(
@@ -93,18 +94,20 @@ file(
 	BEHOLDER_HDR
 	CONFIGURE_DEPENDS
 	"${PROJECT_SOURCE_DIR}/src/*.h"
+	"${PROJECT_SOURCE_DIR}/src/capi/*.h"
 	"${PROJECT_SOURCE_DIR}/src/image/*.h"
 	"${PROJECT_SOURCE_DIR}/src/image/ops/*.h"
-	"${PROJECT_SOURCE_DIR}/src/ocr/*.h"
+	"${PROJECT_SOURCE_DIR}/src/nn/*.h"
 )
 
 list(
 	APPEND
 	BEHOLDER_INCLUDE_DIRS 
 	"${PROJECT_SOURCE_DIR}/src"
+	"${PROJECT_SOURCE_DIR}/src/capi"
 	"${PROJECT_SOURCE_DIR}/src/image"
 	"${PROJECT_SOURCE_DIR}/src/image/ops"
-	"${PROJECT_SOURCE_DIR}/src/ocr"
+	"${PROJECT_SOURCE_DIR}/src/nn"
 )
 
 # main library target
@@ -169,6 +172,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 		CONFIGURE_DEPENDS
 		"${PROJECT_SOURCE_DIR}/src/*.cpp"
 		"${PROJECT_SOURCE_DIR}/src/camera/*.cpp"
+		"${PROJECT_SOURCE_DIR}/src/capi/*.cpp"
 	)
 
 	file(
@@ -177,6 +181,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 		CONFIGURE_DEPENDS
 		"${PROJECT_SOURCE_DIR}/src/*.h"
 		"${PROJECT_SOURCE_DIR}/src/camera/*.h"
+		"${PROJECT_SOURCE_DIR}/src/capi/*.h"
 	)
 
 	list(
@@ -184,6 +189,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 		BEHOLDER_CAMERA_INCLUDE_DIRS
 		"${PROJECT_SOURCE_DIR}/src"
 		"${PROJECT_SOURCE_DIR}/src/camera"
+		"${PROJECT_SOURCE_DIR}/src/capi"
 	)
 
 	# camera library target

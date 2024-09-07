@@ -27,10 +27,10 @@ License
 namespace beholder
 {
 
-// the internal/ocr directory
+// the internal/neural directory
 const std::filesystem::path internalDir
 {
-	std::filesystem::path {__FILE__}.parent_path() / "../../../ocr/"
+	std::filesystem::path {__FILE__}.parent_path() / "../../../neural/"
 };
 
 const std::string testImage
@@ -50,14 +50,14 @@ const std::vector<std::string> expected
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-	// chdir to the go project internal/ocr directory to make our life easier
+	// chdir to the go project internal/neural directory to make our life easier
 	std::filesystem::current_path(beholder::internalDir);
 
 	// setup tesseract
 	beholder::Tesseract t {};
 	//t.configPaths = std::vector<std::string>{"testdata/configs/test_dukat.patterns.config"};
 	//t.modelPath = "_models/best";
-	t.modelPath = "model/dotmatrix";
+	t.modelPath = "model/_internal/tesseract/dotmatrix";
 	//t.model = "5x5_Dots_FT_500";
 	//t.model = "DisplayDots_FT_500";
 	//t.model = "DotMatrix_FT_500";
@@ -91,7 +91,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	ip.preprocessing.emplace_back(new beholder::MedianBlur {7});
 	//ip.preprocessing.emplace_back(new beholder::EqualizeHistogram {});
 	//ip.preprocessing.emplace_back(new beholder::CLAHE {120, 12, 12});
-	ip.preprocessing.emplace_back(new beholder::AutoCrop {50, 50.0, 50.0, 15.0});
+	ip.preprocessing.emplace_back(new beholder::AutoCrop {50, 50.0, 50.0, 15.0, 255.0});
 	ip.preprocessing.emplace_back(new beholder::Resize {225, 90});
 	ip.preprocessing.emplace_back(new beholder::Rotate {180});
 	ip.preprocessing.emplace_back(new beholder::DivGaussianBlur {255.0, 5.0, 5.0, 0, 0});
@@ -110,7 +110,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	//ip.preprocessing.emplace_back(new beholder::CLAHE {10, 1, 4});
 	ip.preprocessing.emplace_back(new beholder::Threshold {0, 255, cv::THRESH_BINARY+cv::THRESH_OTSU});
 	//ip.preprocessing.emplace_back(new beholder::Threshold {120, 255, cv::THRESH_BINARY});
-	ip.preprocessing.emplace_back(new beholder::AutoCrop {15, 20.0, 10.0, 10.0});
+	ip.preprocessing.emplace_back(new beholder::AutoCrop {15, 20.0, 10.0, 10.0, 255.0});
 	ip.preprocessing.emplace_back(new beholder::GaussianBlur {3, 5, 0, 0});
 	//ip.preprocessing.emplace_back(new beholder::Resize {225, 75});
 	//ip.preprocessing.emplace_back(new beholder::Morphology {cv::MORPH_RECT, 2, 3, cv::MORPH_OPEN, 1});

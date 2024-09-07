@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <string>
 
@@ -48,22 +49,15 @@ void Cam_Delete(Cam* c) {
 	}
 }
 
-RawImage Cam_GetRawImage(Cam c) {
+Img Cam_GetRawImage(Cam c) {
 	if (!c) {
-		return RawImage {};
+		return Img {};
 	}
 	auto res {c->getRawImage()};
 	if (!res) {
-		return RawImage {};
+		return Img {};
 	}
-	return RawImage {
-		res->id,
-		res->rows,
-		res->cols,
-		res->pixelType,
-		res->buffer,
-		res->step
-	};
+	return std::move(res).value().moveToC();
 }
 
 bool Cam_IsAcquiring(Cam c) {
@@ -87,13 +81,13 @@ bool Cam_IsInitialized(Cam c) {
 	return false;
 }
 
-bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t) {
-	if (!c || !t) {
+bool Cam_Init(Cam c, Trans t, const CamInit* in) {
+	if (!c || !t || !in) {
 		return false;
 	}
 	// create device
 	Pylon::IPylonDevice* d {
-		t->createDevice(sn, beholder::DeviceDesignator::SN)
+		t->createDevice(in->sn, beholder::DeviceDesignator::SN, in->reboot)
 	};
 	// initialize
 	if (!d || !c->init(d)) {
@@ -101,9 +95,9 @@ bool Cam_Init(Cam c, const char* sn, Par* pars, size_t nPars, Trans t) {
 	}
 	// set params
 	beholder::ParamList list;	// OPTIMIZE: could avoid copying here
-	list.reserve(nPars);
-	for (auto i {0ul}; i < nPars; ++i) {
-		list.emplace_back(pars[i].name, pars[i].value);
+	list.reserve(in->nPars);
+	for (auto i {0ul}; i < in->nPars; ++i) {
+		list.emplace_back(in->pars[i].name, in->pars[i].value);
 	}
 	// NOTE: we don't technically have to fail
 	return c->setParams(list);

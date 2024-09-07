@@ -9,8 +9,8 @@ import (
 	"path"
 	"runtime"
 
-	"github.com/Milover/beholder/internal/image"
-	"github.com/Milover/beholder/internal/neutral"
+	"github.com/Milover/beholder/internal/imgproc"
+	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
 )
@@ -27,22 +27,17 @@ var (
 	}
 )
 
-// id is a helper type, so that Filename can receive an arbitrary string.
-type id struct {
-	ID string // an arbitrary string ID
-}
-
 // ProcApp represents a program for running an image processing pipeline
 // on an image or a set of images read from disc.
 type ProcApp struct {
-	P *image.Processor `json:"image_processing"`
-	F Filename[id]     `json:"filename"`
+	P *imgproc.Processor `json:"image_processing"`
+	F Filename[id]       `json:"filename"`
 }
 
 // NewProcApp creates a new Proc app.
 func NewProcApp() *ProcApp {
 	return &ProcApp{
-		P: image.NewProcessor(),
+		P: imgproc.NewProcessor(),
 		F: Filename[id]{
 			FString: "img_%v.jpeg",
 			Fields:  []string{"ID"},
@@ -70,7 +65,7 @@ func (app *ProcApp) Init() error {
 
 // Run is a function that runs the image processing pipeline for
 // a single image file: reading and preprocessing.
-func (app *ProcApp) Run(filename string, imgID id, res *neutral.Result) error {
+func (app *ProcApp) Run(filename string, imgID id, res *models.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
 	res.TimeStamp = sw.Start
@@ -90,7 +85,7 @@ func (app *ProcApp) Run(filename string, imgID id, res *neutral.Result) error {
 	res.Timings.Set("read", sw.Lap())
 
 	// FIXME: the read mode shouldn't be hardcoded
-	if err := app.P.DecodeImage(buf, image.RMAnyColor); err != nil {
+	if err := app.P.DecodeImage(buf, imgproc.RMAnyColor); err != nil {
 		return err
 	}
 	res.Timings.Set("decode", sw.Lap())
@@ -147,15 +142,13 @@ func runProc(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	count := int64(0) // No. results to average
 	switch {
 	case info.Mode().IsRegular():
-		id := id{ID: fmt.Sprintf("%07d", count)}
+		id := id{ID: fmt.Sprintf("%07d", stats.avgCount)}
 		if err = app.Run(cliFile, id, stats.Result); err != nil {
 			return err
 		}
-		stats.Accumulate(stats.Result.Timings)
-		count++
+		stats.RollingAverage(stats.Result.Timings)
 	case info.Mode().IsDir():
 		dir, err := os.Open(cliFile)
 		if err != nil {
@@ -168,22 +161,20 @@ func runProc(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		for _, filename := range filenames {
-			id := id{ID: fmt.Sprintf("%07d", count)}
+			id := id{ID: fmt.Sprintf("%07d", stats.avgCount)}
 			file := path.Join(dir.Name(), filename)
 
-			log.Printf("processing (%d/%d): %v", count+1, len(filenames), file)
+			log.Printf("processing (%d/%d): %v", stats.avgCount+1, len(filenames), file)
 			if err := app.Run(file, id, stats.Result); err != nil {
 				//return err
 				log.Println("processing error:", err)
 				continue
 			}
-			stats.Accumulate(stats.Result.Timings)
-			count++
+			stats.RollingAverage(stats.Result.Timings)
 		}
 	default:
 		return fmt.Errorf("bad file: %v", info.Name())
 	}
-	stats.Average(count)
 	stats.ExecDuration = sw.Total()
 
 	//app.P.ShowImage("result")
