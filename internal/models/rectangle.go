@@ -12,6 +12,11 @@ func (r Rectangle) Area() int64 {
 	return (r.Right - r.Left) * (r.Bottom - r.Top)
 }
 
+// Height returns the width of r.
+func (r Rectangle) Height() int64 {
+	return r.Bottom - r.Top
+}
+
 // In reports whether every point in r is in s.
 func (r Rectangle) In(s Rectangle) bool {
 	return r.Left > s.Left &&
@@ -50,6 +55,11 @@ func (r Rectangle) Overlap(s Rectangle) int64 {
 func (r Rectangle) OverlapPct(s Rectangle) float64 {
 	ovr := r.Overlap(s)
 	return float64(ovr) / float64(r.Area()+s.Area()+ovr)
+}
+
+// Width returns the width of r.
+func (r Rectangle) Width() int64 {
+	return r.Right - r.Left
 }
 
 // String returns a string representation of r like "(3,4)-(6,5)".
