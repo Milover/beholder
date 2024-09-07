@@ -56,6 +56,9 @@ typedef struct
 	//- Bounding boxes detected by algorithms and/or NNs
 	Rectangle box;
 
+	//- Bounding box rotation angle, with respect to the original image
+	double boxRotAngle;
+
 	//- Confidence of the result
 	double confidence;
 
@@ -94,6 +97,9 @@ public:
 	//- Bounding boxes detected by algorithms and/or NNs
 	Rectangle box;
 
+	//- Bounding box rotation angle, with respect to the original image
+	double boxRotAngle;
+
 	//- Confidence of the result
 	double confidence;
 
@@ -109,11 +115,12 @@ public:
 		Result(Result&&) = default;
 
 		//- Construct by forwarding components
-		template<typename Txt, typename Box, typename Conf>
-		Result(Txt&& t, Box&& b, Conf&& c)
+		template<typename Txt, typename Box, typename Ang, typename Conf>
+		Result(Txt&& t, Box&& b, Ang&& rot, Conf&& c)
 		:
 			text {std::forward<Txt>(t)},
 			box {std::forward<Box>(b)},
+			boxRotAngle {std::forward<Ang>(rot)},
 			confidence {std::forward<Conf>(c)}
 		{}
 
@@ -122,6 +129,7 @@ public:
 		:
 			text {r.text},
 			box {r.box},
+			boxRotAngle {r.boxRotAngle},
 			confidence {r.confidence}
 		{}
 
@@ -135,7 +143,7 @@ public:
 		{
 			char* ch {new char[text.size() + 1]};
 			std::strcpy(ch, text.c_str());
-			return capi::Result {ch, box.cRef(), confidence};
+			return capi::Result {ch, box.cRef(), boxRotAngle, confidence};
 		}
 
 	// Member operators

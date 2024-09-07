@@ -126,12 +126,17 @@ public:
 		bool readImage(const std::string& path, int flags);
 
 		//- Reset the region of interest, i.e. set the ROI to the whole image
-		//	FIXME: this is incorrectly implemented
 		void resetROI() const;
 
 		//- Set the region of interest
-		//	FIXME: this is incorrectly implemented
+		//	FIXME: bad implementation, always operates on the original image,
+		//	not the current ROI
 		void setROI(const Rectangle& roi) const;
+
+		//- Set the region of interest
+		//	FIXME: bad implementation, always operates on the original image,
+		//	not the current ROI
+		void setRotatedROI(const Rectangle& roi, double angle) const;
 
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;

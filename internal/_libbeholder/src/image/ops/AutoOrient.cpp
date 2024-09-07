@@ -99,7 +99,7 @@ bool AutoOrient::executeImpl
 		out,
 		rot,
 		bbox.size(),
-		cv::INTER_NEAREST,
+		cv::INTER_LINEAR,
 		cv::BORDER_CONSTANT,
 		cv::Scalar::all(padValue)
 	);

@@ -11,6 +11,7 @@ License
 #include <array>
 #include <vector>
 
+#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
@@ -31,7 +32,7 @@ namespace beholder
 
 bool DrawBoundingBoxes::execute(const cv::Mat&, cv::Mat&) const
 {
-	// can't really do anything without the BEHOLDER results
+	// can't really do anything without the results
 	return true;
 }
 
@@ -43,15 +44,32 @@ bool DrawBoundingBoxes::execute
 ) const
 {
 	cv::Scalar c {color[0], color[1], color[2], color[3]};
+
 	cv::Rect rect {};
+	cv::RotatedRect rect {};
+	cv::Point2f verts[4] {};
 	for (const auto& r : res)
 	{
 		const auto& b {r.box.cRef()};
-		rect.x = b.left;
-		rect.y = b.top;
-		rect.width = b.right - b.left;
-		rect.height = b.bottom - b.top;	// because we measure from the top left
-		cv::rectangle(out, rect, c, thickness);
+		rect = cv::RotatedRect
+		{
+			cv::Point2f
+			{
+				static_cast<float>(b.right - b.left) / 2.0f,
+				static_cast<float>(b.bottom - b.top) / 2.0f
+			},
+			cv::Size2f
+			{
+				static_cast<float>(b.right - b.left),
+				static_cast<float>(b.bottom - b.top)
+			},
+			static_cast<float>(r.boxRotAngle)
+		};
+		rect.points(verts);
+		for (auto i {0ul}; i < 4; ++i)
+		{
+			cv::line(out, verts[i], verts[(i + 1) % 4], c, thickness);
+		}
 	}
 	return true;
 }

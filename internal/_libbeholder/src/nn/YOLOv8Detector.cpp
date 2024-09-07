@@ -63,6 +63,7 @@ void YOLOv8Detector::extract()
 			cvFloor(det[2]),
 			cvFloor(det[3])
 		);
+		buf_->tAngles.emplace_back(0.0);
 		buf_->tClassIDs.emplace_back(maxLoc.x);
 		buf_->tConfidences.emplace_back(static_cast<float>(conf));
 	}
