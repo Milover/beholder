@@ -43,6 +43,7 @@ var opFactoryMap = map[string]opFactory{
 	"normalize_brightness_contrast": NewNormBC,
 	"rescale":                       NewRescale,
 	"resize":                        NewResize,
+	"resize_to_height":              NewResizeToHeight,
 	"rotate":                        NewRotate,
 	"threshold":                     NewThreshold,
 	"unsharp_mask":                  NewUnsharpMask,
@@ -793,6 +794,30 @@ func NewResize(m json.RawMessage) (unsafe.Pointer, error) {
 	}
 	return unsafe.Pointer(C.Rsz_New(
 		C.int(op.Width),
+		C.int(op.Height),
+	)), nil
+}
+
+// resizeToHeight resizes the image to the specified height while keeping
+// the original aspect ratio.
+type resizeToHeight struct {
+	Height int `json:"height"`
+}
+
+// NewResizeToHeight creates a resize operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewResizeToHeight(m json.RawMessage) (unsafe.Pointer, error) {
+	op := resizeToHeight{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Height <= 0 {
+		return nil, errors.New("imgproc.NewResizeToHeight: bad height")
+	}
+	return unsafe.Pointer(C.RszToH_New(
 		C.int(op.Height),
 	)), nil
 }

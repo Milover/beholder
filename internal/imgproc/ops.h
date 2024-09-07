@@ -30,6 +30,7 @@ typedef beholder::Morphology* Morph;
 typedef beholder::NormalizeBrightnessContrast* NormBC;
 typedef beholder::Rescale* Rsl;
 typedef beholder::Resize* Rsz;
+typedef beholder::ResizeToHeight* RszToH;
 typedef beholder::Rotate* Rot;
 typedef beholder::Threshold* Thresh;
 typedef beholder::UnsharpMask* UnshMsk;
@@ -56,6 +57,7 @@ typedef void* NormBC;
 typedef void* Rot;
 typedef void* Rsl;
 typedef void* Rsz;
+typedef void* RszToH;
 typedef void* Thresh;
 typedef void* UnshMsk;
 #endif
@@ -82,6 +84,7 @@ NormBC NormBC_New(float clipLowPct, float clipHighPct);
 Rot Rot_New(float angle);
 Rsl Rsl_New(double scale);
 Rsz Rsz_New(int width, int height);
+RszToH RszToH_New(int height);
 Thresh Thresh_New(float val, float maxVal, int typ);
 UnshMsk UnshMsk_New(double sig, double thresh, double amount);
 

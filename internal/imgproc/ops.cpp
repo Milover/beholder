@@ -92,6 +92,10 @@ Rsz Rsz_New(int width, int height) {
 	return new beholder::Resize {width, height};
 }
 
+RszToH RszToH_New(int height) {
+	return new beholder::ResizeToHeight {height};
+}
+
 Thresh Thresh_New(float val, float maxVal, int typ) {
 	return new beholder::Threshold {val, maxVal, typ};
 }
