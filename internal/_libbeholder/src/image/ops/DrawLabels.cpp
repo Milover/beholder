@@ -46,7 +46,6 @@ bool DrawLabels::execute
 ) const
 {
 	cv::Scalar c {color[0], color[1], color[2], color[3]};
-	cv::Rect rect {};
 	std::string label;
 	for (const auto& r : res)
 	{

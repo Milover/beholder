@@ -45,7 +45,6 @@ bool DrawBoundingBoxes::execute
 {
 	cv::Scalar c {color[0], color[1], color[2], color[3]};
 
-	cv::Rect rect {};
 	cv::RotatedRect rect {};
 	cv::Point2f verts[4] {};
 	for (const auto& r : res)
@@ -55,8 +54,8 @@ bool DrawBoundingBoxes::execute
 		{
 			cv::Point2f
 			{
-				static_cast<float>(b.right - b.left) / 2.0f,
-				static_cast<float>(b.bottom - b.top) / 2.0f
+				static_cast<float>(b.right + b.left) / 2.0f,
+				static_cast<float>(b.bottom + b.top) / 2.0f
 			},
 			cv::Size2f
 			{
