@@ -55,7 +55,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	beholder::YOLOv8Detector yolo {};
 	yolo.modelPath = "model/_internal/yolo";
 	yolo.model = "fima_v8n_640-50e-b16-1280px.onnx";
-	yolo.size = 1280;
+	yolo.size = beholder::YOLOv8Detector::Vec2<> {1280, 1280};
 	if (!yolo.init())
 	{
 		std::cerr << "Could not initialize yolo.\n";
@@ -66,7 +66,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	beholder::EASTDetector east {};
 	east.modelPath = "model/_internal/east";
 	east.model = "east.pb";
-	east.size = 320;
+	east.size = beholder::EASTDetector::Vec2<> {320, 320};
 	if (!east.init())
 	{
 		std::cerr << "Could not initialize east.\n";

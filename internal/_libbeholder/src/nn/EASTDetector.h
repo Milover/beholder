@@ -64,7 +64,7 @@ public:
 		{
 			// For more info, see:
 			// https://docs.opencv.org/4.10.0/d4/d43/tutorial_dnn_text_spotting.html
-			mean = std::array<double, 3> {123.68, 116.78, 103.94};
+			mean = Base::Vec3<> {123.68, 116.78, 103.94};
 		}
 
 		//- Disable copy constructor

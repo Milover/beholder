@@ -162,8 +162,8 @@ bool ObjDetector::init()
 	(
 		new cv::dnn::Image2BlobParams
 		{
-			cv::Scalar::all(scale),
-			cv::Size {size, size},
+			cv::Scalar {scale[0], scale[1], scale[2]},
+			cv::Size {size[0], size[1]},
 			cv::Scalar {mean[0], mean[1], mean[2]},
 			swapRB,
 			CV_32F,

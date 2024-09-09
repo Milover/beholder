@@ -123,6 +123,9 @@ protected:
 
 public:
 
+	template<typename T = int> using Vec2 = std::array<T, 2>;
+	template<typename T = double> using Vec3 = std::array<T, 3>;
+
 	// Public data
 
 		//- Directory path of the model (weights) file.
@@ -150,21 +153,21 @@ public:
 		//	The image will be resized and padded so that the largest image
 		//	dimension is equal to size. The aspect ratio is preserved using
 		//	letterboxing.
-		int size {640};
+		Vec2<> size {640, 640};
 		//- Multiplier for image pixel values.
 		//	Set based on which model is in use.
-		double scale {1.0};
+		Vec3<> scale {1.0, 1.0, 1.0};
 		//- Confidence threshold used for text box filtering.
 		float confidenceThreshold {0.5};
 		//- Non-maximum suppression threshold.
 		float nmsThreshold {0.4};
 		//- Normalization constant.
 		//	This value is subtracted from each pixel value of the current image.
-        std::array<double, 3> mean {0.0, 0.0, 0.0};
+        Vec3<> mean {0.0, 0.0, 0.0};
 		//- Swap red and green channels
         bool swapRB {true};
 		//- The pixel value used to pad the image, if padding is active.
-        std::array<double, 3> padValue {0.0, 0.0, 0.0};	// or 114.0, 114.0, 114.0
+        Vec3<> padValue {0.0, 0.0, 0.0};
 
 
 	// Constructors

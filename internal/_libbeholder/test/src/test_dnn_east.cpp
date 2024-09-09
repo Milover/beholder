@@ -61,7 +61,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 	beholder::EASTDetector det {};
 	det.modelPath = "model/_internal/east";
 	det.model = "east.pb";
-	det.size = 640;
+	det.size = beholder::EASTDetector::Vec2<> {640, 640};
 	if (!det.init())
 	{
 		std::cerr << "Could not initialize EAST text detector.\n";

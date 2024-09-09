@@ -53,7 +53,7 @@ public:
 		//- Default constructor
 		YOLOv8Detector()
 		{
-			scale = 1.0/255.0;
+			scale = Base::Vec3<> {1.0/255.0, 1.0/255.0, 1.0/255.0};
 		}
 
 		//- Disable copy constructor
