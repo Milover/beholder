@@ -1,4 +1,5 @@
 {
+	"tst_camera_test_image": "internal/neural/testdata/images/fima/sawlog_0.png",
 	"output": {
 		"format": "json",
 		"target": "stdout"
@@ -13,7 +14,7 @@
 	"cameras": [
 		{
 			"no_reboot": true,
-			"type": "gige",
+			"type": "emulated",
 			"serial_number": "pick-first",
 			"acquisition_timeout": "3s",
 			"trigger": {
@@ -31,16 +32,16 @@
 		}
 	],
 	"yolov8": {
-		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-640px.onnx",
+		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-1280px.onnx",
 		"config": {
-			"size": 640,
+			"size": [1280, 1280],
 			"confidence_threshold": 0.8
 		}
 	},
-	"east": {
-		"model": "internal/neural/model/_internal/east/east.pb",
+	"craft": {
+		"model": "internal/neural/model/_internal/craft/craft_320px.onnx",
 		"config": {
-			"size": 320
+			"size": [320, 320]
 		}
 	},
 	"tesseract": {
@@ -60,8 +61,8 @@
 	"image_processing": {
 		"preprocessing": [
 			{
-				"resize_to_height": {
-					"height": 50
+				"rescale": {
+					"scale": 3
 				}
 			},
 			{
@@ -74,8 +75,8 @@
 			},
 			{
 				"gaussian_blur": {
-					"kernel_width": 3,
-					"kernel_height": 3,
+					"kernel_width": 5,
+					"kernel_height": 5,
 					"sigma_x": 0,
 					"sigma_y": 0
 				}
@@ -89,6 +90,11 @@
 			},
 			{
 				"invert": null
+			},
+			{
+				"resize_to_height": {
+					"height": 50
+				}
 			}
 		],
 		"postprocessing": [

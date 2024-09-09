@@ -42,7 +42,7 @@ var (
 type DemoApp struct {
 	Cs camera.Array           `json:"cameras"`
 	Y  *neural.YOLOv8         `json:"yolov8"`
-	E  *neural.EAST           `json:"east"`
+	CR *neural.CRAFT          `json:"craft"`
 	T  *neural.Tesseract      `json:"tesseract"`
 	P  *imgproc.Processor     `json:"image_processing"`
 	O  *output.Output         `json:"output"`
@@ -56,11 +56,11 @@ type DemoApp struct {
 // NewDemoApp creates a new demo app.
 func NewDemoApp() *DemoApp {
 	return &DemoApp{
-		Y: neural.NewYOLOv8(),
-		E: neural.NewEAST(),
-		T: neural.NewTesseract(),
-		P: imgproc.NewProcessor(),
-		O: output.NewOutput(),
+		Y:  neural.NewYOLOv8(),
+		CR: neural.NewCRAFT(),
+		T:  neural.NewTesseract(),
+		P:  imgproc.NewProcessor(),
+		O:  output.NewOutput(),
 		F: Filename[models.Image]{
 			FString: "img_%v_%v.png",
 			Fields: []string{
@@ -76,7 +76,7 @@ func NewDemoApp() *DemoApp {
 func (app *DemoApp) Finalize() error {
 	app.Cs.Delete()
 	app.Y.Delete()
-	app.E.Delete()
+	app.CR.Delete()
 	app.T.Delete()
 	app.P.Delete()
 	return app.O.Close()
@@ -98,7 +98,7 @@ func (app *DemoApp) Init() error {
 	if err := app.Y.Init(); err != nil {
 		return err
 	}
-	if err := app.E.Init(); err != nil {
+	if err := app.CR.Init(); err != nil {
 		return err
 	}
 	if err := app.T.Init(); err != nil {
@@ -129,20 +129,23 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 
 	// loop for each yolo ROI
 	for i := range res.Boxes {
-		res.Boxes[i].Resize(int64(math.Floor(0.05 * float64(min(res.Boxes[i].Height(), res.Boxes[i].Width())))))
+		res.Boxes[i].Resize(int64(math.Floor(
+			0.05 * float64(min(res.Boxes[i].Height(),
+				res.Boxes[i].Width())),
+		)))
 		//res.Boxes[i].Resize(15)
 		app.P.SetROI(res.Boxes[i])
 
 		eRes := models.NewResult()
-		if err := app.E.Inference(app.P.GetRawImage(), eRes); err != nil {
+		if err := app.CR.Inference(app.P.GetRawImage(), eRes); err != nil {
 			log.Printf("text detection error: %v", err)
 			continue
 		}
-		if err := app.P.WriteImage(fmt.Sprintf("east_%v_%v.jpeg", app.P.GetRawImage().ID, i)); err != nil {
+		if err := app.P.WriteImage(fmt.Sprintf("craft_%v_%v.jpeg", app.P.GetRawImage().ID, i)); err != nil {
 			log.Printf("uh-oh")
 		}
 
-		// loop for each east ROI
+		// loop for each craft ROI
 		tRes := models.NewResult()
 		var ts []string
 		for ei, eb := range eRes.Boxes {
@@ -150,12 +153,18 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 			eb.Resize(int64(math.Floor(0.05 * float64(min(eb.Height(), eb.Width())))))
 			app.P.SetRotatedROI(eb, eRes.Angles[ei])
 
+			// DEBUG: remove
+			if err := app.P.WriteImage(fmt.Sprintf("pre_tess_%v_%v_%v.jpeg", app.P.GetRawImage().ID, ei, i)); err != nil {
+				log.Printf("uh-oh")
+			}
+			// DEBUG: remove
+
 			if err := app.P.Preprocess(); err != nil {
 				app.P.ResetROI()
 				return err
 			}
 			// DEBUG: remove
-			if err := app.P.WriteImage(fmt.Sprintf("tess_%v_%v_%v.jpeg", app.P.GetRawImage().ID, ei, i)); err != nil {
+			if err := app.P.WriteImage(fmt.Sprintf("post_tess_%v_%v_%v.jpeg", app.P.GetRawImage().ID, ei, i)); err != nil {
 				log.Printf("uh-oh")
 			}
 			// DEBUG: remove
