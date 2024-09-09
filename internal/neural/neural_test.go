@@ -19,7 +19,7 @@ func dfltTesseract() Network {
 }
 func dfltCRAFT() Network {
 	n := NewCRAFT()
-	n.Model = "model/_internal/craft/craft_320px.onnx"
+	n.Model = "model/_internal/craft/craft-320px.onnx"
 	n.Config.Size = [2]int{320, 320}
 	return n
 }

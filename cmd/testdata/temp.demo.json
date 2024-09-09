@@ -39,7 +39,7 @@
 		}
 	},
 	"craft": {
-		"model": "internal/neural/model/_internal/craft/craft_320px.onnx",
+		"model": "internal/neural/model/_internal/craft/craft-320px.onnx",
 		"config": {
 			"size": [320, 320]
 		}
