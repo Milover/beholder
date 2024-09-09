@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // A Rectangle has four vertices.
 type Rectangle struct {
@@ -23,6 +26,20 @@ func (r Rectangle) In(s Rectangle) bool {
 		r.Top > s.Top &&
 		r.Right < s.Right &&
 		r.Bottom < s.Bottom
+}
+
+// Rotate90 rotates r by 90°. Note that due to how [Rectangle] is implemented,
+// rotating by +/-90° and +/-270° yields the same r in all cases.
+func (r *Rectangle) Rotate90() {
+	w := r.Right - r.Left
+	h := r.Bottom - r.Top
+	cx := 0.5 * float64(r.Right+r.Left)
+	cy := 0.5 * float64(r.Bottom+r.Top)
+
+	r.Left = int64(math.Floor(cx - 0.5*float64(h)))
+	r.Top = int64(math.Floor(cy - 0.5*float64(w)))
+	r.Right = int64(math.Floor(cx + 0.5*float64(h)))
+	r.Bottom = int64(math.Floor(cy + 0.5*float64(w)))
 }
 
 // Offset moves the rectangle by x and y.

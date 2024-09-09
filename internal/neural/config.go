@@ -11,13 +11,16 @@ var (
 
 // Config holds [Network] specific configuration data.
 type Config struct {
-	// Size is the DNN input image size in pixels.
+	// Size is the DNN input image width x height in pixels.
 	//
 	// The image is scaled and padded, via letter-boxing, so that the image
-	// dimensions are Size*Size, while preserving the original aspect ratio.
-	Size int `json:"size"`
+	// dimensions are Size[0]*Size[1], while optionally preserving the original
+	// aspect ratio.
+	//
+	// TODO: this need a better explanation.
+	Size [2]int `json:"size"`
 	// Scale is a normalization constant by which pixel values are multiplied.
-	Scale float64 `json:"scale"`
+	Scale [3]float64 `json:"scale"`
 	// ConfidenceThreshold is the minimum confidence score needed to accept
 	// a detected object.
 	ConfidenceThreshold float32 `json:"confidence_threshold"`
@@ -34,8 +37,8 @@ type Config struct {
 // NewConfig returns a new Config with default values.
 func NewConfig() *Config {
 	return &Config{
-		Size:                640,
-		Scale:               1.0,
+		Size:                [2]int{640, 640},
+		Scale:               [3]float64{1.0, 1.0, 1.0},
 		ConfidenceThreshold: 0.5,
 		NMSThreshold:        0.4,
 		Mean:                [3]float64{0.0, 0.0, 0.0},
@@ -46,7 +49,7 @@ func NewConfig() *Config {
 
 // IsValid is function used as an assertion that c has valid values.
 func (c *Config) IsValid() error {
-	if c.Size <= 0 {
+	if c.Size[0] <= 0 || c.Size[1] <= 0 {
 		return fmt.Errorf("%w: bad size", ErrConfig)
 	}
 	if c.ConfidenceThreshold < 0.0 || c.ConfidenceThreshold > 1.0 {

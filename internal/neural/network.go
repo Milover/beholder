@@ -253,14 +253,27 @@ func (n network) Init() error {
 		model:     (*C.char)(ar.CopyStr(path.Base(mfn))),
 		backend:   C.int(n.Backend),
 		target:    C.int(n.Target),
-		size:      C.int(n.Config.Size),
-		scale:     C.double(n.Config.Scale),
 		conf:      C.float(n.Config.ConfidenceThreshold),
 		nms:       C.float(n.Config.NMSThreshold),
-		mean:      *(*[3]C.double)(unsafe.Pointer(&n.Config.Mean[0])),
 		swapRB:    C.bool(n.Config.SwapRB),
-		pad:       *(*[3]C.double)(unsafe.Pointer(&n.Config.PadValue[0])),
 	}
+
+	// assign arrays
+	v2Asgn := func(from [2]int, to *[2]C.int) {
+		for i := range 2 {
+			to[i] = C.int(from[i])
+		}
+	}
+	v3Asgn := func(from [3]float64, to *[3]C.double) {
+		for i := range 3 {
+			to[i] = C.double(from[i])
+		}
+	}
+	v2Asgn(n.Config.Size, &in.size)
+	v3Asgn(n.Config.Scale, &in.scale)
+	v3Asgn(n.Config.Mean, &in.mean)
+	v3Asgn(n.Config.PadValue, &in.pad)
+
 	// handle classes
 	in.nClasses = C.size_t(len(n.Classes))
 	in.classes = (**C.char)(ar.Malloc((uint64(in.nClasses) * uint64(unsafe.Sizeof((*C.char)(nil))))))

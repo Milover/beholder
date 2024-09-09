@@ -17,10 +17,16 @@ func dfltTesseract() Network {
 	n.Model = "model/_internal/tesseract/dflt/eng.traineddata"
 	return n
 }
+func dfltCRAFT() Network {
+	n := NewCRAFT()
+	n.Model = "model/_internal/craft/craft_320px.onnx"
+	n.Config.Size = [2]int{320, 320}
+	return n
+}
 func dfltEAST() Network {
 	n := NewEAST()
 	n.Model = "model/_internal/east/east.pb"
-	n.Config.Size = 160
+	n.Config.Size = [2]int{160, 160}
 	return n
 }
 func dfltYOLOv8() Network {
@@ -96,6 +102,68 @@ var networkTests = []networkTest{
 			},
 			Text:        []string{"TEXT TEXT", "TEXT TEXT"},
 			Confidences: make([]float64, 2),
+		},
+	},
+	// test craft
+	{
+		Name:    "craft-text-1-line-1-word",
+		Error:   nil,
+		Factory: dfltCRAFT,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
+			},
+			Text:        make([]string, 1),
+			Confidences: make([]float64, 1),
+		},
+	},
+	{
+		Name:    "craft-text-1-line-2-word",
+		Error:   nil,
+		Factory: dfltCRAFT,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_2_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 10, Top: 20, Right: 120, Bottom: 65},
+				models.Rectangle{Left: 120, Top: 20, Right: 230, Bottom: 65},
+			},
+			Text:        make([]string, 2),
+			Confidences: make([]float64, 2),
+		},
+	},
+	{
+		Name:    "craft-text-2-line-1-word",
+		Error:   nil,
+		Factory: dfltCRAFT,
+		Config:  "",
+		Image:   "testdata/images/text_2_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
+				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
+			},
+			Text:        make([]string, 2),
+			Confidences: make([]float64, 2),
+		},
+	},
+	{
+		Name:    "craft-text-2-line-2-word",
+		Error:   nil,
+		Factory: dfltCRAFT,
+		Config:  "",
+		Image:   "testdata/images/text_2_line_2_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{
+				models.Rectangle{Left: 30, Top: 20, Right: 140, Bottom: 60},
+				models.Rectangle{Left: 140, Top: 20, Right: 250, Bottom: 60},
+				models.Rectangle{Left: 30, Top: 65, Right: 140, Bottom: 105},
+				models.Rectangle{Left: 140, Top: 65, Right: 250, Bottom: 105},
+			},
+			Text:        make([]string, 4),
+			Confidences: make([]float64, 4),
 		},
 	},
 	// test east
@@ -187,10 +255,31 @@ const netInfRepeat = 3 // No. inferencing re-runs during tests
 //
 // Since the element order might vary, both expected and actual are sorted
 // in ascending order, based on the distance of the top left vertex from origin.
-func boxesInExpected(expected, actual []models.Rectangle, t *testing.T) bool {
-	if len(expected) != len(actual) {
+//
+// Before sorting and comparing, the boxes are rotated by 90°/270°,
+// if necessary (the result contains an angle), because some [Networks] yield
+// rotated/transposed results, e.g. [neural.CRAFT].
+func boxesInExpected(expected, actual *models.Result, t *testing.T) bool {
+	if len(expected.Boxes) != len(actual.Boxes) {
 		return false
 	}
+	// rotate by 90° increments only
+	// TODO: handle arbitrary angles
+	rot := func(rs []models.Rectangle, as []float64) {
+		if len(rs) != len(as) {
+			return
+		}
+		for i := range rs {
+			switch math.Abs(math.Round(as[i])) { // FIXME: wtf, bro
+			case 90.0, 270.0:
+				rs[i].Rotate90()
+			}
+		}
+	}
+	rot(expected.Boxes, expected.Angles)
+	rot(actual.Boxes, actual.Angles)
+
+	// sort
 	cmp := func(a, b models.Rectangle) int {
 		da := math.Hypot(float64(a.Left), float64(a.Top))
 		db := math.Hypot(float64(b.Left), float64(b.Top))
@@ -203,13 +292,13 @@ func boxesInExpected(expected, actual []models.Rectangle, t *testing.T) bool {
 			return 0
 		}
 	}
-	slices.SortFunc(expected, cmp)
-	slices.SortFunc(actual, cmp)
+	slices.SortFunc(expected.Boxes, cmp)
+	slices.SortFunc(actual.Boxes, cmp)
 
 	ok := true
-	for i := range expected {
+	for i := range expected.Boxes {
 		//t.Logf("expected: %v\tactual: %v", expected[i], actual[i])
-		ok = ok && actual[i].In(expected[i])
+		ok = ok && actual.Boxes[i].In(expected.Boxes[i])
 	}
 	return ok
 }
@@ -258,7 +347,7 @@ func TestNetworkInference(t *testing.T) {
 				// check boxes
 				assert.Equal(len(tt.Expected.Boxes), len(res.Boxes),
 					"boxes length mismatch")
-				assert.True(boxesInExpected(tt.Expected.Boxes, res.Boxes, t),
+				assert.True(boxesInExpected(&tt.Expected, res, t),
 					"box overlap mismatch")
 				// check confidences; XXX: checking length only
 				assert.Equal(len(tt.Expected.Confidences), len(res.Confidences),

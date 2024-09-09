@@ -38,6 +38,6 @@ func NewYOLOv8() *YOLOv8 {
 	y.p = newYOLOv8CPtr()
 	// YOLOv8 expects pixel values to be [0, 1], see:
 	// https://docs.ultralytics.com/guides/preprocessing_annotated_data/#normalizing-pixel-values
-	y.Config.Scale = 1.0 / 255.0
+	y.Config.Scale = [3]float64{1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0}
 	return y
 }

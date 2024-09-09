@@ -38,8 +38,8 @@ typedef struct {
 	int target;
 	char** classes;
 	size_t nClasses;
-	int size;
-	double scale;
+	int size[2];
+	double scale[3];
 	float conf;
 	float nms;
 	double mean[3];
@@ -51,6 +51,7 @@ void Det_Clear(Det d);
 void Det_Delete(Det d);
 ResArr* Det_Detect(Det d, const Img* img);
 bool Det_Init(Det d, const DetInit* in);
+Det Det_NewCRAFT();
 Det Det_NewEAST();
 Det Det_NewYOLOv8();
 

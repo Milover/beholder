@@ -1,8 +1,17 @@
+#include <array>
 #include <cstring>
 #include <vector>
 #include <string>
 
 #include "neural.h"
+
+// vecAsgn assigns values from C-array to a std::array.
+template<typename T, int Sz>
+void arAsgn(std::array<T, Sz>& ar, const T (&a)[Sz]) {
+	for (auto i {0}; i < Sz; ++i) {
+		ar[i] = a[i];
+	}
+}
 
 void ResArr_Delete(void* r) {
 	if (r) {
@@ -55,23 +64,18 @@ bool Det_Init(Det d, const DetInit* in) {
 	if (!d || !in) {
 		return false;
 	}
-	auto arrAsgn = [](std::array<double, 3>& ar, const double (&a)[3]) -> void {
-		for (auto i {0}; i < 3; ++i) {
-			ar[i] = a[i];
-		}
-	};
 	d->modelPath = std::string {in->modelPath};
 	d->model = std::string {in->model};
 	d->backend = in->backend;
 	d->target = in->target;
-	d->size = in->size;
-	d->scale = in->scale;
 	d->confidenceThreshold = in->conf;
 	d->nmsThreshold = in->nms;
 	d->swapRB = in->swapRB;
 	// handle arrays
-	arrAsgn(d->mean, in->mean);
-	arrAsgn(d->padValue, in->pad);
+	arAsgn<double, 3>(d->mean, in->mean);
+	arAsgn<double, 3>(d->padValue, in->pad);
+	arAsgn<double, 3>(d->scale, in->scale);
+	arAsgn<int, 2>(d->size, in->size);
 	// handle classes
 	d->classes.clear();
 	d->classes.reserve(in->nClasses);
@@ -79,6 +83,10 @@ bool Det_Init(Det d, const DetInit* in) {
 		d->classes.emplace_back(in->classes[i]);
 	}
 	return d->init();
+}
+
+Det Det_NewCRAFT() {
+	return static_cast<Det>(new beholder::CRAFTDetector {});
 }
 
 Det Det_NewEAST() {
