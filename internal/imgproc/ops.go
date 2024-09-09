@@ -27,6 +27,7 @@ var opFactoryMap = map[string]opFactory{
 	"auto_crop":                     NewAutoCrop,
 	"auto_orient":                   NewAutoOrient,
 	"clahe":                         NewCLAHE,
+	"correct_gamma":                 NewCorrectGamma,
 	"crop":                          NewCrop,
 	"deblur":                        NewDeblur,
 	"div_gaussian_blur":             NewDivGaussianBlur,
@@ -267,6 +268,29 @@ func NewCLAHE(m json.RawMessage) (unsafe.Pointer, error) {
 		C.float(op.ClipLimit),
 		C.int(op.TileRows),
 		C.int(op.TileColumns),
+	)), nil
+}
+
+// correctGamma performs gamma correction on an image.
+type correctGamma struct {
+	Gamma float64 `json:"gamma"`
+}
+
+// NewCorrectGamma creates a gamma correction operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewCorrectGamma(m json.RawMessage) (unsafe.Pointer, error) {
+	op := correctGamma{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	if op.Gamma < 0.0 {
+		return nil, errors.New("imgproc.NewCorrectGamma: bad gamma value")
+	}
+	return unsafe.Pointer(C.CorrGamma_New(
+		C.double(op.Gamma),
 	)), nil
 }
 

@@ -22,6 +22,10 @@ CLH CLH_New(float lim, int tRows, int tCols) {
 	return new beholder::CLAHE {lim, tRows, tCols};
 }
 
+CorrGamma CorrGamma_New(double gamma) {
+	return new beholder::CorrectGamma {gamma};
+}
+
 Crp Crp_New(int left, int top, int width, int height) {
 	return new beholder::Crop {left, top, width, height};
 }
