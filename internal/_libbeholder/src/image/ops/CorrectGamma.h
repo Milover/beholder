@@ -7,22 +7,19 @@ License
 	See the LICENSE file for license information.
 
 Description
-	An image sharpennig operation using the 'unsharp mask' algorithm.
-
-	For more info, see:
-	https://docs.opencv.org/4.10.0/d1/d10/classcv_1_1MatExpr.html#details
+	A gamma correction operation.
 
 SourceFiles
-	UnsharpMask.cpp
+	CorrectGamma.cpp
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BEHOLDER_UNSHARP_MASK_OP_H
-#define BEHOLDER_UNSHARP_MASK_OP_H
+#ifndef BEHOLDER_CORRECT_GAMMA_OP_H
+#define BEHOLDER_CORRECT_GAMMA_OP_H
 
 #include <vector>
 
-#include "GaussianBlur.h"
+#include "ProcessingOp.h"
 
 // * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
 
@@ -37,22 +34,22 @@ namespace beholder
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class UnsharpMask Declaration
+                         Class CorrectGamma Declaration
 \*---------------------------------------------------------------------------*/
 
-class UnsharpMask
+class CorrectGamma
 :
-	public GaussianBlur
+	public ProcessingOp
 {
 protected:
 
 	// Protected member functions
 
 		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
+		bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
 		//- Execute the processing operation
-		virtual bool execute
+		bool execute
 		(
 			const cv::Mat& in,
 			cv::Mat& out,
@@ -63,42 +60,38 @@ public:
 
 	//- Public data
 
-		//- Scale factor
-		double sigma {1.0};
-		double threshold {5.0};
-		double amount {1.0};
+		//- Gamma correction value
+		double gamma {1.0};
 
 	//- Constructors
 
 		//- Default constructor
-		UnsharpMask() = default;
+		CorrectGamma() = default;
 
 		//- Default constructor
-		UnsharpMask(double s, double t, double a)
+		CorrectGamma(double g)
 		:
-			sigma {s},
-			threshold {t},
-			amount {a}
+			gamma {g}
 		{}
 
 		//- Default copy constructor
-		UnsharpMask(const UnsharpMask&) = default;
+		CorrectGamma(const CorrectGamma&) = default;
 
 		//- Default move constructor
-		UnsharpMask(UnsharpMask&&) = default;
+		CorrectGamma(CorrectGamma&&) = default;
 
 	//- Destructor
-	virtual ~UnsharpMask() = default;
+	virtual ~CorrectGamma() = default;
 
 	//- Member functions
 
 	//- Member operators
 
 		//- Default copy assignment
-		UnsharpMask& operator=(const UnsharpMask&) = default;
+		CorrectGamma& operator=(const CorrectGamma&) = default;
 
 		//- Default move assignment
-		UnsharpMask& operator=(UnsharpMask&&) = default;
+		CorrectGamma& operator=(CorrectGamma&&) = default;
 
 };
 

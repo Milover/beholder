@@ -21,6 +21,7 @@ Description
 #include "AutoCrop.h"
 #include "AutoOrient.h"
 #include "CLAHE.h"
+#include "CorrectGamma.h"
 #include "Crop.h"
 #include "Deblur.h"
 #include "DivGaussianBlur.h"
