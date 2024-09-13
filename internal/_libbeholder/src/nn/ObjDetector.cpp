@@ -21,6 +21,7 @@ License
 #include "RawImage.h"
 #include "Rectangle.h"
 #include "Result.h"
+#include "Traits.h"
 
 #include "internal/ObjDetectorBuffers.h"
 
@@ -54,6 +55,11 @@ static_assert(static_cast<int>(NNTarget::TargetCUDAfp16) == static_cast<int>(cv:
 static_assert(static_cast<int>(NNTarget::TargetHDDL) == static_cast<int>(cv::dnn::DNN_TARGET_HDDL));
 static_assert(static_cast<int>(NNTarget::TargetNPU) == static_cast<int>(cv::dnn::DNN_TARGET_NPU));
 static_assert(static_cast<int>(NNTarget::TargetCPUfp16) == static_cast<int>(cv::dnn::DNN_TARGET_CPU_FP16));
+
+// DNN (blob) padding mode checks
+static_assert(toUnderlying(ObjDetector::ResizeMode::ResizeRaw) == cv::dnn::DNN_PMODE_NULL);
+static_assert(toUnderlying(ObjDetector::ResizeMode::ResizeCrop) == cv::dnn::DNN_PMODE_CROP_CENTER);
+static_assert(toUnderlying(ObjDetector::ResizeMode::ResizeLetterbox) == cv::dnn::DNN_PMODE_LETTERBOX);
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
@@ -111,32 +117,14 @@ bool ObjDetector::detect(const RawImage& raw)
 	// would like this to work for RotatedRects as well.
 	// See TextDetectionModel_EAST_impl::detectTextRectangles for an example
 	// implamentation.
-	params_->blobRectsToImageRects(buf_->tBoxes, buf_->tBoxes, img->size());
-
-	// filter and store results
-	res_.reserve(buf_->tNMSIDs.size());
-	std::string text {""};
-	for (auto i {0ul}; i < buf_->tNMSIDs.size(); ++i)
+	if (!buf_->tBoxes.empty())
 	{
-		auto id {buf_->tNMSIDs[i]};	// use NMS filtered IDs to select results
-		const cv::Rect& r {buf_->tBoxes[id]};
-		if (!buf_->tClassIDs.empty())
-		{
-			auto classID {buf_->tClassIDs[id]};
-			text = classes.size() > static_cast<size_t>(classID)
-				 ? classes[classID] : std::to_string(classID);
-		}
-		res_.emplace_back
-		(
-			Result
-			{
-				text,
-				Rectangle {r.x, r.y, r.x + r.width, r.y + r.height},
-				buf_->tAngles[id],
-				static_cast<double>(buf_->tConfidences[id])
-			}
-		);
+		params_->blobRectsToImageRects(buf_->tBoxes, buf_->tBoxes, img->size());
 	}
+
+	// store results
+	store();
+
 	return !res_.empty();
 }
 
@@ -168,7 +156,7 @@ bool ObjDetector::init()
 			swapRB,
 			CV_32F,
 			cv::dnn::DNN_LAYOUT_NCHW,
-			cv::dnn::DNN_PMODE_LETTERBOX,
+			static_cast<cv::dnn::ImagePaddingMode>(resizeMode_),
 			cv::Scalar {padValue[0], padValue[1], padValue[2]}
 		}
 	);

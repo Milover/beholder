@@ -95,7 +95,6 @@ void CRAFTDetector::extract()
 		)
 	};
 
-	auto rCount {0ul};
 	// skip the first label, because it will be the whole image
 	for (auto i {1}; i < nLabels; ++i)
 	{
@@ -183,10 +182,24 @@ void CRAFTDetector::extract()
 			);
 			buf_->tAngles.emplace_back(rect.angle);
 			buf_->tConfidences.emplace_back(0.0);
-
-			buf_->tNMSIDs.emplace_back(rCount);
-			++rCount;
 		}
+	}
+}
+
+void CRAFTDetector::store()
+{
+	res_.reserve(buf_->tBoxes.size());
+	for (auto i {0ul}; i < buf_->tBoxes.size(); ++i)
+	{
+		Result r {};
+
+		const cv::Rect& b {buf_->tBoxes[i]};
+
+		r.boxRotAngle = buf_->tAngles[i];
+		r.box = Rectangle {b.x, b.y, b.x + b.width, b.y + b.height},
+		r.confidence = static_cast<double>(buf_->tConfidences[i]);
+
+		res_.emplace_back(std::move(r));
 	}
 }
 

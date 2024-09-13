@@ -69,7 +69,7 @@ enum NNBackend
 	BackendCUDA,
 	BackendWebNN,		// Microsoft WebNN
 	BackendTIMVX,		// VeriSilicon TIM-VX
-	BackendCANN,		// Huawei CANN backend
+	BackendCANN			// Huawei CANN backend
 };
 
 // can't do enum class because Go will complain
@@ -85,9 +85,8 @@ enum NNTarget
 	TargetCUDAfp16,
 	TargetHDDL,			// OpenVINO HDDL
 	TargetNPU,
-	TargetCPUfp16,		// ARM only
+	TargetCPUfp16		// ARM only
 };
-
 
 /*---------------------------------------------------------------------------*\
                       Class ObjDetector Declaration
@@ -95,6 +94,33 @@ enum NNTarget
 
 class ObjDetector
 {
+public:
+
+	template<typename T = int> using Vec2 = std::array<T, 2>;
+	template<typename T = double> using Vec3 = std::array<T, 3>;
+
+	// Public enums
+
+	//- Image padding/resizing mode during image-to-blob conversion.
+	//
+	//	This should usually be set by the model, not at runtime, i.e.
+	//	Go shouldn't need to know these values, so we can keep them here.
+	//
+	//	NOTE: the details of each of these depent on OpenCV's implementation
+	//	currently, so even though the methods are described below, the actual
+	//	implementation might differ.
+	enum class ResizeMode : int
+	{
+		// Resize directly to 'size'.
+		ResizeRaw = 0,
+		// Resize based on the largest scale factor, determined by comparing
+		// 'size' to the image size, and then crop to 'size' from the center.
+		ResizeCrop,
+		// Resize based on the smallest scale factor, determined by comparing
+		// 'size' to the image size, and then letterbox to 'size'
+		ResizeLetterbox
+	};
+
 protected:
 
 	// Protected data
@@ -114,17 +140,23 @@ protected:
 		//- detection results
 		std::vector<Result> res_;
 
+		//- Image padding/resize mode when converting to blob.
+		//	Should usually be set by the model, not at runtime.
+		//	TODO: should letterboxing be the default?
+		ResizeMode resizeMode_ {ResizeMode::ResizeLetterbox};
+
 	// Protected member functions
 
-		//- Extract inference results
+		//- Extract and store inference results
 		//	TODO: we would like to time this externally, somehow
 		//	TODO: should return an error of some kind
 		virtual void extract() = 0;
 
-public:
+		//- Store extracted results from the buffer after mapping bounding
+		//	boxes from the blob back to the image.
+		virtual void store() = 0;
 
-	template<typename T = int> using Vec2 = std::array<T, 2>;
-	template<typename T = double> using Vec3 = std::array<T, 3>;
+public:
 
 	// Public data
 
@@ -190,7 +222,8 @@ public:
 		//- Clear detection results
 		virtual void clear();
 
-		//- Run text detection and store the results
+		//- Run inferencing and store the results
+		//	NOTE: the results are cleared as soon as detect is called.
 		virtual bool detect(const RawImage& raw);
 
 		//- Get a const reference to the detection results
