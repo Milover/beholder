@@ -29,6 +29,12 @@ func dfltEAST() Network {
 	n.Config.Size = [2]int{160, 160}
 	return n
 }
+func dfltPARSeq() Network {
+	n := NewPARSeq()
+	n.Model = "model/_internal/parseq/parseq-128x32px.onnx"
+	n.Config.Size = [2]int{128, 32}
+	return n
+}
 func dfltYOLOv8() Network {
 	n := NewYOLOv8()
 	n.Model = "model/_internal/yolo/yolov8n.onnx"
@@ -115,7 +121,7 @@ var networkTests = []networkTest{
 			Boxes: []models.Rectangle{
 				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
 			},
-			Text:        make([]string, 1),
+			Text:        make([]string, 1), // FIXME: shouldn't be necessary
 			Confidences: make([]float64, 1),
 		},
 	},
@@ -130,7 +136,7 @@ var networkTests = []networkTest{
 				models.Rectangle{Left: 10, Top: 20, Right: 120, Bottom: 65},
 				models.Rectangle{Left: 120, Top: 20, Right: 230, Bottom: 65},
 			},
-			Text:        make([]string, 2),
+			Text:        make([]string, 2), // FIXME: shouldn't be necessary
 			Confidences: make([]float64, 2),
 		},
 	},
@@ -145,7 +151,7 @@ var networkTests = []networkTest{
 				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
 				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
 			},
-			Text:        make([]string, 2),
+			Text:        make([]string, 2), // FIXME: shouldn't be necessary
 			Confidences: make([]float64, 2),
 		},
 	},
@@ -162,7 +168,7 @@ var networkTests = []networkTest{
 				models.Rectangle{Left: 30, Top: 65, Right: 140, Bottom: 105},
 				models.Rectangle{Left: 140, Top: 65, Right: 250, Bottom: 105},
 			},
-			Text:        make([]string, 4),
+			Text:        make([]string, 4), // FIXME: shouldn't be necessary
 			Confidences: make([]float64, 4),
 		},
 	},
@@ -230,6 +236,21 @@ var networkTests = []networkTest{
 		},
 	},
 	*/
+	// test parseq
+	{
+		Name:    "parseq-text-1-line-1-word",
+		Error:   nil,
+		Factory: dfltPARSeq,
+		Config:  "",
+		Image:   "testdata/images/text_1_line_1_word.png",
+		Expected: models.Result{
+			Boxes: []models.Rectangle{ // FIXME: dummy value, shouldn't be necessary
+				models.Rectangle{Left: -1, Top: -1, Right: 1, Bottom: 1},
+			},
+			Text:        []string{"TEXT"},
+			Confidences: make([]float64, 1),
+		},
+	},
 	// test yolov8
 	{
 		Name:    "yolov8-zidane",
