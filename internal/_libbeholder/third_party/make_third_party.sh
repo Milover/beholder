@@ -39,30 +39,37 @@ rm -f install_manifest.txt
 #------------------------------------------------------------------------------
 # download sources and build archive if necessary
 
-if [ ! -f "archive.tar.gz" ]; then
+if [ ! -d "archive" ]; then
 	mkdir archive
 	cd archive
 
-	git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git
-	git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git
-	git clone --depth=1 --branch "$TESSERACT_VERSION" https://github.com/tesseract-ocr/tesseract.git
+	# get OpenCV
+	git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv.git "opencv-$OPENCV_VERSION"
+	tar -cvzf "opencv-$OPENCV_VERSION.tar.gz" "opencv-$OPENCV_VERSION"
+	rm -r "opencv-$OPENCV_VERSION"
 
-	mkdir -v pylon
+	# get leptonica
+	git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git "leptonica-$LEPTONICA_VERSION"
+	tar -cvzf "leptonica-$LEPTONICA_VERSION.tar.gz" "leptonica-$LEPTONICA_VERSION"
+	rm -r "leptonica-$LEPTONICA_VERSION"
+
+	# get tesseract
+	git clone --depth=1 --branch "$TESSERACT_VERSION" https://github.com/tesseract-ocr/tesseract.git "tesseract-$TESSERACT_VERSION"
+	tar -cvzf "tesseract-$TESSERACT_VERSION.tar.gz" "tesseract-$TESSERACT_VERSION"
+	rm -r "tesseract-$TESSERACT_VERSION"
+
+	# get pylon
+	mkdir -v "pylon-$PYLON_VERSION"
 	curl -O "https://www2.baslerweb.com/media/downloads/software/pylon_software/pylon-${PYLON_VERSION}_setup.tar.gz"
 	tar -xvf "pylon-${PYLON_VERSION}_setup.tar.gz"
-	tar -C pylon -xvf "pylon-${PYLON_VERSION}.tar.gz"
-	rm -vf "pylon-${PYLON_VERSION}.tar.gz" \
-		   "pylon-${PYLON_VERSION}_setup.tar.gz" \
+	tar -C "pylon-$PYLON_VERSION" -xvf "pylon-$PYLON_VERSION.tar.gz"
+	rm -vf "pylon-$PYLON_VERSION.tar.gz" \
+		   "pylon-$PYLON_VERSION_setup.tar.gz" \
 		   INSTALL
+	tar -cvzf "pylon-$PYLON_VERSION.tar.gz" "pylon-$PYLON_VERSION"
+	rm -r "pylon-$PYLON_VERSION"
 
 	cd "$THIRD_PARTY_DIR"
-
-	tar -cvzf archive.tar.gz archive
-	#rm -r archive
-fi
-
-if [ ! -d "archive" ]; then
-	tar -xvzf archive.tar.gz
 fi
 
 #------------------------------------------------------------------------------
@@ -71,7 +78,8 @@ fi
 if [ ! -d opencv ]; then
 	echo "setting up OpenCV"
 
-	mv archive/opencv ./
+	tar -C "./" -xvzf "archive/opencv-$OPENCV_VERSION.tar.gz"
+	mv "opencv-$OPENCV_VERSION" opencv
 	cd opencv
 	git apply "$THIRD_PARTY_DIR/patches/opencv.patch"
 	mkdir build
@@ -84,7 +92,7 @@ if [ ! -d opencv ]; then
 		  -DOPENCV_GENERATE_PKGCONFIG=ON \
 		  -DOPENCV_FORCE_3RDPARTY_BUILD=ON \
 		  ../
-	make -j4
+	make -j8
 	make install
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
@@ -101,7 +109,8 @@ fi
 if [ ! -d leptonica ]; then
 	echo "setting up leptonica"
 
-	mv archive/leptonica ./
+	tar -C "./" -xvzf "archive/leptonica-$LEPTONICA_VERSION.tar.gz"
+	mv "leptonica-$LEPTONICA_VERSION" leptonica
 	cd leptonica
 	git apply "$THIRD_PARTY_DIR/patches/leptonica.patch"
 	mkdir build
@@ -126,7 +135,7 @@ if [ ! -d leptonica ]; then
 		  -DOPENJPEG_INCLUDE_DIRS:PATH="$THIRD_PARTY_DIR/opencv/3rdparty/openjpeg/openjp2;$THIRD_PARTY_DIR/opencv/build/3rdparty/openjpeg/openjp2" \
 		  -DENABLE_GIF=OFF \
 		  ../
-	make -j4
+	make -j8
 	make install
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
@@ -143,7 +152,8 @@ fi
 if [ ! -d tesseract ]; then
 	echo "setting up tesseract"
 
-	mv archive/tesseract ./
+	tar -C "./" -xvzf "archive/tesseract-$TESSERACT_VERSION.tar.gz"
+	mv "tesseract-$TESSERACT_VERSION" tesseract
 	mkdir tesseract/build
 	cd tesseract/build
 	cmake -DCMAKE_BUILD_TYPE=Release \
@@ -160,7 +170,7 @@ if [ ! -d tesseract ]; then
 		  -DTIFF_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibtiff.a" \
 		  -DLeptonica_DIR="$OPT_INSTALL_DIR/lib/cmake/leptonica" \
 		  ../
-	make -j4
+	make -j8
 	make install
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
@@ -181,7 +191,8 @@ if [ "$PLATFORM" = "Darwin" ]; then
 elif [ ! -d pylon ]; then
 	echo "setting up pylon"
 
-	mv archive/pylon ./
+	tar -C "./" -xvzf "archive/pylon-$PYLON_VERSION.tar.gz"
+	mv "pylon-$PYLON_VERSION" pylon
 	cd pylon
 
 	# package and 'install' pylon
@@ -255,7 +266,5 @@ fi
 if [ "$PLATFORM" = "Linux" ]; then
 	ldconfig
 fi
-
-rm -rf archive
 
 #------------------------------------------------------------------------------
