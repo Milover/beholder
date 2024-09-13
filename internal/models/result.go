@@ -11,6 +11,10 @@ import (
 //
 // TODO: a Result should probably know to which image it is associated, eg.
 // by holding some type of reference to it.
+// TODO: pull out the raw data into a new type, and mark which fields are
+// required to always be present (currently only Confidences), or provide a
+// generic way of iterating/assigning result values without having to check
+// the length of each slice every time.
 type Result struct {
 	// Boxes is a list of bounding boxes detected by a processing pipeline.
 	Boxes []Rectangle `json:"boxes"`
