@@ -19,6 +19,8 @@ const TypeCRAFT Type = 4 // CRAFT text detection models
 // WARNING: CRAFT contains C-managed resources so when it is no longer needed,
 // [CRAFT.Delete] must be called to release the resources and clean up.
 //
+// FIXME: forward runtime params to C-API
+//
 // [CRAFT]: https://github.com/clovaai/CRAFT-pytorch
 type CRAFT struct {
 	TextThreshold float32 // text confidence threshold

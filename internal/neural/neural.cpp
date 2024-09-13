@@ -93,6 +93,10 @@ Det Det_NewEAST() {
 	return static_cast<Det>(new beholder::EASTDetector {});
 }
 
+Det Det_NewPARSeq() {
+	return static_cast<Det>(new beholder::PARSeqDetector {});
+}
+
 Det Det_NewYOLOv8() {
 	return static_cast<Det>(new beholder::YOLOv8Detector {});
 }

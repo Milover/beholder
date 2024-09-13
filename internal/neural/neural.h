@@ -53,6 +53,7 @@ ResArr* Det_Detect(Det d, const Img* img);
 bool Det_Init(Det d, const DetInit* in);
 Det Det_NewCRAFT();
 Det Det_NewEAST();
+Det Det_NewPARSeq();
 Det Det_NewYOLOv8();
 
 typedef struct {
