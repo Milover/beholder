@@ -43,7 +43,7 @@ type DemoApp struct {
 	Cs camera.Array           `json:"cameras"`
 	Y  *neural.YOLOv8         `json:"yolov8"`
 	CR *neural.CRAFT          `json:"craft"`
-	T  *neural.Tesseract      `json:"tesseract"`
+	PS *neural.PARSeq         `json:"parseq"`
 	P  *imgproc.Processor     `json:"image_processing"`
 	O  *output.Output         `json:"output"`
 	F  Filename[models.Image] `json:"filename"`
@@ -58,7 +58,7 @@ func NewDemoApp() *DemoApp {
 	return &DemoApp{
 		Y:  neural.NewYOLOv8(),
 		CR: neural.NewCRAFT(),
-		T:  neural.NewTesseract(),
+		PS: neural.NewPARSeq(),
 		P:  imgproc.NewProcessor(),
 		O:  output.NewOutput(),
 		F: Filename[models.Image]{
@@ -77,7 +77,7 @@ func (app *DemoApp) Finalize() error {
 	app.Cs.Delete()
 	app.Y.Delete()
 	app.CR.Delete()
-	app.T.Delete()
+	app.PS.Delete()
 	app.P.Delete()
 	return app.O.Close()
 }
@@ -101,7 +101,7 @@ func (app *DemoApp) Init() error {
 	if err := app.CR.Init(); err != nil {
 		return err
 	}
-	if err := app.T.Init(); err != nil {
+	if err := app.PS.Init(); err != nil {
 		return err
 	}
 	if err := app.P.Init(); err != nil {
@@ -154,26 +154,16 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 			app.P.SetRotatedROI(eb, eRes.Angles[ei])
 
 			// DEBUG: remove
-			if err := app.P.WriteImage(fmt.Sprintf("pre_tess_%v_%v_%v.jpeg", app.P.GetRawImage().ID, ei, i)); err != nil {
+			if err := app.P.WriteImage(fmt.Sprintf("parseq_%v_%v_%v.jpeg", app.P.GetRawImage().ID, i, ei)); err != nil {
 				log.Printf("uh-oh")
 			}
 			// DEBUG: remove
-
-			if err := app.P.Preprocess(); err != nil {
-				app.P.ResetROI()
-				return err
-			}
-			// DEBUG: remove
-			if err := app.P.WriteImage(fmt.Sprintf("post_tess_%v_%v_%v.jpeg", app.P.GetRawImage().ID, ei, i)); err != nil {
-				log.Printf("uh-oh")
-			}
-			// DEBUG: remove
-			if err := app.T.Inference(app.P.GetRawImage(), tRes); err != nil {
+			if err := app.PS.Inference(app.P.GetRawImage(), tRes); err != nil {
 				log.Printf("text recognition error: %v", err)
 			}
 			ts = append(ts, tRes.Text...)
 			for _, tc := range tRes.Confidences {
-				res.Confidences[i] *= tc / 100.0
+				res.Confidences[i] *= tc
 			}
 		}
 		res.Text[i] = strings.Join(ts, " ")
