@@ -16,6 +16,7 @@ const TypeEAST Type = 3 // EAST text detection models
 // The [Network] interface is implemented by the embedded [network], so the
 // same usage rules apply.
 //
+// WARNING: a new EAST should ALWAYS be created using [NewEAST].
 // WARNING: EAST contains C-managed resources so when it is no longer needed,
 // [EAST.Delete] must be called to release the resources and clean up.
 //
@@ -34,13 +35,15 @@ func newEASTCPtr() C.Det {
 }
 
 // NewEAST constructs (C call) a new EAST text detection network.
+// See the [docs] for more info about the default values.
 // WARNING: [EAST.Delete] must be called to release the memory
 // when no longer needed.
+//
+// [docs]: https://docs.opencv.org/4.10.0/d4/d43/tutorial_dnn_text_spotting.html
 func NewEAST() *EAST {
-	e := &EAST{network: newNetwork()}
-	e.p = newEASTCPtr()
-	// EAST expects a specific mean normalization value, see:
-	// https://docs.opencv.org/4.10.0/d4/d43/tutorial_dnn_text_spotting.html
-	e.Config.Mean = [3]float64{123.68, 116.78, 103.94}
-	return e
+	n := &EAST{network: newNetwork()}
+	n.p = newEASTCPtr()
+
+	n.Config.Mean = [3]float64{123.68, 116.78, 103.94}
+	return n
 }

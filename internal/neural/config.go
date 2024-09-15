@@ -25,6 +25,8 @@ type Config struct {
 	// a detected object.
 	ConfidenceThreshold float32 `json:"confidence_threshold"`
 	// NMSThreshold is the non-maximum suppression threshold.
+	//
+	// TODO: should be moved somewhere else, since only some models use NMS
 	NMSThreshold float32 `json:"nms_threshold"`
 	// Mean is a normalization constant which is subtracted from pixel values.
 	Mean [3]float64 `json:"mean"`

@@ -182,11 +182,6 @@ type network struct {
 	// Config is the network configuration.
 	Config *Config `json:"config"`
 
-	// Classes are the object clases which the current model can detect.
-	//
-	// TODO: this shouldn't be here
-	Classes []string `json:"classes"`
-
 	p C.Det // pointer to the C++ API class.
 }
 
@@ -274,14 +269,6 @@ func (n network) Init() error {
 	v3Asgn(n.Config.Mean, &in.mean)
 	v3Asgn(n.Config.PadValue, &in.pad)
 
-	// handle classes
-	in.nClasses = C.size_t(len(n.Classes))
-	in.classes = (**C.char)(ar.Malloc((uint64(in.nClasses) * uint64(unsafe.Sizeof((*C.char)(nil))))))
-	classesSlice := unsafe.Slice(in.classes, uint64(in.nClasses))
-	// TODO: the classes probably shouldn't be here
-	for i, p := range n.Classes {
-		classesSlice[i] = (*C.char)(ar.CopyStr(p))
-	}
 	if ok := C.Det_Init(n.p, &in); !ok {
 		return ErrInit
 	}

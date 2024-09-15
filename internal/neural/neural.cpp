@@ -64,25 +64,25 @@ bool Det_Init(Det d, const DetInit* in) {
 	if (!d || !in) {
 		return false;
 	}
-	d->modelPath = std::string {in->modelPath};
-	d->model = std::string {in->model};
-	d->backend = in->backend;
-	d->target = in->target;
-	d->confidenceThreshold = in->conf;
-	d->nmsThreshold = in->nms;
-	d->swapRB = in->swapRB;
-	// handle arrays
-	arAsgn<double, 3>(d->mean, in->mean);
-	arAsgn<double, 3>(d->padValue, in->pad);
-	arAsgn<double, 3>(d->scale, in->scale);
-	arAsgn<int, 2>(d->size, in->size);
-	// handle classes
-	d->classes.clear();
-	d->classes.reserve(in->nClasses);
-	for (auto i {0ul}; i < in->nClasses; ++i) {
-		d->classes.emplace_back(in->classes[i]);
+	try {
+		d->modelPath = std::string {in->modelPath};
+		d->model = std::string {in->model};
+		d->backend = in->backend;
+		d->target = in->target;
+		d->confidenceThreshold = in->conf;
+		d->nmsThreshold = in->nms;
+		d->swapRB = in->swapRB;
+		// handle arrays
+		arAsgn<double, 3>(d->mean, in->mean);
+		arAsgn<double, 3>(d->padValue, in->pad);
+		arAsgn<double, 3>(d->scale, in->scale);
+		arAsgn<int, 2>(d->size, in->size);
+
+		return d->init();
+	} catch(...) {
+		// cleanup ?
 	}
-	return d->init();
+	return false;
 }
 
 Det Det_NewCRAFT() {
@@ -99,6 +99,51 @@ Det Det_NewPARSeq() {
 
 Det Det_NewYOLOv8() {
 	return static_cast<Det>(new beholder::YOLOv8Detector {});
+}
+
+bool Det_ConfigureCRAFT(Det d, float txtThresh, float lnThresh, float lowTxt) {
+	using CRAFT = beholder::CRAFTDetector;
+	CRAFT* ptr {dynamic_cast<CRAFT*>(d)};	// futureproofing
+	if (!ptr) {
+		return false;
+	}
+	// handle threshold values
+	ptr->textThreshold = txtThresh;
+	ptr->linkThreshold = lnThresh;
+	ptr->lowText = lowTxt;
+	return true;
+}
+
+bool Det_ConfigurePARSeq(Det d, const char* charset) {
+	using PARSeq = beholder::PARSeqDetector;
+	PARSeq* ptr {dynamic_cast<PARSeq*>(d)};
+	if (!ptr) {
+		return false;
+	}
+	if (!charset) {
+		return false;
+	}
+	// handle the charset
+	ptr->charset = charset;
+	return true;
+}
+
+bool Det_ConfigureYOLOv8(Det d, const char** classes, size_t nClasses) {
+	using YOLOv8 = beholder::YOLOv8Detector;
+	YOLOv8* ptr {dynamic_cast<YOLOv8*>(d)};	// futureproofing
+	if (!ptr) {
+		return false;
+	}
+	if (!classes || nClasses == 0) {	// valid; nothing to do
+		return true;
+	}
+	// handle classes
+	ptr->classes.clear();
+	ptr->classes.reserve(nClasses);
+	for (auto i {0ul}; i < nClasses; ++i) {
+		ptr->classes.emplace_back(classes[i]);
+	}
+	return true;
 }
 
 void Tess_Clear(Tess t) {

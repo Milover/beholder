@@ -38,6 +38,7 @@ func dfltPARSeq() Network {
 func dfltYOLOv8() Network {
 	n := NewYOLOv8()
 	n.Model = "model/_internal/yolo/yolov8n.onnx"
+	n.Config.Size = [2]int{640, 640}
 	return n
 }
 
