@@ -107,7 +107,10 @@ void EASTDetector::extract()
 			buf_->tConfidences.emplace_back(conf);
 		}
 	}
+}
 
+void EASTDetector::store()
+{
 	cv::dnn::NMSBoxes
 	(
 		buf_->tBoxes,
@@ -116,6 +119,21 @@ void EASTDetector::extract()
 		nmsThreshold,
 		buf_->tNMSIDs
 	);
+
+	res_.reserve(buf_->tNMSIDs.size());
+	for (auto i {0ul}; i < buf_->tNMSIDs.size(); ++i)
+	{
+		Result r {};
+
+		auto id {buf_->tNMSIDs[i]};	// use NMS filtered IDs to select results
+		const cv::Rect& b {buf_->tBoxes[id]};
+
+		r.boxRotAngle = buf_->tAngles[id];
+		r.box = Rectangle {b.x, b.y, b.x + b.width, b.y + b.height},
+		r.confidence = static_cast<double>(buf_->tConfidences[id]);
+
+		res_.emplace_back(std::move(r));
+	}
 }
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //

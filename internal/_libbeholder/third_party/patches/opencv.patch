@@ -1,3 +1,58 @@
+diff --git a/modules/dnn/src/dnn_utils.cpp b/modules/dnn/src/dnn_utils.cpp
+index 3ef75fa..6ef16e3 100644
+--- a/modules/dnn/src/dnn_utils.cpp
++++ b/modules/dnn/src/dnn_utils.cpp
+@@ -178,7 +178,15 @@ void blobFromImagesWithParamsImpl(InputArrayOfArrays images_, Tmat& blob_, const
+             {
+                 float resizeFactor = std::max(size.width / (float)imgSize.width,
+                                               size.height / (float)imgSize.height);
+-                resize(images[i], images[i], Size(), resizeFactor, resizeFactor, INTER_LINEAR);
++                if (resizeFactor < 1.0f)
++                {
++                    resize(images[i], images[i], Size(), resizeFactor, resizeFactor, INTER_AREA);
++                }
++                else
++                {
++                    resize(images[i], images[i], Size(), resizeFactor, resizeFactor, INTER_LINEAR);
++                }
++                //resize(images[i], images[i], Size(), resizeFactor, resizeFactor, INTER_LINEAR);
+                 Rect crop(Point(0.5 * (images[i].cols - size.width),
+                                 0.5 * (images[i].rows - size.height)),
+                           size);
+@@ -190,7 +198,15 @@ void blobFromImagesWithParamsImpl(InputArrayOfArrays images_, Tmat& blob_, const
+                                               size.height / (float)imgSize.height);
+                 int rh = int(imgSize.height * resizeFactor);
+                 int rw = int(imgSize.width * resizeFactor);
+-                resize(images[i], images[i], Size(rw, rh), INTER_LINEAR);
++                //resize(images[i], images[i], Size(rw, rh), INTER_AREA);
++                if (resizeFactor < 1.0f)
++                {
++                    resize(images[i], images[i], Size(rw, rh), 0, 0, INTER_AREA);
++                }
++                else
++                {
++                    resize(images[i], images[i], Size(rw, rh), 0, 0, INTER_LINEAR);
++                }
+ 
+                 int top = (size.height - rh)/2;
+                 int bottom = size.height - top - rh;
+@@ -200,7 +216,15 @@ void blobFromImagesWithParamsImpl(InputArrayOfArrays images_, Tmat& blob_, const
+             }
+             else
+             {
+-                resize(images[i], images[i], size, 0, 0, INTER_LINEAR);
++                //resize(images[i], images[i], size, 0, 0, INTER_LINEAR);
++                if (imgSize.width * imgSize.height > size.width * size.height)
++                {
++                    resize(images[i], images[i], size, 0, 0, INTER_AREA);
++                }
++                else
++                {
++                    resize(images[i], images[i], size, 0, 0, INTER_LINEAR);
++                }
+             }
+         }
+ 
 diff --git a/modules/videoio/cmake/detect_obsensor.cmake b/modules/videoio/cmake/detect_obsensor.cmake
 index cf5a906..f0b6601 100644
 --- a/modules/videoio/cmake/detect_obsensor.cmake

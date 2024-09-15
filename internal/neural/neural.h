@@ -36,8 +36,6 @@ typedef struct {
 	const char* model;
 	int backend;
 	int target;
-	char** classes;
-	size_t nClasses;
 	int size[2];
 	double scale[3];
 	float conf;
@@ -47,13 +45,20 @@ typedef struct {
 	double pad[3];
 } DetInit;
 
+// do stuff with a detector
 void Det_Clear(Det d);
 void Det_Delete(Det d);
 ResArr* Det_Detect(Det d, const Img* img);
 bool Det_Init(Det d, const DetInit* in);
+// allocate new detectors
 Det Det_NewCRAFT();
 Det Det_NewEAST();
+Det Det_NewPARSeq();
 Det Det_NewYOLOv8();
+// configure a specific detector
+bool Det_ConfigureCRAFT(Det d, float txtThresh, float lnThresh, float lowTxt);
+bool Det_ConfigurePARSeq(Det d, const char* charset);
+bool Det_ConfigureYOLOv8(Det d, const char** classes, size_t nClasses);
 
 typedef struct {
 	char* key;

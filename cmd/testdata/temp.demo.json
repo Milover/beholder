@@ -44,6 +44,13 @@
 			"size": [320, 320]
 		}
 	},
+	"parseq": {
+		"model": "internal/neural/model/_internal/parseq/parseq-128x32px.onnx",
+		"config": {
+			"charset": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+			"size": [128, 32]
+		}
+	},
 	"tesseract": {
 		"config_paths": [],
 		"model": "internal/neural/model/_internal/tesseract/dflt/eng.traineddata",

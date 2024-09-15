@@ -182,11 +182,6 @@ type network struct {
 	// Config is the network configuration.
 	Config *Config `json:"config"`
 
-	// Classes are the object clases which the current model can detect.
-	//
-	// TODO: this shouldn't be here
-	Classes []string `json:"classes"`
-
 	p C.Det // pointer to the C++ API class.
 }
 
@@ -274,14 +269,6 @@ func (n network) Init() error {
 	v3Asgn(n.Config.Mean, &in.mean)
 	v3Asgn(n.Config.PadValue, &in.pad)
 
-	// handle classes
-	in.nClasses = C.size_t(len(n.Classes))
-	in.classes = (**C.char)(ar.Malloc((uint64(in.nClasses) * uint64(unsafe.Sizeof((*C.char)(nil))))))
-	classesSlice := unsafe.Slice(in.classes, uint64(in.nClasses))
-	// TODO: the classes probably shouldn't be here
-	for i, p := range n.Classes {
-		classesSlice[i] = (*C.char)(ar.CopyStr(p))
-	}
 	if ok := C.Det_Init(n.p, &in); !ok {
 		return ErrInit
 	}
@@ -316,8 +303,8 @@ func toCImg(img models.Image) C.Img {
 func fromCRes(cRes *C.ResArr, res *models.Result) {
 	// allocate and reset if necessary
 	nLines := uint64(cRes.count)
-	if uint64(cap(res.Text)) < nLines {
-		diff := int(nLines - uint64(cap(res.Text)))
+	if uint64(cap(res.Confidences)) < nLines {
+		diff := int(nLines - uint64(cap(res.Confidences)))
 		res.Text = slices.Grow(res.Text, diff)
 		res.Confidences = slices.Grow(res.Confidences, diff)
 		res.Angles = slices.Grow(res.Angles, diff)
@@ -330,6 +317,9 @@ func fromCRes(cRes *C.ResArr, res *models.Result) {
 	res.Boxes = res.Boxes[:0]
 	// populate the result
 	resultsSl := unsafe.Slice(cRes.array, nLines)
+	// FIXME: the C-Result should only contain fields which the network can
+	// actually generate, i.e. a text detector shouldn't need to have a 'text'
+	// field, and a text recognizer shouldn't need to have a 'box' field.
 	for _, r := range resultsSl {
 		res.Text = append(res.Text, C.GoString(r.text))
 		res.Confidences = append(res.Confidences, float64(r.confidence))

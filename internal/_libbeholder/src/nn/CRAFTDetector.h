@@ -51,7 +51,13 @@ protected:
 	// Protected member functions
 
 		//- Extract inference results
+		//	TODO: extract confidences from NN output
+		//	TODO: clean up and optimize if possible
 		virtual void extract() override;
+
+		//- Store results
+		//	NOTE: has to happen after re-mapping from blob back to the image
+		virtual void store() override;
 
 public:
 

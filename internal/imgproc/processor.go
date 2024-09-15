@@ -166,21 +166,22 @@ func (ip Processor) Postprocess(res *models.Result) error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
-	// a Result should always have associated Boxes
-	cres := make([]C.Res, len(res.Boxes))
-	for i := range res.Boxes {
-		cres[i].box.left = C.int(res.Boxes[i].Left)
-		cres[i].box.top = C.int(res.Boxes[i].Top)
-		cres[i].box.right = C.int(res.Boxes[i].Right)
-		cres[i].box.bottom = C.int(res.Boxes[i].Bottom)
+	// a Result should always have associated Confidences
+	// FIXME: this will break at some point
+	cres := make([]C.Res, len(res.Confidences))
+	for i := range res.Confidences {
+		cres[i].confidence = C.double(res.Confidences[i])
+		if len(res.Boxes) > i {
+			cres[i].box.left = C.int(res.Boxes[i].Left)
+			cres[i].box.top = C.int(res.Boxes[i].Top)
+			cres[i].box.right = C.int(res.Boxes[i].Right)
+			cres[i].box.bottom = C.int(res.Boxes[i].Bottom)
+		}
 		if len(res.Angles) > i {
 			cres[i].boxRotAngle = C.double(res.Angles[i])
 		}
 		if len(res.Text) > i {
 			cres[i].text = (*C.char)(ar.CopyStr(res.Text[i]))
-		}
-		if len(res.Confidences) > i {
-			cres[i].confidence = C.double(res.Confidences[i])
 		}
 	}
 	if ok := C.Proc_Postprocess(ip.p, &cres[0], C.size_t(len(cres))); !ok {

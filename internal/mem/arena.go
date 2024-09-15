@@ -9,6 +9,11 @@ package mem
 import "C"
 import "unsafe"
 
+// Sizes, in bytes, of commonly used C-types.
+const (
+	SizeofCharPtr = uint64(unsafe.Sizeof((*C.char)(nil)))
+)
+
 // A Pointer enables correct deletion of a C-allocated value.
 type Pointer struct {
 	// Del is a function pointer of the type: void (*func)(void*), which
@@ -63,8 +68,8 @@ func (ar *Arena) Copy(b []byte) unsafe.Pointer {
 	return ptr
 }
 
-// CopyStr copies a string into ar and returns a pointer to the location
-// at which the string was written.
+// CopyStr copies a string into ar and returns a (*C.char) pointer to the
+// location at which the string was written.
 //
 // The copied string is always null-terminated.
 func (ar *Arena) CopyStr(s string) unsafe.Pointer {
@@ -75,6 +80,21 @@ func (ar *Arena) CopyStr(s string) unsafe.Pointer {
 	}
 	unsafe.Slice((*byte)(ptr), size)[size-1] = '\x00'
 	return ptr
+}
+
+// CopyStrArray copies all elements of ss into ar and
+// returns a (**C.char) pointer to the location at which the first element
+// (*C.char) was written.
+//
+// The copied strings are always null-terminated.
+func (ar *Arena) CopyStrArray(ss []string) unsafe.Pointer {
+	nStrings := uint64(len(ss))
+	strings := (**C.char)(ar.Malloc(nStrings * SizeofCharPtr))
+	stringsSlice := unsafe.Slice(strings, nStrings)
+	for i, s := range ss {
+		stringsSlice[i] = (*C.char)(ar.CopyStr(s))
+	}
+	return unsafe.Pointer(strings)
 }
 
 // Free deallocates all memory owned by ar and sets it's size to zero.
@@ -94,23 +114,23 @@ func (ar *Arena) Store(p, del unsafe.Pointer) unsafe.Pointer {
 	return p
 }
 
-// StoreArray appends a pointer to an array of count pointers p, and
-// all elements (pointers) within p, to ar, and assumes ownership
-// of both p and all elements of p.
-// p is freed by calling delP with p as the argument, while the elements of p
-// are freed by sequentially calling delEl with each element of p
-// as the argument.
+// StoreArray appends a pointer to an array of count pointers ptrs, and
+// all elements (pointers) within ptrs, to ar, and assumes ownership
+// of both ptrs and all elements of ptrs.
+// ptrs is freed by calling delP with ptrs as the argument, while
+// the elements of ptrs are freed by sequentially calling delEl with each
+// element of ptrs as the argument.
 //
-// p is returned for convenience.
+// ptrs is returned for convenience.
 //
-// WARNING: the elements of p must be pointers to C-allocated values.
-func (ar *Arena) StoreArray(p, delP, delEl unsafe.Pointer, count uint64) unsafe.Pointer {
-	s := unsafe.Slice((*unsafe.Pointer)(p), count)
+// WARNING: the elements of ptrs must be pointers to C-allocated values.
+func (ar *Arena) StoreArray(ptrs, delP, delEl unsafe.Pointer, count uint64) unsafe.Pointer {
+	s := unsafe.Slice((*unsafe.Pointer)(ptrs), count)
 	for _, ptr := range s {
 		*ar = append(*ar, Pointer{Ptr: ptr, Del: delEl})
 	}
-	*ar = append(*ar, Pointer{Ptr: p, Del: delP})
-	return p
+	*ar = append(*ar, Pointer{Ptr: ptrs, Del: delP})
+	return ptrs
 }
 
 // StoreCStr stores the C-string (*C.char) cstr into ar, which then assumes

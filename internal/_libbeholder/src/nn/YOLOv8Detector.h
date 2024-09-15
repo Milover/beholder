@@ -46,6 +46,9 @@ protected:
 		//- Extract inference results
 		virtual void extract() override;
 
+		//- Filter (NMS) and store results
+		virtual void store() override;
+
 public:
 
 	// Constructors

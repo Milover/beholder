@@ -26,13 +26,13 @@ func init() {
 const TypeTesseract Type = 1 // tesseract OCR models
 
 // Tesseract is a text detection and recognition [Network] using
-// the [Tesseract OCR] model (engine).
+// the [Tesseract OCR model] (engine).
 //
 // WARNING: Tesseract contains C-managed resources so when it is no longer
 // needed, [Tesseract.Delete] must be called to release the resources and
 // clean up.
 //
-// [Tesseract OCR]: https://github.com/tesseract-ocr/tesseract
+// [Tesseract OCR model]: https://github.com/tesseract-ocr/tesseract
 type Tesseract struct {
 	// ConfigPaths is a list of configuration file paths.
 	ConfigPaths []string `json:"config_paths"`
@@ -139,11 +139,7 @@ func (t Tesseract) Init() error {
 	}
 	// handle configuration file names
 	in.nCfgs = C.size_t(len(t.ConfigPaths))
-	in.cfgs = (**C.char)(ar.Malloc((uint64(in.nCfgs) * uint64(unsafe.Sizeof((*C.char)(nil))))))
-	cfgsSlice := unsafe.Slice(in.cfgs, uint64(in.nCfgs))
-	for i, p := range t.ConfigPaths {
-		cfgsSlice[i] = (*C.char)(ar.CopyStr(p))
-	}
+	in.cfgs = (**C.char)(ar.CopyStrArray(t.ConfigPaths))
 	// handle variables
 	in.nVars = C.size_t(len(t.Variables))
 	in.vars = (*C.KeyVal)(ar.Malloc(uint64(in.nVars) * uint64(unsafe.Sizeof(C.KeyVal{}))))
