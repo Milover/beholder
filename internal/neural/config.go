@@ -3,6 +3,9 @@ package neural
 import (
 	"errors"
 	"fmt"
+	"slices"
+
+	"github.com/Milover/beholder/internal/veryprecise"
 )
 
 var (
@@ -14,8 +17,8 @@ type Config struct {
 	// Size is the DNN input image width x height in pixels.
 	//
 	// The image is scaled and padded, via letter-boxing, so that the image
-	// dimensions are Size[0]*Size[1], while optionally preserving the original
-	// aspect ratio.
+	// dimensions are (W × H) Size[0] × Size[1], while optionally preserving
+	// the original aspect ratio.
 	//
 	// TODO: this need a better explanation.
 	Size [2]int `json:"size"`
@@ -47,6 +50,28 @@ func NewConfig() *Config {
 		SwapRB:              true,
 		PadValue:            [3]float64{0.0, 0.0, 0.0},
 	}
+}
+
+// Equal reports whether two Configs are equal.
+// Floating-point values are considered equal if the difference is within 2 ULPs.
+func (c *Config) Equal(c1 *Config) bool {
+	if c == c1 {
+		return true
+	}
+	ulp := 2
+	equal32 := func(x, y float32) bool {
+		return veryprecise.EqualULP32(x, y, ulp)
+	}
+	equal64 := func(x, y float64) bool {
+		return veryprecise.EqualULP(x, y, ulp)
+	}
+	return slices.Equal(c.Size[:], c1.Size[:]) &&
+		slices.EqualFunc(c.Scale[:], c1.Scale[:], equal64) &&
+		slices.EqualFunc(c.Mean[:], c1.Mean[:], equal64) &&
+		slices.EqualFunc(c.PadValue[:], c1.PadValue[:], equal64) &&
+		equal32(c.ConfidenceThreshold, c1.ConfidenceThreshold) &&
+		equal32(c.NMSThreshold, c1.NMSThreshold) &&
+		c.SwapRB == c1.SwapRB
 }
 
 // IsValid is function used as an assertion that c has valid values.
