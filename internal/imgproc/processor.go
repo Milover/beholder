@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -71,6 +72,36 @@ func (ip Processor) DecodeImage(buf []byte, readMode ReadMode) error {
 // Delete releases C-allocated memory. Once called, ip is no longer valid.
 func (ip *Processor) Delete() {
 	C.Proc_Delete(ip.p)
+}
+
+// EncodeImage encodes the currently held image (ROI) and returns the raw bytes
+// of the encoding. The encoding format is determined by the format file
+// extension which must include the leading period.
+// See [OpenCV docs] for supported formats.
+//
+// TODO: use an enum instead of an extension string for setting the
+// output format.
+// TODO: avoid copying the encoded bytes.
+//
+// [OpenCV docs]: https://docs.opencv.org/4.10.0/d4/da8/group__imgcodecs.html#ga4e9883ae1f619bcbe875b7038520ea78
+func (ip Processor) EncodeImage(ext string) ([]byte, error) {
+	if !strings.HasPrefix(ext, ".") {
+		return nil, fmt.Errorf("imgproc.Processor.EncodeImage: bad format: %q", ext)
+	}
+	cs := C.CString(ext)
+	defer C.free(unsafe.Pointer(cs))
+
+	var nBytes int
+	b := C.Proc_EncodeImage(ip.p, cs, (*C.int)(unsafe.Pointer(&nBytes)))
+	if b == (*C.uchar)(nil) {
+		return nil, errors.New("imgproc.Processor.EncodeImage: could not encode image")
+	}
+	// the returned *C.char is managed by C, so we DON'T free/clean up
+	bSlice := unsafe.Slice((*byte)(unsafe.Pointer(b)), nBytes)
+
+	enc := make([]byte, nBytes)
+	copy(enc, bSlice)
+	return enc, nil
 }
 
 // GetRawImage returns the currently stored image as a [models.Image].
@@ -282,8 +313,10 @@ func (ip Processor) ToGrayscale() {
 }
 
 // Write writes the currently held image to disc.
-// The format of the image is determined from the filename extension,
-// see OpenCV 'cv::imwrite' for supported formats.
+// The format of the image is determined from the filename extension.
+// See [OpenCV docs] for supported formats.
+//
+// [OpenCV docs]: https://docs.opencv.org/4.10.0/d4/da8/group__imgcodecs.html#ga8ac397bd09e48851665edbe12aa28f25
 func (ip Processor) WriteImage(filename string) error {
 	cs := C.CString(filename)
 	defer C.free(unsafe.Pointer(cs))

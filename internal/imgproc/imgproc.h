@@ -27,6 +27,7 @@ typedef Result Res;
 
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags);
 void Proc_Delete(Proc p);
+const unsigned char* Proc_EncodeImage(Proc p, const char* ext, int* encSize);
 Img Proc_GetRawImage(Proc p);
 bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre);
 Proc Proc_New();

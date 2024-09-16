@@ -37,6 +37,11 @@ var (
 	}
 )
 
+type streamImage struct {
+	Buffer []byte // raw image bytes
+	MIME   string // image MIME type
+}
+
 // DemoApp is a program for showcasing image acquisition, processing and
 // web serving.
 type DemoApp struct {
@@ -50,7 +55,7 @@ type DemoApp struct {
 
 	TstImg string `json:"tst_camera_test_image"`
 
-	ImagePath string `json:"-"` // the latest image path
+	LatestImg streamImage `json:"-"` // the latest processed and encoded image
 }
 
 // NewDemoApp creates a new demo app.
@@ -141,9 +146,11 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 			log.Printf("text detection error: %v", err)
 			continue
 		}
-		if err := app.P.WriteImage(fmt.Sprintf("craft_%v_%v.jpeg", app.P.GetRawImage().ID, i)); err != nil {
-			log.Printf("uh-oh")
-		}
+		// DEBUG: remove
+		//if err := app.P.WriteImage(fmt.Sprintf("craft_%v_%v.jpeg", app.P.GetRawImage().ID, i)); err != nil {
+		//	log.Printf("uh-oh")
+		//}
+		// DEBUG: remove
 
 		// loop for each craft ROI
 		tRes := models.NewResult()
@@ -154,9 +161,9 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 			app.P.SetRotatedROI(eb, eRes.Angles[ei])
 
 			// DEBUG: remove
-			if err := app.P.WriteImage(fmt.Sprintf("parseq_%v_%v_%v.jpeg", app.P.GetRawImage().ID, i, ei)); err != nil {
-				log.Printf("uh-oh")
-			}
+			//if err := app.P.WriteImage(fmt.Sprintf("parseq_%v_%v_%v.jpeg", app.P.GetRawImage().ID, i, ei)); err != nil {
+			//	log.Printf("uh-oh")
+			//}
 			// DEBUG: remove
 			if err := app.PS.Inference(app.P.GetRawImage(), tRes); err != nil {
 				log.Printf("text recognition error: %v", err)
@@ -194,10 +201,9 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 }
 
 // AcquireImage ...
-func (app *DemoApp) AcquireImage(images chan<- string) error {
+func (app *DemoApp) AcquireImage() error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-	defer close(images)
 
 	sw := stopwatch.New()
 
@@ -244,24 +250,25 @@ func (app *DemoApp) AcquireImage(images chan<- string) error {
 		}
 		stats.Result.Timings.Set("process", sw.Lap())
 
-		log.Printf("writing image: %d", cam.Result.ID)
+		// TODO: we might want to write the image as well
+		//		log.Printf("writing image: %d", cam.Result.ID)
+		//		var err error
+		//		var fname string
+		//		if fname, err = app.F.Get(&cam.Result); err != nil {
+		//			log.Printf("could not generate image filename: %v", err)
+		//			continue
+		//		}
+		//		if err := app.P.WriteImage(fname); err != nil {
+		//			log.Printf("failed to write image: %v", err)
+		//		}
 		var err error
-		var fname string
-		if fname, err = app.F.Get(&cam.Result); err != nil {
-			log.Printf("could not generate image filename: %v", err)
-			continue
+		app.LatestImg = streamImage{MIME: "image/jpeg"}
+		if app.LatestImg.Buffer, err = app.P.EncodeImage(".jpeg"); err != nil {
+			log.Printf("failed to encode image: %v", err)
 		}
-		if err := app.P.WriteImage(fname); err != nil {
-			log.Printf("failed to write image: %v", err)
-		}
-		stats.Result.Timings.Set("write", sw.Lap())
+		stats.Result.Timings.Set("encode", sw.Lap())
 		stats.RollingAverage(stats.Result.Timings)
-
-		// WARNING: this should never block, because it'll be super-duper
-		// expensive (C-context switch something, something)
-		images <- fname
 	}
-
 	return nil
 }
 
@@ -285,21 +292,29 @@ func appRootHandler(app *DemoApp) http.HandlerFunc {
 // appAcquireHandler handles the "/acquire" endpoint of the demo webpage.
 func appAcquireHandler(app *DemoApp) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var err error
-		images := make(chan string) // XXX: unbuffered, so only one at a time
+		done := make(chan error)
 		go func() {
-			err = app.AcquireImage(images)
+			done <- app.AcquireImage()
 		}()
-		// wait untill acquisiton finishes
-		app.ImagePath = strings.TrimPrefix(<-images, "web/")
-
-		// check for acquisition errors
-		if err != nil {
+		// wait for acquisiton to finish and check for errors
+		if err := <-done; err != nil {
 			log.Printf("image acquisition error: %v", err)
 			http.Error(w, "failed to acquire image", http.StatusInternalServerError)
 			return
 		}
 		http.Redirect(w, r, "/", http.StatusSeeOther)
+	}
+}
+
+// appStreamHandler handles the "/stream" endpoint of the demo webpage.
+func appStreamHandler(app *DemoApp) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if len(app.LatestImg.Buffer) == 0 {
+			http.Error(w, "cannot display image", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", app.LatestImg.MIME)
+		w.Write(app.LatestImg.Buffer)
 	}
 }
 
@@ -335,13 +350,11 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	}
 	defer runtime.UnlockOSThread() // FIXME: this should go in a separate goroutine
 
-	// set up file server
-	fs := http.FileServer(http.Dir("web/static"))
 	// set up routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("/{$}", appRootHandler(app))
 	mux.HandleFunc("POST /acquire", appAcquireHandler(app))
-	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+	mux.HandleFunc("GET /stream", appStreamHandler(app))
 	// set up server
 	server := &http.Server{
 		Addr:    ":8080",

@@ -64,6 +64,13 @@ bool Processor::decodeImage(void* buffer, int bufSize, int flags)
 	return roi_->data != nullptr;	// XXX: this should be ok
 }
 
+const std::vector<unsigned char>& Processor::encodeImage(const std::string& ext)
+{
+	encoding_.clear();
+	cv::imencode(ext, *roi_, encoding_);
+	return encoding_;
+}
+
 const cv::Mat& Processor::getImage() const
 {
 	return *roi_;
