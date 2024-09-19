@@ -62,6 +62,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// NOTE: seems to be performing better than the DB detector
 	beholder::CRAFTDetector det {};
+	det.backend = beholder::BackendCUDA;
+	det.target = beholder::TargetCUDA;
 	det.modelPath = "model/_internal/craft";
 	det.model = "craft-320px.onnx";
 	det.size = beholder::CRAFTDetector::Vec2<> {320, 320};

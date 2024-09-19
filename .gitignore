@@ -41,6 +41,7 @@ internal/_libbeholder/vagrant/
 internal/_libbeholder/test/bin/
 internal/_libbeholder/third_party/archive
 internal/_libbeholder/third_party/opencv
+internal/_libbeholder/third_party/opencv_contrib
 internal/_libbeholder/third_party/leptonica
 internal/_libbeholder/third_party/tesseract
 internal/_libbeholder/third_party/pylon
