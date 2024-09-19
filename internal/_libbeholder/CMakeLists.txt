@@ -67,9 +67,41 @@ list(APPEND BEHOLDER_LIBRARIES "Tesseract::libtesseract")
 
 # OpenCV
 set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/opencv4")
-find_package(OpenCV REQUIRED)
+find_package(
+	OpenCV
+	REQUIRED COMPONENTS
+	core
+	imgproc
+	imgcodecs
+	videoio
+	highgui
+	video
+	dnn
+	photo
+	gapi
+	cudev
+	cudaimgproc
+	cudaarithm
+	#cudalegacy
+)
 list(APPEND BEHOLDER_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
-list(APPEND BEHOLDER_LIBRARIES ${OpenCV_LIBS})
+list(
+	APPEND
+	BEHOLDER_LIBRARIES
+	opencv_core
+	opencv_imgproc
+	opencv_imgcodecs
+	opencv_videoio
+	opencv_highgui
+	opencv_video
+	opencv_dnn
+	opencv_photo
+	opencv_gapi
+	opencv_cudev
+	opencv_cudaimgproc
+	opencv_cudaarithm
+	#opencv_cudalegacy
+)
 
 # Threads
 #find_package(Threads REQUIRED)

@@ -48,6 +48,11 @@ if [ ! -d "archive" ]; then
 	tar -cvzf "opencv-$OPENCV_VERSION.tar.gz" "opencv-$OPENCV_VERSION"
 	rm -r "opencv-$OPENCV_VERSION"
 
+	# get OpenCV contrib modules
+	git clone --depth=1 --branch "$OPENCV_VERSION" https://github.com/opencv/opencv_contrib.git "opencv_contrib-$OPENCV_VERSION"
+	tar -cvzf "opencv_contrib-$OPENCV_VERSION.tar.gz" "opencv_contrib-$OPENCV_VERSION"
+	rm -r "opencv_contrib-$OPENCV_VERSION"
+
 	# get leptonica
 	git clone --depth=1 --branch "$LEPTONICA_VERSION" https://github.com/DanBloomberg/leptonica.git "leptonica-$LEPTONICA_VERSION"
 	tar -cvzf "leptonica-$LEPTONICA_VERSION.tar.gz" "leptonica-$LEPTONICA_VERSION"
@@ -80,19 +85,26 @@ if [ ! -d opencv ]; then
 
 	tar -C "./" -xvzf "archive/opencv-$OPENCV_VERSION.tar.gz"
 	mv "opencv-$OPENCV_VERSION" opencv
+	tar -C "./" -xvzf "archive/opencv_contrib-$OPENCV_VERSION.tar.gz"
+	mv "opencv_contrib-$OPENCV_VERSION" opencv_contrib
+
 	cd opencv
 	git apply "$THIRD_PARTY_DIR/patches/opencv.patch"
 	mkdir build
 	cd build
 	cmake -DCMAKE_BUILD_TYPE=Release \
+		  -DCMAKE_CXX_STANDARD=17 \
 		  -DCMAKE_CXX_FLAGS="$CXX_FLAGS" \
 		  -DCMAKE_C_FLAGS="$CC_FLAGS" \
 		  -DCMAKE_INSTALL_PREFIX="$OPT_INSTALL_DIR" \
 		  -DBUILD_SHARED_LIBS=$BUILD_SHARED \
 		  -DOPENCV_GENERATE_PKGCONFIG=ON \
 		  -DOPENCV_FORCE_3RDPARTY_BUILD=ON \
+		  -DOPENCV_EXTRA_MODULES_PATH="$THIRD_PARTY_DIR/opencv_contrib/modules" \
+		  -DWITH_CUDA=ON \
+		  -DOPENCV_DNN_CUDA=ON \
 		  ../
-	make -j8
+	make -j32
 	make install
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
@@ -135,7 +147,7 @@ if [ ! -d leptonica ]; then
 		  -DOPENJPEG_INCLUDE_DIRS:PATH="$THIRD_PARTY_DIR/opencv/3rdparty/openjpeg/openjp2;$THIRD_PARTY_DIR/opencv/build/3rdparty/openjpeg/openjp2" \
 		  -DENABLE_GIF=OFF \
 		  ../
-	make -j8
+	make -j32
 	make install
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"
@@ -170,7 +182,7 @@ if [ ! -d tesseract ]; then
 		  -DTIFF_LIBRARY="$THIRD_PARTY_DIR/opencv/build/3rdparty/lib/liblibtiff.a" \
 		  -DLeptonica_DIR="$OPT_INSTALL_DIR/lib/cmake/leptonica" \
 		  ../
-	make -j8
+	make -j32
 	make install
 
 	cat install_manifest.txt >> "$THIRD_PARTY_DIR/install_manifest.txt"

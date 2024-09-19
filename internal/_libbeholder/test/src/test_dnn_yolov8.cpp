@@ -36,11 +36,11 @@ const std::filesystem::path internalDir
 const std::string testImage
 {
 	//"testdata/images/ultralytics_bus.jpg"
-	//"testdata/images/tags_0.bmp"
-	//"testdata/images/tags_1.jpeg"
-	//"testdata/images/sawlog_0.png"
-	//"testdata/images/sawlog_1.png"
-	"testdata/images/sawlog_2.png"
+	//"testdata/images/fima/tags_0.bmp"
+	//"testdata/images/fima/tags_1.jpeg"
+	//"testdata/images/fima/sawlog_0.png"
+	//"testdata/images/fima/sawlog_1.png"
+	"testdata/images/fima/sawlog_2.png"
 };
 
 const std::vector<std::string> cocoClasses
@@ -147,6 +147,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 
 	// setup object detector
 	beholder::YOLOv8Detector det {};
+	det.backend = beholder::BackendCUDA;
+	det.target = beholder::TargetCUDA;
 	det.modelPath = "model/_internal/yolo";
 	det.model = "fima_v8n_640-50e-b16-1280px.onnx";
 	det.classes = beholder::fimaClasses;
