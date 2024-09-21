@@ -22,16 +22,20 @@
 				"period": "0s"
 			},
 			"parameters": [
-				{"name": "AcquisitionMode",    "value": "Continuous"},
-				{"name": "TriggerSelector",    "value": "FrameStart"},
-				{"name": "TriggerMode",        "value": "On"},
-				{"name": "TriggerSource",      "value": "Software"},
-				{"name": "ExposureMode",       "value": "Timed"},
-				{"name": "ExposureTimeAbs",    "value": "30000"}
+				{"name": "PixelFormat",             "value": "Mono8"},
+				{"name": "BandwidthReserveMode",    "value": "Performance"},
+				{"name": "AcquisitionMode",         "value": "Continuous"},
+				{"name": "TriggerSelector",         "value": "FrameStart"},
+				{"name": "TriggerMode",             "value": "On"},
+				{"name": "TriggerSource",           "value": "Software"},
+				{"name": "ExposureMode",            "value": "Timed"},
+				{"name": "ExposureTime",            "value": "5000"}
 			]
 		}
 	],
 	"yolov8": {
+		"backend": "cuda",
+		"target": "cuda",
 		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-1280px.onnx",
 		"config": {
 			"size": [1280, 1280],
@@ -39,69 +43,26 @@
 		}
 	},
 	"craft": {
+		"backend": "cuda",
+		"target": "cuda",
 		"model": "internal/neural/model/_internal/craft/craft-320px.onnx",
 		"config": {
 			"size": [320, 320]
 		}
 	},
 	"parseq": {
-		"model": "internal/neural/model/_internal/parseq/parseq-128x32px.onnx",
+		"backend": "cuda",
+		"target": "cuda",
+		"model": "internal/neural/model/_internal/parseq/vitstr-128x32px.onnx",
 		"config": {
 			"charset": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
 			"size": [128, 32]
 		}
 	},
-	"tesseract": {
-		"config_paths": [],
-		"model": "internal/neural/model/_internal/tesseract/dflt/eng.traineddata",
-		"page_seg_mode": "single_line",
-		"variables": {
-			"load_system_dawg": "0",
-			"load_freq_dawg": "0",
-			"tessedit_char_whitelist": "ABCDEFGHIJKLMNOPRSTUVZ-0123456789"
-		},
-		"patterns": [
-			"\\d\\d\\d\\d\\d",
-			"\\A\\A-\\A\\A-\\d"
-		]
-	},
 	"image_processing": {
 		"preprocessing": [
 			{
-				"rescale": {
-					"scale": 3
-				}
-			},
-			{
-				"grayscale": null
-			},
-			{
-				"normalize_brightness_contrast": {
-					"clip_low_pct": 0.25
-				}
-			},
-			{
-				"gaussian_blur": {
-					"kernel_width": 5,
-					"kernel_height": 5,
-					"sigma_x": 0,
-					"sigma_y": 0
-				}
-			},
-			{
-				"threshold": {
-					"value": 0,
-					"max_value": 255,
-					"type": [ "binary", "otsu" ]
-				}
-			},
-			{
-				"invert": null
-			},
-			{
-				"resize_to_height": {
-					"height": 50
-				}
+				"bgr": null
 			}
 		],
 		"postprocessing": [
