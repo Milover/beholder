@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 	"unsafe"
 )
@@ -20,4 +21,25 @@ type Image struct {
 	PixelType    int64  // pixel type of the image
 	Step         uint64 // number of bits per image row
 	BitsPerPixel uint64 // number of bits per pixel
+}
+
+// String returns the string representation of img.
+func (img Image) String() string {
+	return fmt.Sprintf(`id: %v
+timestamp: %v
+rows: %v
+cols: %v
+step: %v
+bits per pixel: %v
+pixel type: %v
+buffer: %v`,
+		img.ID,
+		img.Timestamp,
+		img.Rows,
+		img.Cols,
+		img.Step,
+		img.BitsPerPixel,
+		img.PixelType,
+		img.Buffer,
+	)
 }
