@@ -18,6 +18,10 @@ AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding, d
 	return new beholder::AutoOrient {kSize, txtHeight, txtWidth, padding, padV};
 }
 
+BGR BGR_New() {
+	return new beholder::BGR {};
+}
+
 CLH CLH_New(float lim, int tRows, int tCols) {
 	return new beholder::CLAHE {lim, tRows, tCols};
 }

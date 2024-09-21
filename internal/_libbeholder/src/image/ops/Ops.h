@@ -20,6 +20,7 @@ Description
 #include "AddPadding.h"
 #include "AutoCrop.h"
 #include "AutoOrient.h"
+#include "BGR.h"
 #include "CLAHE.h"
 #include "CorrectGamma.h"
 #include "Crop.h"

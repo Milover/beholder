@@ -26,6 +26,7 @@ var opFactoryMap = map[string]opFactory{
 	"adaptive_threshold":            NewAdaptiveThreshold,
 	"auto_crop":                     NewAutoCrop,
 	"auto_orient":                   NewAutoOrient,
+	"bgr":                           NewBGR,
 	"clahe":                         NewCLAHE,
 	"correct_gamma":                 NewCorrectGamma,
 	"crop":                          NewCrop,
@@ -199,6 +200,23 @@ type autoOrient struct {
 	Padding float32 `json:"padding"`
 	// PadValue is the pixel value used for padding.
 	PadValue float64 `json:"pad_value"`
+}
+
+// bgr converts a grayscale image to a 3-channel BGR image.
+type bgr struct{}
+
+// NewBGR creates a bgr operation with default values,
+// unmarshals runtime data into it and then constructs a C-class representing
+// the operation.
+// WARNING: the C-allocated memory will be managed by C,
+// hence C.free should NOT be called on the returned pointer.
+func NewBGR(m json.RawMessage) (unsafe.Pointer, error) {
+	op := bgr{}
+	if err := json.Unmarshal(m, &op); err != nil {
+		return nil, err
+	}
+	// no input validation required
+	return unsafe.Pointer(C.BGR_New()), nil
 }
 
 // NewAutoOrient creates an automaticcropping operation with default values,
