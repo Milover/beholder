@@ -125,6 +125,12 @@ func (app *DemoApp) Init() error {
 func (app *DemoApp) ProcessImage(res *models.Result) error {
 	sw := stopwatch.New()
 
+	// preprocess
+	if err := app.P.Preprocess(); err != nil {
+		return err
+	}
+	res.Timings.Set("preprocess", sw.Lap())
+
 	// detect
 	if err := app.Y.Inference(app.P.GetRawImage(), res); err != nil {
 		log.Printf("object detection error: %v", err)
@@ -146,11 +152,6 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 			log.Printf("text detection error: %v", err)
 			continue
 		}
-		// DEBUG: remove
-		//if err := app.P.WriteImage(fmt.Sprintf("craft_%v_%v.jpeg", app.P.GetRawImage().ID, i)); err != nil {
-		//	log.Printf("uh-oh")
-		//}
-		// DEBUG: remove
 
 		// loop for each craft ROI
 		tRes := models.NewResult()
@@ -160,11 +161,6 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 			eb.Resize(int64(math.Floor(0.05 * float64(min(eb.Height(), eb.Width())))))
 			app.P.SetRotatedROI(eb, eRes.Angles[ei])
 
-			// DEBUG: remove
-			//if err := app.P.WriteImage(fmt.Sprintf("parseq_%v_%v_%v.jpeg", app.P.GetRawImage().ID, i, ei)); err != nil {
-			//	log.Printf("uh-oh")
-			//}
-			// DEBUG: remove
 			if err := app.PS.Inference(app.P.GetRawImage(), tRes); err != nil {
 				log.Printf("text recognition error: %v", err)
 			}
@@ -250,23 +246,23 @@ func (app *DemoApp) AcquireImage() error {
 		}
 		stats.Result.Timings.Set("process", sw.Lap())
 
-		// TODO: we might want to write the image as well
-		//		log.Printf("writing image: %d", cam.Result.ID)
-		//		var err error
-		//		var fname string
-		//		if fname, err = app.F.Get(&cam.Result); err != nil {
-		//			log.Printf("could not generate image filename: %v", err)
-		//			continue
-		//		}
-		//		if err := app.P.WriteImage(fname); err != nil {
-		//			log.Printf("failed to write image: %v", err)
-		//		}
+		// FIXME: encoding should not block acquisition/processing.
 		var err error
 		app.LatestImg = streamImage{MIME: "image/jpeg"}
 		if app.LatestImg.Buffer, err = app.P.EncodeImage(".jpeg"); err != nil {
 			log.Printf("failed to encode image: %v", err)
 		}
 		stats.Result.Timings.Set("encode", sw.Lap())
+
+		// FIXME: writing should not block acquisition/processing.
+		var fname string
+		if fname, err = app.F.Get(&cam.Result); err != nil {
+			log.Printf("could not generate image filename: %v", err)
+		}
+		if err := os.WriteFile(fname, app.LatestImg.Buffer, 0644); err != nil {
+			log.Printf("failed to write image: %v", err)
+		}
+		stats.Result.Timings.Set("write", sw.Lap())
 		stats.RollingAverage(stats.Result.Timings)
 	}
 	return nil
