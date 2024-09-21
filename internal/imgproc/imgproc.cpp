@@ -119,6 +119,20 @@ void Proc_ShowImage(Proc p, const char* title) {
 	p->showImage(s);
 }
 
+void Proc_ToColor(Proc p) {
+	if (!p) {
+		return;
+	}
+	p->toColor();
+}
+
+void Proc_ToGrayscale(Proc p) {
+	if (!p) {
+		return;
+	}
+	p->toGrayscale();
+}
+
 bool Proc_WriteImage(Proc p, const char* filename) {
 	if (!p) {
 		return false;

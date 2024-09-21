@@ -246,6 +246,24 @@ void Processor::showImage(const std::string& title) const
 	cv::waitKey();
 }
 
+void Processor::toColor() const
+{
+	if (img_->channels() < 3)
+	{
+		cvtColor(*img_, *img_, cv::COLOR_GRAY2BGR, 3);
+	}
+	resetROI();
+}
+
+void Processor::toGrayscale() const
+{
+	if (img_->channels() > 1)
+	{
+		cvtColor(*img_, *img_, cv::COLOR_BGR2GRAY, 1);
+	}
+	resetROI();
+}
+
 bool Processor::writeImage(const std::string& filename) const
 {
 	std::vector<int> flags

@@ -269,6 +269,18 @@ func (ip Processor) ShowImage(title string) {
 	C.Proc_ShowImage(ip.p, cs)
 }
 
+// ToColor converts the image to a color (BGR) image and resets
+// the region interest back to the whole image.
+func (ip Processor) ToColor() {
+	C.Proc_ToColor(ip.p)
+}
+
+// ToGrayscale converts the image to a grayscale image and resets
+// the region interest back to the whole image.
+func (ip Processor) ToGrayscale() {
+	C.Proc_ToGrayscale(ip.p)
+}
+
 // Write writes the currently held image to disc.
 // The format of the image is determined from the filename extension,
 // see OpenCV 'cv::imwrite' for supported formats.

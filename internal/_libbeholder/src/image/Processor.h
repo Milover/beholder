@@ -141,6 +141,12 @@ public:
 		//- Show an image and wait for a keypress
 		void showImage(const std::string& title = "image") const;
 
+		//- Convert image to color (BGR) and reset the ROI.
+		void toColor() const;
+
+		//- Convert image to grayscale and reset the ROI
+		void toGrayscale() const;
+
 		//- Write an image to disc
 		//	FIXME: hard-coded to use the lowest compression levels for PNG/JPEG.
 		bool writeImage(const std::string& filename = "img.png") const;
