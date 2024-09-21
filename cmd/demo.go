@@ -125,11 +125,8 @@ func (app *DemoApp) Init() error {
 func (app *DemoApp) ProcessImage(res *models.Result) error {
 	sw := stopwatch.New()
 
-	// preprocess
-	if err := app.P.Preprocess(); err != nil {
-		return err
-	}
-	res.Timings.Set("preprocess", sw.Lap())
+	// force 3-channel image
+	app.P.ToColor()
 
 	// detect
 	if err := app.Y.Inference(app.P.GetRawImage(), res); err != nil {
