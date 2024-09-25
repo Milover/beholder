@@ -10,6 +10,7 @@ import (
 type Image struct {
 	// ID is the acquisition result id as asigned by the camera.
 	ID uint64
+	// TODO: SourceID would be nice, so we know where the image came from.
 	// Timestamp is the time at which the image was created or acquired, i.e.
 	// received by the host machine.
 	Timestamp time.Time

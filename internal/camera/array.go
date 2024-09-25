@@ -82,6 +82,9 @@ func (a Array) StopAcquisition() {
 
 // TryTrigger is a function that will try to execute a software trigger
 // for each camera in the array, see [Camera.TryTrigger] for more details.
+//
+// TODO: rethink whether we should try to trigger all cameras in the array,
+// or just the first triggerable one.
 func (a Array) TryTrigger() error {
 	return a.Apply(func(c *Camera) error {
 		return c.TryTrigger()
