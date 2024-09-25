@@ -1,0 +1,11 @@
+.form-container {
+	display: flex;
+	gap: 20px;
+}
+
+.form {
+	border: 1px solid #ccc;
+	padding: 10px;
+	width: 150px;
+	text-align: center;
+}

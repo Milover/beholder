@@ -8,10 +8,12 @@ import (
 	"html/template"
 	"log"
 	"math"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -21,6 +23,7 @@ import (
 	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/neural"
 	"github.com/Milover/beholder/internal/output"
+	"github.com/Milover/beholder/internal/server"
 	"github.com/Milover/beholder/internal/stopwatch"
 	"github.com/spf13/cobra"
 )
@@ -42,6 +45,16 @@ type streamImage struct {
 	MIME   string // image MIME type
 }
 
+var (
+	// stats is a collection of app statistics and processing results.
+	//
+	// FIXME: bro, what the actual fuck
+	stats = NewStats()
+
+	// tmpl is the demo webpage HTML template.
+	tmpl = template.Must(template.ParseFiles("web/templates/demo.html"))
+)
+
 // DemoApp is a program for showcasing image acquisition, processing and
 // web serving.
 type DemoApp struct {
@@ -56,6 +69,13 @@ type DemoApp struct {
 	TstImg string `json:"tst_camera_test_image"`
 
 	LatestImg streamImage `json:"-"` // the latest processed and encoded image
+
+	// blobs are the acquired processed and encoded images, ready to be
+	// distributed elsewhere.
+	blobs chan server.Blob
+	// errs is the channel on which irrecoverable acquisition errors are
+	// sent.
+	errs chan error
 }
 
 // NewDemoApp creates a new demo app.
@@ -121,8 +141,8 @@ func (app *DemoApp) Init() error {
 	return nil
 }
 
-// ProcessImage runs the obj. detection/OCR pipeline for a single image.
-func (app *DemoApp) ProcessImage(res *models.Result) error {
+// processImage runs the processing pipeline for a single result (image).
+func (app *DemoApp) processImage(res *models.Result) error {
 	sw := stopwatch.New()
 
 	// force 3-channel image
@@ -193,8 +213,13 @@ func (app *DemoApp) ProcessImage(res *models.Result) error {
 	return nil
 }
 
-// AcquireImage ...
-func (app *DemoApp) AcquireImage() error {
+// acquireImages ...
+// TODO: write docs
+func (app *DemoApp) acquireImages() {
+	defer func() {
+		close(app.blobs)
+		close(app.errs)
+	}()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
@@ -202,113 +227,112 @@ func (app *DemoApp) AcquireImage() error {
 
 	log.Println("starting acquisition")
 	if err := app.Cs.StartAcquisition(); err != nil {
-		return err
+		app.errs <- err
+		return
 	}
 	defer app.Cs.StopAcquisition()
 
 	// FIXME: one click - one image, no continuous acquisition
-	stats.Result.Reset()
-	stats.Result.TimeStamp = time.Now()
-	sw.Lap() // reset the lap for the new acquisition loop
+	for app.Cs.IsAcquiring() {
+		stats.Result.Reset()
+		stats.Result.Timestamp = time.Now()
+		sw.Lap() // reset the lap for the new acquisition loop
 
-	// use the trigger if it's defined
-	if err := app.Cs.TryTrigger(); err != nil {
-		// XXX: IsAcquiring should pick up more serious errors, so
-		// we should be able to ignore trigger errors entirely, but
-		// not entirely sure.
-		log.Println("triggering error or timed out")
-		return nil
-	}
-	log.Println("acquiring image")
-	if err := app.Cs.Acquire(); err != nil {
-		return err
-	}
-	stats.Result.Timings.Set("acquisition", sw.Lap())
-
-	// FIXME: output/processing should not block acquisition
-	for _, cam := range app.Cs {
-		if cam.Result.Buffer == nil {
-			continue
+		// use the trigger if it's defined
+		if err := app.Cs.TryTrigger(); err != nil {
+			// XXX: IsAcquiring should pick up more serious errors, so
+			// we should be able to ignore trigger errors entirely, but
+			// not entirely sure.
+			//return nil
+			// TODO: would be nice to know which camera failed to trigger.
+			log.Println("triggering error or timed out")
 		}
-		sw.Lap() // reset the lap to time processing
-
-		// FIXME: the image processor shouldn't own the image
-		if err := app.P.ReceiveRawImage(cam.Result); err != nil {
-			return err
-		}
-		log.Printf("processing image: %d", cam.Result.ID)
-		if err := app.ProcessImage(stats.Result); err != nil {
-			log.Printf("processing error: %v", err)
-			continue
-		}
-		stats.Result.Timings.Set("process", sw.Lap())
-
-		// FIXME: encoding should not block acquisition/processing.
-		var err error
-		app.LatestImg = streamImage{MIME: "image/jpeg"}
-		if app.LatestImg.Buffer, err = app.P.EncodeImage(".jpeg"); err != nil {
-			log.Printf("failed to encode image: %v", err)
-		}
-		stats.Result.Timings.Set("encode", sw.Lap())
-
-		// FIXME: writing should not block acquisition/processing.
-		var fname string
-		if fname, err = app.F.Get(&cam.Result); err != nil {
-			log.Printf("could not generate image filename: %v", err)
-		}
-		if err := os.WriteFile(fname, app.LatestImg.Buffer, 0644); err != nil {
-			log.Printf("failed to write image: %v", err)
-		}
-		stats.Result.Timings.Set("write", sw.Lap())
-		stats.RollingAverage(stats.Result.Timings)
-	}
-	return nil
-}
-
-var (
-	// stats is a collection of app statistics and processing results.
-	//
-	// FIXME: bro, what the actual fuck
-	stats = NewStats()
-
-	// tmpl is the demo webpage HTML template.
-	tmpl = template.Must(template.ParseFiles("web/templates/demo.html"))
-)
-
-// appRootHandler handles the "/" endpoint of the demo webpage.
-func appRootHandler(app *DemoApp) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, app)
-	}
-}
-
-// appAcquireHandler handles the "/acquire" endpoint of the demo webpage.
-func appAcquireHandler(app *DemoApp) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		done := make(chan error)
-		go func() {
-			done <- app.AcquireImage()
-		}()
-		// wait for acquisiton to finish and check for errors
-		if err := <-done; err != nil {
-			log.Printf("image acquisition error: %v", err)
-			http.Error(w, "failed to acquire image", http.StatusInternalServerError)
+		log.Println("acquiring image")
+		if err := app.Cs.Acquire(); err != nil {
+			// TODO: would be nice to know which camera failed to acquire.
+			app.errs <- err
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		stats.Result.Timings.Set("acquisition", sw.Lap())
+
+		// FIXME: output/processing should not block acquisition
+		for _, cam := range app.Cs {
+			if cam.Result.Buffer == nil {
+				continue
+			}
+			sw.Lap() // reset the lap to time processing
+
+			// FIXME: the image processor shouldn't own the image
+			if err := app.P.ReceiveRawImage(cam.Result); err != nil {
+				// TODO: would be nice to know which camera failed to
+				// yield an image.
+				app.errs <- err
+				return
+			}
+			log.Printf("processing image: %d", cam.Result.ID)
+			if err := app.processImage(stats.Result); err != nil {
+				// TODO: would be nice to know from which camera the failed
+				// image came from.
+				log.Printf("processing error: %v", err)
+				continue
+			}
+			stats.Result.Timings.Set("process", sw.Lap())
+
+			// FIXME: encoding should not block acquisition/processing.
+			img := app.P.GetRawImage()
+			blob := server.Blob{
+				ID:        strconv.FormatUint(img.ID, 10),
+				SourceID:  cam.SN,
+				Timestamp: img.Timestamp,
+				MIME:      "image/jpeg",
+			}
+			var err error
+			if blob.Bytes, err = app.P.EncodeImage(".jpeg"); err != nil {
+				log.Printf("failed to encode image: %v", err)
+				stats.RollingAverage(stats.Result.Timings)
+				continue
+			}
+			app.blobs <- blob
+			stats.Result.Timings.Set("encode", sw.Lap())
+
+			// FIXME: writing should not block acquisition/processing.
+			var fname string
+			if fname, err = app.F.Get(&cam.Result); err != nil {
+				log.Printf("could not generate image filename: %v", err)
+			}
+			if err := os.WriteFile(fname, blob.Bytes, 0644); err != nil {
+				log.Printf("failed to write image: %v", err)
+			}
+			stats.Result.Timings.Set("write", sw.Lap())
+			stats.RollingAverage(stats.Result.Timings)
+		}
 	}
 }
 
-// appStreamHandler handles the "/stream" endpoint of the demo webpage.
-func appStreamHandler(app *DemoApp) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if len(app.LatestImg.Buffer) == 0 {
-			http.Error(w, "cannot display image", http.StatusNotFound)
-			return
-		}
-		w.Header().Set("Content-Type", app.LatestImg.MIME)
-		w.Write(app.LatestImg.Buffer)
+// IsAcquiring reports whether image acquisition is currently running.
+func (app *DemoApp) IsAcquiring() bool {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+	return app.Cs.IsAcquiring()
+}
+
+// StartAcquisition starts the image acquisition and sets up the channels
+// on which acquired images and errors are sent.
+func (app *DemoApp) StartAcquisition(blobsSize int) (<-chan server.Blob, <-chan error) {
+	if app.IsAcquiring() {
+		return app.blobs, app.errs
 	}
+	app.blobs = make(chan server.Blob, blobsSize)
+	app.errs = make(chan error, 1)
+	go app.acquireImages()
+
+	return app.blobs, app.errs
+}
+
+// StopAcquisition stops the image acquisition process.
+func (app *DemoApp) StopAcquisition() {
+	// we rely on acquireImages to properly close any channels in use.
+	app.Cs.StopAcquisition()
 }
 
 func runDemo(cmd *cobra.Command, args []string) error {
@@ -327,7 +351,8 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	}
 
 	// setup app
-	runtime.LockOSThread() // FIXME: this should go in a separate go routine
+	// FIXME: app setup should probably go in a separate go routine
+	runtime.LockOSThread()
 	app := NewDemoApp()
 	defer func() {
 		// deferred C-call so we don't care if it's locked or not
@@ -341,18 +366,31 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	if err := app.Init(); err != nil {
 		return err
 	}
-	defer runtime.UnlockOSThread() // FIXME: this should go in a separate goroutine
+	runtime.UnlockOSThread()
 
-	// set up routes
-	mux := http.NewServeMux()
-	mux.HandleFunc("/{$}", appRootHandler(app))
-	mux.HandleFunc("POST /acquire", appAcquireHandler(app))
-	mux.HandleFunc("GET /stream", appStreamHandler(app))
 	// set up server
-	server := &http.Server{
-		Addr:    ":8080",
-		Handler: mux,
+	l, err := net.Listen("tcp", "127.0.0.1:8080") // TODO: should be configurable
+	if err != nil {
+		return err
 	}
+	log.Printf("listening on %v", l.Addr())
+
+	as, err := server.NewAcquisitionServer(app, 3) // TODO: should be configurable
+	if err != nil {
+		return err
+	}
+	srv := &http.Server{
+		Handler:      as,
+		ReadTimeout:  time.Second * 10, // TODO: should be configurable
+		WriteTimeout: time.Second * 10, // TODO: should be configurable
+	}
+	// serve HTTP
+	go func() {
+		if err := srv.Serve(l); !errors.Is(err, http.ErrServerClosed) {
+			// most examples Fatalf here, but that doesn't seem right
+			log.Printf("serve error: %v", err)
+		}
+	}()
 
 	// set up signal handling
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -361,23 +399,13 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	log.Println("initialized")
 	stats.InitDuration = sw.Lap()
 
-	// serve HTTP
-	go func() {
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			// most examples Fatalf here, but that doesn't seem right
-			log.Printf("listen and serve error: %v", err)
-		}
-	}()
-	log.Printf("serving on %v", server.Addr)
-
 	// handle signals and clean up
 	<-ctx.Done()
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer shutdownCancel()
-	if err := server.Shutdown(shutdownCtx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("server shutdown error: %v", err)
 	}
-
 	return nil
 }

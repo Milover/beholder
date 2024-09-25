@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Demo app</title>
+	<link href="/index.css" rel="stylesheet" />
+</head>
+<body>
+	<div id="root">
+		<h1>Demo app</h1>
+
+		<div class="form-container">
+			<form id="acq-start-form">
+				<button id="acq-start-button" type="submit" disabled>
+					Start acquisition
+				</button>
+			</form>
+			<form id="acq-stop-form">
+				<button id="acq-stop-button" type="submit" disabled>
+					Stop acquisition
+				</button>
+			</form>
+		</div>
+
+		<div id="acq-img-container" style="display: none;">
+			<h2>Acquired Image:</h2>
+			<div style="max-width:1280px">
+				<img id="acq-img" src="" alt="Acquired image" style="max-width:100%;" />
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="/index.js"></script>
+</body>
+</html>
