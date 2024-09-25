@@ -23,7 +23,7 @@ var (
 		Text:      []string{"some text", "some other text"},
 		Expected:  []string{"some text", "some other text"},
 		Status:    models.RSPass,
-		TimeStamp: resultTS,
+		Timestamp: resultTS,
 	}
 
 	resultCSV = fmt.Sprintf("timestamp,expected_l0,result_l0,expected_l1,result_l1,status\n%v,%s,%s,%s,%s,%v\n",

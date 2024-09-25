@@ -68,7 +68,7 @@ func (app *ProcApp) Init() error {
 func (app *ProcApp) Run(filename string, imgID id, res *models.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
-	res.TimeStamp = sw.Start
+	res.Timestamp = sw.Start
 
 	img, err := os.Open(filename)
 	if err != nil {

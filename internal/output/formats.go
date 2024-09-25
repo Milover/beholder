@@ -109,7 +109,7 @@ func (o *outCSV) Write(r *models.Result) error {
 		record = record[:0]
 		o.hdr = true
 	}
-	ts, err := r.TimeStamp.MarshalText()
+	ts, err := r.Timestamp.MarshalText()
 	if err != nil {
 		return err
 	}

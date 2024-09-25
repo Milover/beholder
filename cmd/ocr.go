@@ -88,7 +88,7 @@ func (app *OCRApp) Init() error {
 func (app *OCRApp) Run(filename string, imgID id, res *models.Result) error {
 	sw := stopwatch.New()
 	res.Reset()
-	res.TimeStamp = sw.Start
+	res.Timestamp = sw.Start
 
 	img, err := os.Open(filename)
 	if err != nil {
