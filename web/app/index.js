@@ -1,6 +1,12 @@
 let conn;				// global WebSocket resource
 let acquiring = false;	// global acquisition state
 
+const localTime = new Intl.DateTimeFormat(navigator.language, {
+	timeStyle: "long",
+	dateStyle: "short",
+	hour12: false,
+})
+
 const acqImgContainer = document.getElementById("acq-img-container")
 const acqStartButton = document.getElementById("acq-start-button")
 const acqStopButton = document.getElementById("acq-stop-button")
@@ -68,11 +74,23 @@ window.addEventListener("load", () => {
 	// handle incomming messages
 	conn.addEventListener("message", ev => {
 		console.log("got mesage event")
-		// create image binary blob
-		const blob = new Blob([ev.data], {type: "image/jpeg"})
-		// create an URL for the blob and set it as the image source
+
+		// unmarshal JSON
+		const msg = JSON.parse(ev.data)
+		// TODO: handle different message types
+		// TODO: synchronize message types across back-end/front-end
+		if (msg.type !== 1) {	// 1 === MessageImage
+			throw new Error(`Unknown message type: ${msg.type}`)
+		}
+		const time = localTime.format(Date.parse(msg.payload.timestamp))
+
+		// set the image source
 		const imgElement = document.getElementById("acq-img")
-		imgElement.src = URL.createObjectURL(blob)
+		imgElement.src = msg.payload.src
+		// display image overlay text
+		document.getElementById("acq-img-timestamp").textContent = `time: ${time}`
+		document.getElementById("acq-img-id").textContent = `id: ${msg.payload.id}`
+		document.getElementById("acq-img-source").textContent = `src: ${msg.payload.source}`
 		// show the image
 		acqImgContainer.style.display = "block"
 	})

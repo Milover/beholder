@@ -9,3 +9,21 @@
 	width: 150px;
 	text-align: center;
 }
+
+.overlay-text-wrapper {
+	padding: 5px;
+	display: flex;
+	flex-flow: row wrap;
+	align-content: stretch;
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	color: white;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.overlay-text {
+	flex: 1 0 auto;
+	padding: 0px 8px 0px 8px;
+	font-family: Arial;
+}

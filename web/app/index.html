@@ -23,10 +23,15 @@
 			</form>
 		</div>
 
-		<div id="acq-img-container" style="display: none;">
+		<div id="acq-img-container" style="display:none;">
 			<h2>Acquired Image:</h2>
-			<div style="max-width:1280px">
+			<div style="max-width:1280px; position:relative;">
 				<img id="acq-img" src="" alt="Acquired image" style="max-width:100%;" />
+				<div class="overlay-text-wrapper">
+					<span class="overlay-text" id="acq-img-source"></span>
+					<span class="overlay-text" id="acq-img-timestamp"></span>
+					<span class="overlay-text" id="acq-img-id"></span>
+				</div>
 			</div>
 		</div>
 	</div>
