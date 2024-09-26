@@ -7,10 +7,14 @@ import (
 )
 
 // An Image is a (non-owning) view of a camera acquisition result.
+//
+// TODO: a Source tag would be nice, so we know where the image came from,
+// eg. a camera S/N, or a file name if the image was read from disc.
 type Image struct {
 	// ID is the acquisition result id as asigned by the camera.
+	//
+	// TODO: should be a UUID which we assign, fuck the camera.
 	ID uint64
-	// TODO: SourceID would be nice, so we know where the image came from.
 	// Timestamp is the time at which the image was created or acquired, i.e.
 	// received by the host machine.
 	Timestamp time.Time
