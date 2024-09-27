@@ -301,7 +301,7 @@ func (app *DemoApp) acquireImages() {
 				ID:        strconv.FormatUint(img.ID, 10),
 				Source:    cam.SN,
 				Timestamp: img.Timestamp,
-				Src:       path.Join("/static", path.Base(fname)), // FIXME: no
+				Src:       path.Join("/static/images", path.Base(fname)), // FIXME: no
 			}
 			app.blobs <- blob
 			app.stats.Result.Timings.Set("ch-send", sw.Lap())

@@ -189,7 +189,7 @@ func NewAcquisitionServer(acq AcquisitionStartStopper) (*AcquisitionServer, erro
 		conns:        make(map[*connection]struct{}),
 	}
 	s.mux.Handle("/", http.FileServer(http.Dir("web/app")))
-	s.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static")))) // FIXME: should be configurable
+	s.mux.Handle("GET /static/images/{imgfile}", http.StripPrefix("/static/images/", http.FileServer(http.Dir("web/static/images")))) // FIXME: should be configurable
 	s.mux.HandleFunc("POST /acquisition-start", s.acquisitionStartHandler())
 	s.mux.HandleFunc("POST /acquisition-stop", s.acquisitionStopHandler())
 	s.mux.HandleFunc("/stream", s.streamHandler())

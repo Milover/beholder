@@ -5,7 +5,7 @@
 		"target": "stdout"
 	},
 	"filename": {
-		"f_string": "web/static/img_%v_%v.jpeg",
+		"f_string": "web/static/images/img_%v_%v.jpeg",
 		"fields": [
 			"Timestamp",
 			"ID"
