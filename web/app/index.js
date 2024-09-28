@@ -7,6 +7,16 @@ const localTime = new Intl.DateTimeFormat(navigator.language, {
 	hour12: false,
 })
 
+// Extract timestamp from a UUIDv7.
+// Taken from: https://park.is/blog_posts/20240803_extracting_timestamp_from_uuid_v7/
+function uuidv7Timestamp(uuid) {
+	const parts = uuid.split("-")
+	const highBitsHex = parts[0] + parts[1].slice(0, 4)
+
+	const timeMs = parseInt(highBitsHex, 16)
+	return new Date(timeMs)
+}
+
 const acqImgContainer = document.getElementById("acq-img-container")
 const acqStartButton = document.getElementById("acq-start-button")
 const acqStopButton = document.getElementById("acq-stop-button")
@@ -82,14 +92,15 @@ window.addEventListener("load", () => {
 		if (msg.type !== 1) {	// 1 === MessageImage
 			throw new Error(`Unknown message type: ${msg.type}`)
 		}
-		const time = localTime.format(Date.parse(msg.payload.timestamp))
+		const uuid = msg.payload.uuid
+		const time = localTime.format(uuidv7Timestamp(uuid))
 
 		// set the image source
 		const imgElement = document.getElementById("acq-img")
 		imgElement.src = msg.payload.src
 		// display image overlay text
 		document.getElementById("acq-img-timestamp").textContent = `time: ${time}`
-		document.getElementById("acq-img-id").textContent = `id: ${msg.payload.id}`
+		document.getElementById("acq-img-uuid").textContent = `uuid: ${msg.payload.uuid}`
 		document.getElementById("acq-img-source").textContent = `src: ${msg.payload.source}`
 		// show the image
 		acqImgContainer.style.display = "block"

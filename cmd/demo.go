@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -25,8 +24,17 @@ import (
 	"github.com/Milover/beholder/internal/output"
 	"github.com/Milover/beholder/internal/server"
 	"github.com/Milover/beholder/internal/stopwatch"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	// Enable internal randomness pool to improve UUID generation throughput.
+	//
+	// FIXME: maybe think of a better place to put this, we're bound to move
+	// some files around and forget that this is supposed to be turned on.
+	uuid.EnableRandPool()
+}
 
 var (
 	demoCmd = &cobra.Command{
@@ -36,12 +44,14 @@ var (
 		Args: cobra.MatchAll(
 			cobra.ExactArgs(1),
 		),
-		RunE: runDemo,
+		RunE: demoMain,
 	}
 )
 
 // DemoApp is a program for showcasing image acquisition, processing and
 // web serving.
+//
+// TODO: replace specific types with generic pipeline components.
 type DemoApp struct {
 	Cs camera.Array           `json:"cameras"`
 	Y  *neural.YOLOv8         `json:"yolov8"`
@@ -217,7 +227,7 @@ func (app *DemoApp) acquireImages() {
 		return
 	}
 	// TODO: would be nice to communicate that acquisition has stopped
-	// to the front-end.
+	// to other parts of the software.
 	defer app.Cs.StopAcquisition()
 
 	// BUG: stopping acquisiting with [DemoApp.StopAcquisition] gives:
@@ -296,12 +306,10 @@ func (app *DemoApp) acquireImages() {
 			}
 			app.stats.Result.Timings.Set("write", sw.Lap())
 
-			img := app.P.GetRawImage()
 			blob := &server.Blob{
-				ID:        strconv.FormatUint(img.ID, 10),
-				Source:    cam.SN,
-				Timestamp: img.Timestamp,
-				Src:       path.Join("/static/images", path.Base(fname)), // FIXME: no
+				UUID:   uuid.Must(uuid.NewV7()), // FIXME: should take img.UUID
+				Source: cam.SN,
+				Src:    path.Join("/static/images", path.Base(fname)), // FIXME: no
 			}
 			app.blobs <- blob
 			app.stats.Result.Timings.Set("ch-send", sw.Lap())
@@ -332,12 +340,16 @@ func (app *DemoApp) StartAcquisition(blobsSize int) (<-chan *server.Blob, <-chan
 }
 
 // StopAcquisition stops the image acquisition process.
+//
+// NOTE: currently we rely on [DemoApp.acquireImages] to detect acquisition
+// stoppage and close any channels currently in use, which might not be
+// the best idea.
 func (app *DemoApp) StopAcquisition() {
-	// we rely on acquireImages to properly close any channels in use.
 	app.Cs.StopAcquisition()
 }
 
-func runDemo(cmd *cobra.Command, args []string) error {
+// demoMain reads the runtime configuration and sets up and runs the program.
+func demoMain(cmd *cobra.Command, args []string) error {
 	sw := stopwatch.New()
 
 	// read config
@@ -372,6 +384,11 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	}()
 
 	// set up server
+	//
+	// TODO: whether a server gets set up should be runtime configurable since:
+	//	1. some applications might not need an HTTP server at all
+	//	2. acquisition server API (web UI) should be exposed only
+	//     in controlled (development) environments.
 	ln, err := net.Listen("tcp", ":8080") // TODO: should be configurable
 	if err != nil {
 		return err
@@ -382,6 +399,7 @@ func runDemo(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	// TODO: should probably handle static content (file server) routes here.
 	srv := &http.Server{
 		Handler:      as,
 		ReadTimeout:  time.Second * 10, // TODO: should be configurable
