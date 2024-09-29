@@ -1,5 +1,7 @@
 package server
 
+//go:generate protoc -I=proto/ --go_out=proto/ --go_opt=paths=source_relative proto/server.proto
+
 import (
 	"context"
 	"errors"
@@ -10,9 +12,10 @@ import (
 	"time"
 
 	"github.com/Milover/beholder/internal/container/set"
+	pb "github.com/Milover/beholder/internal/server/proto"
 	"github.com/coder/websocket"
-	"github.com/coder/websocket/wsjson"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
 )
 
 func init() {
@@ -88,55 +91,36 @@ type AcquisitionStartStopper interface {
 type Blob struct {
 	UUID   uuid.UUID `json:"uuid"`   // image UUID v7 (embeds a timestamp)
 	Source string    `json:"source"` // source device ID, eg. camera S/N
-	Src    string    `json:"src"`    // image URL
+	Bytes  []byte    `json:"bytes"`  // encoded image bytes
 }
 
-// MessageType designates the payload type of a message sent or received
-// by the [AcquisitionServer].
-type MessageType int
-
-// The recognized message types.
-const (
-	// MessageImage is a message with an image data payload.
-	MessageImage MessageType = iota + 1
-	// MessageError is a message with an error description payload.
-	MessageError
-	// MessageInfo is a message with an info payload.
-	MessageInfo
-	// MessageControl ia a message with a process control payload,
-	// eg. an RPC call.
-	MessageControl
-)
-
-// MessageVersion is the current default message version.
-// TODO: this should probably be handled in some other way.
-const MessageVersion string = "v1.0.0"
-
-// Message is a wrapper around data sent or received by the [AcquisitionServer].
-type Message struct {
-	Version string      `json:"version"` // version string
-	Type    MessageType `json:"type"`    // type of message
-	UUID    uuid.UUID   `json:"uuid"`    // message UUID v7 (embeds a timestamp)
-	Payload any         `json:"payload"` // message data
-}
-
-// NewMessage creates a new Message of default version (see [MessageVersion]),
-// of type typ with payload.
-func NewMessage(typ MessageType, payload any) *Message {
+// NewMessage creates a new Message from a payload.
+// If the payload type is unsupported a message with a nil payload is returned.
+//
+// TODO: support payloads other than [*Blob] or generalize [Blob] to handle the
+// different stuff we want to send.
+func NewMessage(payload any) proto.Message {
 	switch p := payload.(type) {
 	case *Blob:
-		return &Message{
-			Version: MessageVersion,
-			Type:    typ,
-			UUID:    p.UUID,
-			Payload: p,
+		return &pb.MessageWrapper{
+			Header: &pb.MessageHeader{
+				Uuid: p.UUID.String(),
+				Type: pb.MessageType_MESSAGE_TYPE_IMAGE,
+			},
+			Payload: &pb.MessageWrapper_Image{
+				Image: &pb.Image{
+					Source: p.Source,
+					Mime:   http.DetectContentType(p.Bytes),
+					Raw:    p.Bytes,
+				},
+			},
 		}
 	default:
-		return &Message{
-			Version: MessageVersion,
-			Type:    typ,
-			UUID:    uuid.Must(uuid.NewV7()),
-			Payload: p,
+		return &pb.MessageWrapper{
+			Header: &pb.MessageHeader{
+				Uuid: uuid.Must(uuid.NewV7()).String(),
+				Type: pb.MessageType_MESSAGE_TYPE_UNKNOWN,
+			},
 		}
 	}
 }
@@ -149,7 +133,7 @@ type connection struct {
 	// addr is the originating address of the connection.
 	addr string
 	// msgs is the channel on which message are received.
-	msgs chan *Message
+	msgs chan proto.Message
 	// closed reports whether the underlying connection has been closed.
 	closed bool
 	// mu is the underlying synchronization mechanism.
@@ -168,12 +152,18 @@ func (c *connection) drop(reason string) {
 	}
 }
 
-// writeMsg encodes msg to JSON and writes it to c's underlying WebSocket
-// connection.
-func (c *connection) writeMsg(ctx context.Context, timeout time.Duration, msg *Message) error {
+// write marshalls msg and writes it to c's underlying WebSocket connection.
+func (c *connection) write(ctx context.Context, timeout time.Duration, msg proto.Message) error {
 	writeCtx, cancelWrite := context.WithTimeout(ctx, timeout)
 	defer cancelWrite()
-	return wsjson.Write(writeCtx, c.c, msg)
+	if msg == nil {
+		return errors.New("nil protobuf message")
+	}
+	b, err := proto.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	return c.c.Write(writeCtx, websocket.MessageBinary, b)
 }
 
 // Route variables so they can be set during testing.
@@ -227,7 +217,7 @@ type AcquisitionServer struct {
 	// blobs is the channel on which acquired blobs (images) are received.
 	//
 	// TODO: should turn into a channel of any, since stuff sent here
-	// will get assigned to a [Message.Payload].
+	// will get converted into a [proto.Message].
 	blobs <-chan *Blob
 	// errs is the channel on which acquisition errors are received.
 	errs <-chan error
@@ -287,7 +277,7 @@ func NewAcquisitionServer(acq AcquisitionStartStopper) (*AcquisitionServer, erro
 					// bail, acquisition done
 					continue
 				}
-				s.distribute(NewMessage(MessageImage, blob))
+				s.distribute(NewMessage(blob))
 			default:
 				// Necessary so that we don't block indefinitely.
 				// NOTE: we could sleep here to leave some wiggle room for
@@ -368,7 +358,7 @@ func (s *AcquisitionServer) stopAcquisition() {
 func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error {
 	conn := &connection{
 		addr: r.RemoteAddr,
-		msgs: make(chan *Message, s.BufferSize),
+		msgs: make(chan proto.Message, s.BufferSize),
 	}
 	s.addConnection(conn)
 	defer s.deleteConnection(conn)
@@ -398,7 +388,7 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 	for {
 		select {
 		case msg := <-conn.msgs:
-			if err := conn.writeMsg(ctx, s.WriteTimeout, msg); err != nil {
+			if err := conn.write(ctx, s.WriteTimeout, msg); err != nil {
 				return err
 			}
 		case <-ctx.Done():
@@ -409,7 +399,7 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 
 // distribute sends msg to all active connections.
 // It never blocks and so messages to slow connections are dropped.
-func (s *AcquisitionServer) distribute(msg *Message) {
+func (s *AcquisitionServer) distribute(msg proto.Message) {
 	s.connsMu.Lock()
 	defer s.connsMu.Unlock()
 

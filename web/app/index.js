@@ -1,6 +1,9 @@
 let conn;				// global WebSocket resource
 let acquiring = false;	// global acquisition state
 
+let MessageType;		// global protobuf message type
+let MessageWrapper;		// global protobuf message wrapper
+
 const localTime = new Intl.DateTimeFormat(navigator.language, {
 	timeStyle: "long",
 	dateStyle: "short",
@@ -77,37 +80,66 @@ async function stopAcquisition() {
 	console.log("Image acquisition stopped")
 }
 
+// handleMessage decodes a protobuf-encoded message and does stuff with the data.
+function handleMessage(binaryData) {
+	switch (true) {
+		case !MessageType:
+			console.error("MessageType type not loaded")
+			return
+		case !MessageWrapper:
+			console.error("MessageWrapper type not loaded")
+			return
+	}
+	const msg = MessageWrapper.decode(new Uint8Array(binaryData))
+	// TODO: handle different message types
+	if (msg.header.type !== MessageType.values.MESSAGE_TYPE_IMAGE) {
+		console.error(`Unsupported message type: ${msg.header.type}`)
+		return
+	}
+	// TODO: detect image MIME type
+	const blob = new Blob([msg.image.raw], { type: `image/${msg.image.mime}` });
+	const imageURL = URL.createObjectURL(blob)
+	const time = localTime.format(uuidv7Timestamp(msg.header.uuid))
+
+	// set the image source
+	document.getElementById("acq-img").src = imageURL
+	// display image overlay text
+	document.getElementById("acq-img-timestamp").textContent = `time: ${time}`
+	document.getElementById("acq-img-uuid").textContent = `uuid: ${msg.header.uuid}`
+	document.getElementById("acq-img-source").textContent = `src: ${msg.image.source}`
+	// show the container
+	acqImgContainer.style.display = "block"
+}
+
 // Set up the WebSocket as soon as the page loads.
 window.addEventListener("load", () => {
 	conn = new WebSocket(`ws://${location.host}/stream`)
+	conn.binaryType = "arraybuffer" // because of protobuf stuff
 
-	// handle incomming messages
-	conn.addEventListener("message", ev => {
-		console.log("got mesage event")
+	// load protobuf definitions and start handling messages
+	try {
+		protobuf.load("proto/server.proto", (err, root) => {
+			if (err) {
+				throw err
+			}
+			// cache the protobuf types
+			MessageType = root.lookupEnum("beholder.server.MessageType")
+			MessageWrapper = root.lookup("beholder.server.MessageWrapper")
 
-		// unmarshal JSON
-		const msg = JSON.parse(ev.data)
-		// TODO: handle different message types
-		// TODO: synchronize message types across back-end/front-end
-		if (msg.type !== 1) {	// 1 === MessageImage
-			throw new Error(`Unknown message type: ${msg.type}`)
-		}
-		const uuid = msg.payload.uuid
-		const time = localTime.format(uuidv7Timestamp(uuid))
-
-		// set the image source
-		const imgElement = document.getElementById("acq-img")
-		imgElement.src = msg.payload.src
-		// display image overlay text
-		document.getElementById("acq-img-timestamp").textContent = `time: ${time}`
-		document.getElementById("acq-img-uuid").textContent = `uuid: ${msg.payload.uuid}`
-		document.getElementById("acq-img-source").textContent = `src: ${msg.payload.source}`
-		// show the image
-		acqImgContainer.style.display = "block"
-	})
+			// handle incomming messages
+			conn.addEventListener("message", ev => {
+				console.log("got mesage event")
+				handleMessage(ev.data)
+			})
+		})
+	} catch(err) {
+		console.error("Failed to load .proto file:", err)
+	}
+	// handle connection closure
 	conn.addEventListener("close", ev => {
 		console.log(`WebSocket connection closed: ${ev.code}, reason: ${ev.reason}`)
 	})
+	// handle connection error
 	conn.addEventListener("error", ev => {
 		console.error(`WebSocket error: ${ev}`)
 	})

@@ -309,7 +309,7 @@ func (app *DemoApp) acquireImages() {
 			blob := &server.Blob{
 				UUID:   uuid.Must(uuid.NewV7()), // FIXME: should take img.UUID
 				Source: cam.SN,
-				Src:    path.Join("/static/images", path.Base(fname)), // FIXME: no
+				Bytes:  encoding,
 			}
 			app.blobs <- blob
 			app.stats.Result.Timings.Set("ch-send", sw.Lap())

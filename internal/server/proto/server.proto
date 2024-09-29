@@ -1,0 +1,49 @@
+syntax = "proto3";
+package beholder.server;
+
+option go_package = "github.com/Milover/beholder/internal/server/proto";
+
+// MessageType designates a recognized message type.
+enum MessageType {
+	MESSAGE_TYPE_UNKNOWN = 0;
+	MESSAGE_TYPE_ERROR = 1;		// an error message
+	MESSAGE_TYPE_INFO = 2;		// an info message
+	MESSAGE_TYPE_IMAGE = 3;		// an image message
+	MESSAGE_TYPE_CONTROL = 4;	// a process control message
+}
+
+// MessageHeader is the basic message metadata each message must contain.
+message MessageHeader {
+	string uuid = 1;		// message UUIDv7
+	MessageType type = 2;	// message type
+}
+
+// MessageWrapper is wraps a message header and payload.
+// It is used to simplify unmarshalling received messages.
+message MessageWrapper {
+	MessageHeader header = 1;	// message header
+	oneof payload {
+		Error error = 2;		// an error message payload
+		Info info = 3;			// an info message payload
+		Image image = 4;		// an image message payload
+	}
+}
+
+// Error is a message containing an error code and description.
+message Error {
+	uint32 code = 1;		// error code
+	string description = 2;	// error description
+}
+
+// Info is a message containing an informative description.
+message Info {
+	string description = 1;	// description
+}
+
+// Image is a message containing bytes of an encoded image and some image
+// metadata.
+message Image {
+	string source = 1;	// image generation source
+	string mime = 2;	// image MIME type
+	bytes raw = 3;		// encoded image bytes
+}

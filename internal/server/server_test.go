@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,9 +12,11 @@ import (
 	"testing"
 	"time"
 
+	pb "github.com/Milover/beholder/internal/server/proto"
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 )
 
 // For future reference, the recommended command to run the tests is:
@@ -250,21 +251,22 @@ func (cl *client) Close() error {
 }
 
 // nextMessage reads a message from the clients WebSocket connection and
-// unmarshalls it from JSON.
-func (cl *client) nextMessage() (*Message, error) {
+// unmarshalls it from a protobuf.
+func (cl *client) nextMessage() (proto.Message, error) {
 	typ, b, err := cl.c.Read(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	if typ != websocket.MessageText {
-		cl.c.Close(websocket.StatusUnsupportedData, "expected text message")
-		return nil, fmt.Errorf("expected text message, but got: %v", typ)
+	if typ != websocket.MessageBinary {
+		cl.c.Close(websocket.StatusUnsupportedData, "expected binary message")
+		return nil, fmt.Errorf("expected binary message, but got: %v", typ)
 	}
-	msg := Message{Payload: &Blob{}}
-	if err := json.Unmarshal(b, &msg); err != nil {
+	// unmarshall the message
+	msg := &pb.MessageWrapper{}
+	if err := proto.Unmarshal(b, msg); err != nil {
 		return nil, err
 	}
-	return &msg, nil
+	return msg, nil
 }
 
 func (cl *client) doHTTPRequest(ctx context.Context, method, endpoint string, status int) error {
@@ -340,12 +342,12 @@ func TestMessageImage(t *testing.T) {
 		assert.Nil(err, err)
 
 		// acquire (and send) blobs
-		expMsg := NewMessage(MessageImage, mock.acquire())
+		expMsg := NewMessage(mock.acquire())
 
 		// read and check the message
 		msg, err := client.nextMessage()
 		assert.Nil(err, err)
-		assert.Equal(expMsg, msg)
+		assert.True(proto.Equal(expMsg, msg))
 
 		// stop acquisition
 		err = client.doHTTPRequest(ctx, http.MethodPost, "/acquisition-stop", http.StatusOK)
@@ -408,7 +410,7 @@ func TestMessageImage(t *testing.T) {
 		defer cancel()
 
 		// get ready to acquire (and send) blobs
-		msgs := make([]*Message, nMessages)
+		msgs := make([]proto.Message, nMessages)
 		// We're acquiring/generating and checking concurrently, so
 		// we need to synchronize.
 		var msgsMu sync.Mutex
@@ -432,7 +434,7 @@ func TestMessageImage(t *testing.T) {
 			<-canAcquire
 			for i := range msgs {
 				msgsMu.Lock()
-				msgs[i] = NewMessage(MessageImage, mock.acquire())
+				msgs[i] = NewMessage(mock.acquire())
 				msgsMu.Unlock()
 			}
 		}()
@@ -475,7 +477,7 @@ func TestMessageImage(t *testing.T) {
 
 					// ok, because we can't receive more messages than we send
 					msgsMu.Lock()
-					assert.Equal(msgs[i], msg)
+					assert.True(proto.Equal(msgs[i], msg))
 					msgsMu.Unlock()
 				}
 			}()

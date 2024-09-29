@@ -15,7 +15,11 @@ endif
 
 build:
 	@echo $(MODULE)
+	go generate ./...
 	go build -tags=$(BUILD_TAGS) -o bin/$(TARGET) main.go
+
+generate:
+	go generate ./...
 
 run:
 	go run ./...
