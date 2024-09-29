@@ -99,7 +99,7 @@ func (acq *mockAcq) IsAcquiring() bool {
 // StartAcquisition sets up and returns the comms channels and
 // sets acq.acquiring to true.
 func (acq *mockAcq) StartAcquisition(blobsSize int) (<-chan *Blob, <-chan error) {
-	if acq.acquiring {
+	if acq.IsAcquiring() {
 		return acq.blobs, acq.errs
 	}
 	acq.blobs = make(chan *Blob, blobsSize)

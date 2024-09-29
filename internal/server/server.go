@@ -330,9 +330,6 @@ func (s *AcquisitionServer) startAcquisition() {
 	s.acqMu.Lock()
 	defer s.acqMu.Unlock()
 
-	if s.acq.IsAcquiring() {
-		return
-	}
 	s.blobs, s.errs = s.acq.StartAcquisition(s.BufferSize)
 }
 
