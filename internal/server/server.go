@@ -18,6 +18,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	ErrMsg = errors.New("bad message") // Invalid message
+)
+
+// Internal use errors.
+var (
+	errConnSlow = errors.New("connection too slow")
+)
+
 func init() {
 	// Enable internal randomness pool to improve UUID generation throughput.
 	//
@@ -94,12 +103,12 @@ type Blob struct {
 	Bytes  []byte    `json:"bytes"`  // encoded image bytes
 }
 
-// NewMessage creates a new Message from a payload.
+// withPayload creates a new [proto.Message] with a payload.
 // If the payload type is unsupported a message with a nil payload is returned.
 //
 // TODO: support payloads other than [*Blob] or generalize [Blob] to handle the
 // different stuff we want to send.
-func NewMessage(payload any) proto.Message {
+func withPayload(payload any) *pb.MessageWrapper {
 	switch p := payload.(type) {
 	case *Blob:
 		return &pb.MessageWrapper{
@@ -125,45 +134,14 @@ func NewMessage(payload any) proto.Message {
 	}
 }
 
-// connection represents an active WebSocket connection
-// to the [AcquisitionServer].
+// A request is a container which relates a [proto.Message] request to
+// the originating connection.
 //
-// A connection shouldn't be copied once constructed.
-type connection struct {
-	// addr is the originating address of the connection.
-	addr string
-	// msgs is the channel on which message are received.
-	msgs chan proto.Message
-	// closed reports whether the underlying connection has been closed.
-	closed bool
-	// mu is the underlying synchronization mechanism.
-	mu sync.Mutex
-	// c is the underlying WebSocket connection.
-	c *websocket.Conn
-}
-
-// drop closes a connection with a StatusPolicyViolation and reports the reason.
-func (c *connection) drop(reason string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.closed = true
-	if c.c != nil {
-		c.c.Close(websocket.StatusPolicyViolation, reason)
-	}
-}
-
-// write marshalls msg and writes it to c's underlying WebSocket connection.
-func (c *connection) write(ctx context.Context, timeout time.Duration, msg proto.Message) error {
-	writeCtx, cancelWrite := context.WithTimeout(ctx, timeout)
-	defer cancelWrite()
-	if msg == nil {
-		return errors.New("nil protobuf message")
-	}
-	b, err := proto.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	return c.c.Write(writeCtx, websocket.MessageBinary, b)
+// Since all protobuf message types implement [proto.Message] through
+// pointer receivers, request can be (shallowly) copied.
+type request struct {
+	orig *connection   // request message origin
+	msg  proto.Message // request message
 }
 
 // Route variables so they can be set during testing.
@@ -183,21 +161,32 @@ var (
 //
 // An AcquisitionServer shouldn't be copied once constructed.
 //
+// Call [AcquisitionServer.Close] when done to clean up and free resources.
+//
+// TODO: add Start/Close methods.
 // TODO: should turn this into a (middleware) muxer/Handler.
 // Could also break into two (or more) parts: one just for handling WebSocket
 // communication and other ones which implement specific functionality,
 // eg. acquisition control, then we could add new 'servers' as needed,
 // each of which would implement some specific functionality.
 type AcquisitionServer struct {
-	// BufferSize is the size of the [Blob] channel used by the server and
+	// BlobsBufferSize is the size of the [Blob] channel used by the server and
 	// each [connection].
 	//
-	// BufferSize is used (evaluated) only when acquisition is started,
-	// hence if BufferSize is changed while acquisition is running, the
+	// BlobsBufferSize is used (evaluated) only when acquisition is started,
+	// hence if BlobsBufferSize is changed while acquisition is running, the
 	// change will take effect the next time acquisition is started.
 	//
 	// Defaults to 8.
-	BufferSize int
+	BlobsBufferSize int
+	// InboxBufferSize is the size of the [proto.Message] channel used by the
+	// server.
+	//
+	// InboxBufferSize is used (evaluated) only when [AcquisitionServer.Start]
+	// is called.
+	//
+	// Defaults to 32.
+	InboxBufferSize int
 	// WriteTimeout is the maximum duration allowed for writing a message
 	// to a connection.
 	//
@@ -207,6 +196,11 @@ type AcquisitionServer struct {
 	// Defaults to 5 seconds.
 	WriteTimeout time.Duration
 
+	// Logf controls where logs are sent.
+	//
+	// Defaults to log.Printf.
+	Logf func(f string, v ...interface{})
+
 	// acq handles starting and stopping image acquisition and sending
 	// acquired blobs (images) and/or errors on their respective channels.
 	acq AcquisitionStartStopper
@@ -214,79 +208,138 @@ type AcquisitionServer struct {
 	// concurrency requirements on other people.
 	acqMu sync.Mutex
 
-	// blobs is the channel on which acquired blobs (images) are received.
-	//
-	// TODO: should turn into a channel of any, since stuff sent here
-	// will get converted into a [proto.Message].
-	blobs <-chan *Blob
-	// errs is the channel on which acquisition errors are received.
-	errs <-chan error
+	// inbox is the channel on which connections send messages.
+	inbox chan request
 
 	// conns are the currently active connections.
 	conns set.Set[*connection]
 	// connsMu is conns' synchronization mechanism.
 	connsMu sync.Mutex
 
+	// shutdown is a signal that the server is being shut down and
+	// all resources should be freed.
+	shutdown chan struct{}
+	// shutdownMu is shutdown's synchronization mechanism.
+	shutdownMu sync.Mutex
+
 	// mux routes endpoints to their appropriate handlers.
 	mux *http.ServeMux
 }
 
-// NewAcquisitionServer creates a new AcquisitionServer ready to be used,
-// if the acq is not nil.
+// NewAcquisitionServer creates a new AcquisitionServer but doesn't start it.
 //
-// New messages can be received, and are distributed to any active connections,
-// as soon as NewAcquisitionServer returns, provided no error occurs.
+// After changing its configuration, the caller should call
+// [AcquisitionServer.Start].
+//
+// The caller should call [AcquisitionServer.Close] when done to clean up
+// and free resources.
 func NewAcquisitionServer(acq AcquisitionStartStopper) (*AcquisitionServer, error) {
 	if acq == nil {
 		return nil, errors.New("server.NewAcquisitionServer: nil AcquisitionStartStopper")
 	}
 	s := &AcquisitionServer{
-		BufferSize:   8,
-		WriteTimeout: time.Second * 5,
-		acq:          acq,
-		mux:          http.NewServeMux(),
-		conns:        set.New[*connection](),
+		BlobsBufferSize: 8,
+		InboxBufferSize: 32,
+		WriteTimeout:    time.Second * 5,
+		Logf:            log.Printf,
+		acq:             acq,
+		mux:             http.NewServeMux(),
+		conns:           set.New[*connection](),
 	}
 	// FIXME: file server routes should probably be handled somewhere else
 	s.mux.Handle("/", http.FileServer(http.Dir(rootPath)))
-	s.mux.Handle("GET /static/images/{imgfile}", http.StripPrefix("/static/images/", http.FileServer(http.Dir(imgsPath))))
+	s.mux.Handle("GET /static/images/{imgfile}", http.StripPrefix("/static/images/", http.FileServer(http.Dir(imgsPath)))) // TODO: can remove, no longer used
+	s.mux.HandleFunc("GET /stream", s.streamHandler)
+	// TODO: should be enabled only for testing/debugging
 	s.mux.HandleFunc("POST /acquisition-start", s.acquisitionStartHandler)
 	s.mux.HandleFunc("POST /acquisition-stop", s.acquisitionStopHandler)
-	s.mux.HandleFunc("GET /stream", s.streamHandler)
 
-	// start receiving and distributing messages
+	return s, nil
+}
+
+// Close closes all active connections, stops acquisition and
+// frees all resources.
+func (s *AcquisitionServer) Close() error {
+	s.shutdownMu.Lock()
+	defer s.shutdownMu.Unlock()
+
+	s.Logf("server shutting down")
+	if s.shutdown != nil {
+		// the server has been started previously, signal the shutdown
+		select {
+		case <-s.shutdown:
+			// already closed, nothing to do
+		default:
+			close(s.shutdown)
+		}
+	}
+	// stop acquisition
+	s.stopAcquisition()
+
+	// drop connections (stream() will clean up)
+	s.connsMu.Lock()
+	defer s.connsMu.Unlock()
+
+	var err error
+	for c := range s.conns {
+		errors.Join(err, c.drop(websocket.StatusGoingAway, nil))
+	}
+	return err
+}
+
+// Start starts a server from [AcquisitionServer.NewAcquisitionServer]:
+//   - incomming connections are accepted
+//   - incomming messages from connections are received and processed
+//
+// Call [AcquisitionServer.Close] when done to clean up and free resources.
+func (s *AcquisitionServer) Start() {
+	s.shutdownMu.Lock()
+	defer s.shutdownMu.Unlock()
+
+	s.Logf("server starting")
+	if s.shutdown != nil {
+		// the server has been started previously
+		select {
+		case <-s.shutdown:
+			// the server was closed, proceed with restart
+		default:
+			// the server was never closed, bail
+			return
+		}
+	}
+	s.inbox = make(chan request, s.InboxBufferSize)
+	s.shutdown = make(chan struct{})
+
+	// start receiving and processing messages from connections
 	go func() {
-		var blobs <-chan *Blob
-		var errs <-chan error
 		for {
-			s.acqMu.Lock()
-			blobs = s.blobs
-			errs = s.errs
-			s.acqMu.Unlock()
-
 			select {
-			case blob := <-blobs:
-				// If we're here, we either have a message to send, or
-				// s.messages was closed (acquisition has stopped), in which
-				// case we should check for errors.
-				if blob == nil {
-					// TODO: distribute encountered errors as messages
-					if err, ok := <-errs; ok && err != nil {
-						log.Printf("error: %v", err)
-					}
-					// bail, acquisition done
+			case <-s.shutdown:
+				// server shutdown, bail
+				return
+			case req := <-s.inbox:
+				s.Logf("received request (%p)", req.orig)
+				resp, uuid, err := s.processRequest(req.msg)
+				if err != nil {
+					s.Logf("%v (uuid: %v; conn: %p)", err, uuid, req.orig)
+				}
+				b, err := proto.Marshal(resp)
+				if err != nil {
+					s.Logf("failed to marshal response: %v (uuid: %v; conn: %p)",
+						err, uuid, req.orig)
 					continue
 				}
-				s.distribute(NewMessage(blob))
-			default:
-				// Necessary so that we don't block indefinitely.
-				// NOTE: we could sleep here to leave some wiggle room for
-				// other goroutines, however, even short sleep durations (1ms)
-				// cause weird hangs in tests for some reason.
+				// push response to connection if it's still active
+				s.connsMu.Lock()
+				if _, ok := s.conns[req.orig]; ok {
+					req.orig.msgs <- b
+					// TODO: log that the response was queued for sending
+					s.Logf("response queued (uuid: %v; conn: %p)", uuid, req.orig)
+				}
+				s.connsMu.Unlock()
 			}
 		}
 	}()
-	return s, nil
 }
 
 // ServeHTTP dispatches the request to the handler whose pattern most closely
@@ -311,26 +364,59 @@ func (s *AcquisitionServer) acquisitionStopHandler(w http.ResponseWriter, r *htt
 func (s *AcquisitionServer) streamHandler(w http.ResponseWriter, r *http.Request) {
 	err := s.stream(w, r)
 	if errors.Is(err, context.Canceled) {
-		log.Println("websocket connection closed due to cancelled context")
+		s.Logf("websocket connection closed: %v", err)
 		return
 	}
 	if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
 		websocket.CloseStatus(err) == websocket.StatusGoingAway {
-		log.Println("websocket connection closed")
+		s.Logf("websocket connection closed (%p)", err.(*connError).conn)
 		return
 	}
 	if err != nil {
-		log.Printf("error: %v", err)
+		s.Logf("server.AcquisitionServer.streamHandler: %v", err)
 		return
 	}
 }
 
 // startAcquisition safely sets up and starts acquisition.
+// Incomming blobs are received and distributed to active connections.
 func (s *AcquisitionServer) startAcquisition() {
 	s.acqMu.Lock()
 	defer s.acqMu.Unlock()
 
-	s.blobs, s.errs = s.acq.StartAcquisition(s.BufferSize)
+	if s.acq.IsAcquiring() {
+		return
+	}
+	blobs, errs := s.acq.StartAcquisition(s.BlobsBufferSize)
+	s.Logf("acquisition started")
+	// start receiving blobs and distributing them as messages
+	go func() {
+		for {
+			select {
+			case <-s.shutdown:
+				// server shutdown, bail
+				return
+			case blob := <-blobs:
+				if blob == nil {
+					// The channel is closed and acquisition has stopped (see
+					// [AcquisitionStartStopper]) so check for errors.
+					// TODO: distribute encountered errors as messages
+					if err, ok := <-errs; ok && err != nil {
+						s.Logf("acquisition error: %v", err)
+					}
+					// acquisition stopped, bail
+					return
+				}
+				b, err := proto.Marshal(withPayload(blob))
+				if err != nil {
+					s.Logf("could not marshal response message: %v", err)
+					// marshalling failed, nothing to do
+					continue
+				}
+				s.distribute(b)
+			}
+		}
+	}()
 }
 
 // stopAcquisition safely stops acquisition.
@@ -339,6 +425,7 @@ func (s *AcquisitionServer) stopAcquisition() {
 	defer s.acqMu.Unlock()
 
 	s.acq.StopAcquisition()
+	s.Logf("acquisition stopped")
 }
 
 // stream accepts a WebSocket connection and writes Blobs sent on
@@ -346,19 +433,14 @@ func (s *AcquisitionServer) stopAcquisition() {
 // Errors sent on [AcquisitionServer.errs] are checked only once
 // [AcquisitionServer.messages] is closed.
 //
-// TODO: stream uses [websocket.CloseRead] to keep reading from the connection
-// to process control messages and cancel the context if the connection drops.
-// However, [websocket.CloseRead] closes the connection once a data message is
-// read. This is ok for now, but we would like to use the connection for
-// back and forth communication, and as we understand it, [websocket.CloseRead]
-// does not allow this.
+// If the returned error is not nil, it will be of type [*server.connError].
 func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error {
 	conn := &connection{
 		addr: r.RemoteAddr,
-		msgs: make(chan proto.Message, s.BufferSize),
+		msgs: make(chan []byte, s.BlobsBufferSize),
 	}
-	s.addConnection(conn)
-	defer s.deleteConnection(conn)
+	s.register(conn)
+	defer s.unregister(conn)
 
 	// XXX: this entire block seems contrived, why can't we just assign
 	// the socket to c?
@@ -369,34 +451,54 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 	// Maybe this handles cases when the handshake is taking too long?
 	c, err := websocket.Accept(w, r, nil) // *AcceptOptions == nil
 	if err != nil {
-		return err
+		return newConnError(err, conn)
 	}
 	conn.mu.Lock()
 	if conn.closed {
 		conn.mu.Unlock()
-		return net.ErrClosed
+		return newConnError(net.ErrClosed, conn)
 	}
 	conn.c = c
 	conn.mu.Unlock()
-	defer conn.c.CloseNow()
+	defer conn.dropNow()
 
-	// FIXME: ok for now, but doesn't work for two-way comms
-	ctx := conn.c.CloseRead(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// read messages from clients (and handle ping, pong and close frames)
+	readErr := make(chan error, 1)
+	go func() {
+		for {
+			msg, err := conn.read(ctx)
+			if err != nil {
+				if errors.Is(err, ErrMsg) {
+					err = errors.Join(err, conn.drop(websocket.StatusUnsupportedData, ErrMsg))
+				}
+				readErr <- err
+				// the connection will get (or already has been) dropped, bail
+				return
+			}
+			s.inbox <- request{orig: conn, msg: msg}
+		}
+	}()
+	// write messages from the server
 	for {
 		select {
 		case msg := <-conn.msgs:
 			if err := conn.write(ctx, s.WriteTimeout, msg); err != nil {
-				return err
+				return newConnError(err, conn)
 			}
+		case err := <-readErr:
+			return newConnError(err, conn)
 		case <-ctx.Done():
-			return ctx.Err()
+			return newConnError(ctx.Err(), conn)
 		}
 	}
 }
 
 // distribute sends msg to all active connections.
 // It never blocks and so messages to slow connections are dropped.
-func (s *AcquisitionServer) distribute(msg proto.Message) {
+func (s *AcquisitionServer) distribute(msg []byte) {
 	s.connsMu.Lock()
 	defer s.connsMu.Unlock()
 
@@ -405,23 +507,31 @@ func (s *AcquisitionServer) distribute(msg proto.Message) {
 		select {
 		case c.msgs <- msg:
 		default:
-			go c.drop("connection too slow")
+			go c.drop(websocket.StatusPolicyViolation, errConnSlow) // FIXME: ignoring error
 		}
 	}
 }
 
-// addConnection registers a new active connection.
-func (s *AcquisitionServer) addConnection(c *connection) {
+// register registers a new connection.
+func (s *AcquisitionServer) register(c *connection) {
 	s.connsMu.Lock()
+	defer s.connsMu.Unlock()
+
+	if c == nil {
+		return
+	}
 	s.conns.Add(c)
-	s.connsMu.Unlock()
-	log.Printf("registered new connection: %v", c.addr)
+	s.Logf("registered new connection: %v (%p)", c.addr, c)
 }
 
-// deleteConnection deletes a connection.
-func (s *AcquisitionServer) deleteConnection(c *connection) {
+// unregister unregisters a connection (but does NOT close it).
+func (s *AcquisitionServer) unregister(c *connection) {
 	s.connsMu.Lock()
+	defer s.connsMu.Unlock()
+
+	if c == nil {
+		return
+	}
 	s.conns.Remove(c)
-	s.connsMu.Unlock()
-	log.Printf("de-registered connection: %v", c.addr)
+	s.Logf("unregistered connection: %v (%p)", c.addr, c)
 }

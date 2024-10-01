@@ -367,7 +367,7 @@ func demoMain(cmd *cobra.Command, args []string) error {
 	defer func() {
 		// deferred C-call so we don't care if it's locked or not
 		if err := app.Finalize(); err != nil {
-			log.Println("finalization error: ", err)
+			log.Printf("app finalization error: %v", err)
 		}
 	}()
 	if err := json.Unmarshal(cfg, &app); err != nil {
@@ -399,6 +399,12 @@ func demoMain(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	as.Start()
+	defer func() {
+		if err := as.Close(); err != nil {
+			log.Printf("acquisition server close error: %v", err)
+		}
+	}()
 	// TODO: should probably handle static content (file server) routes here.
 	srv := &http.Server{
 		Handler:      as,
