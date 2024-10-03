@@ -395,7 +395,10 @@ func (s *AcquisitionServer) startAcquisition() {
 					// acquisition stopped, bail
 					return
 				}
-				b, err := proto.Marshal(withPayload(blob))
+				msg := withPayload(blob)
+				s.Logf("distributing message (uuid: %v; type: %v)",
+					msg.Header.Uuid, msg.Header.Type)
+				b, err := proto.Marshal(msg)
 				if err != nil {
 					s.Logf("could not marshal response message: %v", err)
 					// marshalling failed, nothing to do

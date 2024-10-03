@@ -52,8 +52,8 @@ func (s *AcquisitionServer) processRequest(req request) (*pb.MessageWrapper, str
 	var resp *pb.MessageWrapper
 	var opcode pb.OpCode
 	defer func() {
-		s.Logf("processed request (opcode: %v; uuid: %v; conn: %p)",
-			opcode, resp.Header.Uuid, req.orig)
+		s.Logf("processed request (uuid: %v; conn: %p; opcode: %v)",
+			resp.Header.Uuid, req.orig, opcode)
 	}()
 	// check request
 	op, service, uuid, err := verifyRequest(req.msg)
