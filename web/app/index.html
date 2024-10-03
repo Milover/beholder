@@ -10,20 +10,19 @@
 	<div id="root">
 		<h1>Demo app</h1>
 
-		<div class="form-container">
-			<form id="acq-start-form">
-				<button id="acq-start-button" type="submit" disabled>
-					Start acquisition
-				</button>
-			</form>
-			<form id="acq-stop-form">
-				<button id="acq-stop-button" type="submit" disabled>
-					Stop acquisition
-				</button>
-			</form>
+		<div class="acq-sw-container">
+			<label class="acq-sw-label" for="acq-sw">
+				Start/stop acquisition
+			</label>
+			<div class="vcenter">
+				<label class="acq-sw" name="acq-sw">
+					<input class="hidden" id="acq-sw-checkbox" type="checkbox" autocomplete="off">
+					<span class="acq-sw-slider"></span>
+				</label>
+			</div>
 		</div>
 
-		<div id="acq-img-container" style="display:none;">
+		<div id="acq-img-container" class="hidden">
 			<h2>Acquired Image:</h2>
 			<div style="max-width:1280px; position:relative;">
 				<img id="acq-img" src="" alt="Acquired image" style="max-width:100%;" />
@@ -37,6 +36,6 @@
 	</div>
 
 	<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.4.0/dist/protobuf.min.js"></script>
-	<script type="text/javascript" src="/index.js"></script>
+	<script type="module" src="index.js"></script>
 </body>
 </html>
