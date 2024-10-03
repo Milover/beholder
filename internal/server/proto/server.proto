@@ -32,9 +32,12 @@ message MessageWrapper {
 }
 
 // ErrorCode designates a recognized error code.
+//
+// Code 0 signifies failure so that users must explicitly set the error code,
+// or generate a 'failed' Error.
 enum ErrorCode {
-	ERROR_CODE_SUCCESS = 0;	// everything OK, no errors occured
-	ERROR_CODE_FAIL = 1;	// a (generic) error occured
+	ERROR_CODE_FAIL = 0;	// a (generic) error occured
+	ERROR_CODE_SUCCESS = 1;	// everything OK, no errors occured
 }
 
 // Error is a message containing an error code and description.

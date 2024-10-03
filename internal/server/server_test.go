@@ -634,16 +634,11 @@ var opMsgTests = []opMsgTest{
 	{
 		Name:   "msg-unknown",
 		OpCode: pb.OpCode_OP_CODE_UNKNOWN,
-		Resp: func(req *pb.MessageWrapper) *pb.MessageWrapper {
-			resp := (proto.Clone(req)).(*pb.MessageWrapper)
-			resp.Header.Type = pb.MessageType_MESSAGE_TYPE_ERROR
-			resp.Payload = &pb.MessageWrapper_Error{
-				Error: &pb.Error{
-					Code:        pb.ErrorCode_ERROR_CODE_FAIL,
-					Description: ErrMsg.Error(),
-				},
+		Payload: func() proto.Message {
+			return &pb.Error{
+				Code:        pb.ErrorCode_ERROR_CODE_FAIL,
+				Description: ErrMsg.Error(),
 			}
-			return resp
 		},
 	},
 	{

@@ -134,16 +134,6 @@ func withPayload(payload any) *pb.MessageWrapper {
 	}
 }
 
-// A request is a container which relates a [proto.Message] request to
-// the originating connection.
-//
-// Since all protobuf message types implement [proto.Message] through
-// pointer receivers, request can be (shallowly) copied.
-type request struct {
-	orig *connection   // request message origin
-	msg  proto.Message // request message
-}
-
 // Route variables so they can be set during testing.
 //
 // TODO: could leave non-WebSocket/acquisition specific routes up to
@@ -318,8 +308,8 @@ func (s *AcquisitionServer) Start() {
 				// server shutdown, bail
 				return
 			case req := <-s.inbox:
-				s.Logf("received request (%p)", req.orig)
-				resp, uuid, err := s.processRequest(req.msg)
+				s.Logf("received request (conn: %p)", req.orig)
+				resp, uuid, err := s.processRequest(req)
 				if err != nil {
 					s.Logf("%v (uuid: %v; conn: %p)", err, uuid, req.orig)
 				}
@@ -388,7 +378,6 @@ func (s *AcquisitionServer) startAcquisition() {
 		return
 	}
 	blobs, errs := s.acq.StartAcquisition(s.BlobsBufferSize)
-	s.Logf("acquisition started")
 	// start receiving blobs and distributing them as messages
 	go func() {
 		for {
@@ -425,7 +414,6 @@ func (s *AcquisitionServer) stopAcquisition() {
 	defer s.acqMu.Unlock()
 
 	s.acq.StopAcquisition()
-	s.Logf("acquisition stopped")
 }
 
 // stream accepts a WebSocket connection and writes Blobs sent on
