@@ -308,7 +308,6 @@ func (s *AcquisitionServer) Start() {
 				// server shutdown, bail
 				return
 			case req := <-s.inbox:
-				s.Logf("received request (conn: %p)", req.orig)
 				resp, uuid, err := s.processRequest(req)
 				if err != nil {
 					s.Logf("%v (uuid: %v; conn: %p)", err, uuid, req.orig)
@@ -466,6 +465,7 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 				// the connection will get (or already has been) dropped, bail
 				return
 			}
+			s.Logf("read message (conn: %p)", conn.c) // XXX: shouldn't log here
 			s.inbox <- request{orig: conn, msg: msg}
 		}
 	}()
@@ -473,6 +473,7 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 	for {
 		select {
 		case msg := <-conn.msgs:
+			s.Logf("writing message (conn: %p)", conn.c) // XXX: shouldn't log here
 			if err := conn.write(ctx, s.WriteTimeout, msg); err != nil {
 				return newConnError(err, conn)
 			}

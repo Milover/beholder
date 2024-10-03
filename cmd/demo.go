@@ -247,12 +247,21 @@ func (app *DemoApp) acquireImages() {
 		// TODO: the trigger should enable single/multiple image acquisition
 		// mode, it currently only supports continuous (infinite) acquisition.
 		if err := app.Cs.TryTrigger(); err != nil {
-			// XXX: IsAcquiring should pick up more serious errors, so
-			// we should be able to ignore trigger errors entirely, but
-			// not entirely sure.
-			//return nil
 			// TODO: would be nice to know which camera failed to trigger.
 			log.Println("triggering error or timed out")
+			// FIXME: IsAcquiring should pick up more serious errors, so
+			// we should be able to ignore trigger errors entirely,
+			// however if we fail to trigger there is no sense in trying
+			// to acquire.
+			// The issue is that we currently expect all cameras to trigger
+			// once TryTrigger is called, so if one camera fails to trigger
+			// we won't acquire any images.
+			// What we should probably do is trigger the first available
+			// camera, and then acquire the first available image, that is
+			// we have to change how [camera.Array] functions which implies
+			// modifying the C-API.
+			// When this is done, the loop below won't be necessary.
+			continue
 		}
 		log.Println("acquiring image")
 		if err := app.Cs.Acquire(); err != nil {
