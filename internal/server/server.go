@@ -25,6 +25,9 @@ var (
 // Internal use errors.
 var (
 	errConnSlow = errors.New("connection too slow")
+
+	errAcqStarted = errors.New("acquisition already started")
+	errAcqStopped = errors.New("acquisition already stopped")
 )
 
 func init() {
@@ -264,7 +267,7 @@ func (s *AcquisitionServer) Close() error {
 		}
 	}
 	// stop acquisition
-	s.stopAcquisition()
+	_ = s.stopAcquisition()
 
 	// drop connections (stream() will clean up)
 	s.connsMu.Lock()
@@ -309,23 +312,27 @@ func (s *AcquisitionServer) Start() {
 				return
 			case req := <-s.inbox:
 				resp, uuid, err := s.processRequest(req)
-				if err != nil {
+				// ignore the error if it's specifically a 'no-distribute' error
+				if err != nil && err != ErrNoDistribute {
 					s.Logf("%v (uuid: %v; conn: %p)", err, uuid, req.orig)
 				}
+				// if there is an error, only the request origin should receive
+				// a response
+				distribute := (err == nil)
+
 				b, err := proto.Marshal(resp)
 				if err != nil {
 					s.Logf("failed to marshal response: %v (uuid: %v; conn: %p)",
 						err, uuid, req.orig)
 					continue
 				}
-				// push response to connection if it's still active
-				s.connsMu.Lock()
-				if _, ok := s.conns[req.orig]; ok {
-					req.orig.msgs <- b
-					// TODO: log that the response was queued for sending
-					s.Logf("response queued (uuid: %v; conn: %p)", uuid, req.orig)
+				// queue the response
+				if distribute {
+					s.distribute(b)
+				} else {
+					s.sendTo(b, req.orig)
 				}
-				s.connsMu.Unlock()
+				s.Logf("response queued (uuid: %v)", uuid)
 			}
 		}
 	}()
@@ -339,13 +346,13 @@ func (s *AcquisitionServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // acquireHandler handles the "/acquire-start" endpoint.
 func (s *AcquisitionServer) acquisitionStartHandler(w http.ResponseWriter, r *http.Request) {
-	s.startAcquisition()
+	_ = s.startAcquisition()
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // acquireHandler handles the "/acquire-stop" endpoint.
 func (s *AcquisitionServer) acquisitionStopHandler(w http.ResponseWriter, r *http.Request) {
-	s.stopAcquisition()
+	_ = s.stopAcquisition()
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -369,12 +376,14 @@ func (s *AcquisitionServer) streamHandler(w http.ResponseWriter, r *http.Request
 
 // startAcquisition safely sets up and starts acquisition.
 // Incomming blobs are received and distributed to active connections.
-func (s *AcquisitionServer) startAcquisition() {
+//
+// If there is an error, it will be an [errAcqStarted].
+func (s *AcquisitionServer) startAcquisition() error {
 	s.acqMu.Lock()
 	defer s.acqMu.Unlock()
 
 	if s.acq.IsAcquiring() {
-		return
+		return errAcqStarted
 	}
 	blobs, errs := s.acq.StartAcquisition(s.BlobsBufferSize)
 	// start receiving blobs and distributing them as messages
@@ -408,14 +417,24 @@ func (s *AcquisitionServer) startAcquisition() {
 			}
 		}
 	}()
+	return nil
 }
 
 // stopAcquisition safely stops acquisition.
-func (s *AcquisitionServer) stopAcquisition() {
+//
+// If there is an error, it will be an [errAcqStopped].
+func (s *AcquisitionServer) stopAcquisition() error {
 	s.acqMu.Lock()
 	defer s.acqMu.Unlock()
 
+	// Calling IsAcquiring is not necessary, since it can never fail, but
+	// we need to know the acquisition state before stopping it.
+	if !s.acq.IsAcquiring() {
+		return errAcqStopped
+	}
 	s.acq.StopAcquisition()
+
+	return nil
 }
 
 // stream accepts a WebSocket connection and writes Blobs sent on
@@ -488,14 +507,30 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 	}
 }
 
-// distribute sends msg to all active connections.
-// It never blocks and so messages to slow connections are dropped.
+// distribute sends a message to all active connections.
+// It never blocks, so slow connections are dropped.
 func (s *AcquisitionServer) distribute(msg []byte) {
 	s.connsMu.Lock()
 	defer s.connsMu.Unlock()
 
 	// should we rate-limit here?
 	for c := range s.conns {
+		select {
+		case c.msgs <- msg:
+		default:
+			go c.drop(websocket.StatusPolicyViolation, errConnSlow) // FIXME: ignoring error
+		}
+	}
+}
+
+// sendTo sends a message to a single connection if it is active.
+// It never blocks, so a slow connection will be dropped.
+func (s *AcquisitionServer) sendTo(msg []byte, c *connection) {
+	s.connsMu.Lock()
+	defer s.connsMu.Unlock()
+
+	_, found := s.conns[c]
+	if found {
 		select {
 		case c.msgs <- msg:
 		default:

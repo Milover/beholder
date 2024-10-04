@@ -63,12 +63,7 @@ func (s *AcquisitionServer) processRequest(req request) (*pb.MessageWrapper, str
 	}
 	// execute service
 	respPayload, err := service(op, s)
-	if err != nil {
-		respPayload = &pb.Error{
-			Code:        pb.ErrorCode_ERROR_CODE_FAIL,
-			Description: ErrMsg.Error(),
-		}
-	}
+
 	// construct service response
 	var errResp error
 	if resp, opcode, errResp = makeResponse(req.msg, respPayload); errResp != nil {
