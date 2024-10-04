@@ -19,50 +19,59 @@ function uuidv7Timestamp(uuid) {
 
 // handle decodes an incomming protobuf message and processes it.
 export function handle(binaryData) {
+	let uuid;
+	let type;
 	try {
 		const msg = Proto.MessageWrapper.decode(new Uint8Array(binaryData))
 		if (!msg.header.type || !msg.header.uuid) {
-			throw new Error(`Bad message header`);
+			throw new Error(`Bad message`);
 		}
-		console.log(`Received message: type=${msg.header.type} uuid=${msg.header.uuid}`);
+		uuid = msg.header.uuid;
+		type = msg.header.type;
+		//console.log(`Received message: uuid=${uuid} type=${type}`);
 
 		// TODO: handle different message types
 		switch (msg.header.type) {
 			case Proto.MessageType.values.MESSAGE_TYPE_ERROR:
-				handleError(msg)
+				handleError(msg);
 				break;
 			case Proto.MessageType.values.MESSAGE_TYPE_IMAGE:
-				handleImage(msg)
+				handleImage(msg);
 				break;
 			case Proto.MessageType.values.MESSAGE_TYPE_OP:
-				handleServiceResponse(msg.op.header.code, msg.op)
+				handleServiceResponse(msg);
 				break;
 			default:
-				console.error(`Unsupported message type: ${msg.header.type} uuid=${msg.header.uuid}`)
+				throw new Error(`Unsupported message`)
 		}
 	} catch(err) {
-		console.error(`Error handling message: ${err.message}`)
+		console.error(`Error handling message: uuid=${uuid} type=${type} error=${err.message}`);
 	}
 }
 
 // Handle an incomming error message.
 function handleError(msg) {
-	const err = msg.error
-	console.error(`Received error message: description=${err.description} code=${err.code}`)
+	const err = msg.error;
+	const uuid = msg.header.uuid;
+
+	console.error(`Received error: uuid=${uuid} code=${err.code} description=${err.description}`);
 }
 
 // Handle an incomming image message.
 function handleImage(msg) {
 	const blob = new Blob([msg.image.raw], { type: `image/${msg.image.mime}` });
 	const imageURL = URL.createObjectURL(blob);
-	const time = localTime.format(uuidv7Timestamp(msg.header.uuid));
+	const uuid = msg.header.uuid; // TODO: change to msg.image.uuid when implemented
+	const time = localTime.format(uuidv7Timestamp(uuid));
+	const source = msg.image.source;
 
+	console.log(`Received image: uuid=${uuid} time=${time} source=${source}`);
 	// set the image source
 	document.getElementById("acq-img").src = imageURL;
 	// display image overlay text
 	document.getElementById("acq-img-timestamp").textContent = `time: ${time}`;
-	document.getElementById("acq-img-uuid").textContent = `uuid: ${msg.header.uuid}`;
-	document.getElementById("acq-img-source").textContent = `src: ${msg.image.source}`;
+	document.getElementById("acq-img-uuid").textContent = `uuid: ${uuid}`;
+	document.getElementById("acq-img-source").textContent = `src: ${source}`;
 	// show the container
 	document.getElementById("acq-img-container").style.display = "block";
 }

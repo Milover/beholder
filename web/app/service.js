@@ -36,12 +36,17 @@ export function shutdown(ev) {
 }
 
 // Handle an incomming response op-message.
-export function handleResponse(opcode, msg) {
+export function handleResponse(msg) {
+	const opcode = msg.op.header.code;
+	const uuid = msg.header.uuid;
+
+	console.log(`Received op: uuid=${uuid} opcode=${opcode}`);
+	// find an execute the service
 	const service = servicesMap.get(opcode);
 	if (!service) {
-		throw new Error(`Unexpected service opcode: opcode=${opcode}`);
+		throw new Error(`Unsupported op: opcode=${opcode}`);
 	}
-	service.handleResponse(msg);
+	service.handleResponse(msg.op);
 }
 
 // Service is an interface which implements methods needed to send service
@@ -78,7 +83,7 @@ class Service {
 			this.timeoutID = setTimeout(() => {
 				this.rollback();
 				this.timeoutID = undefined;
-				console.error(`Service timed out: opcode=${this.opcode}`);
+				console.error(`Service timed out: uuid=${obj.header.uuid} opcode=${this.opcode}`);
 			}, this.timeout);
 
 			// encode and send the message
@@ -88,11 +93,11 @@ class Service {
 				throw new Error("WebSocket not ready, cannot send data");
 			}
 			this.conn.send(buffer);
-			console.log(`Sending request: opcode=${this.opcode} uuid=${obj.header.uuid}`);
+			console.log(`Sending request: uuid=${obj.header.uuid} opcode=${this.opcode}`);
 		} catch(err) {
 			this.clearRollback()
 			this.rollback();
-			console.error(`Error creating request: ${err.message}`);
+			console.error(`Error creating request: ${err.message} opcode=${this.opcode}`);
 		}
 	}
 
@@ -115,7 +120,7 @@ class Service {
 			this.finish(msg);
 		} catch(err) {
 			this.rollback();
-			console.error(`Error handling response: ${err.message}`);
+			throw err; // the caller should handle/report the error
 		}
 	}
 
