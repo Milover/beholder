@@ -12,6 +12,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type ConnectionRole int
+
+const (
+	RoleUnknown    ConnectionRole = iota
+	RoleController                // a 'human' controller connection
+	RoleObserver                  // a 'human' observer connection
+	RoleBot                       // a robot connection
+)
+
 // connection represents an active WebSocket connection
 // to the [AcquisitionServer].
 //
@@ -19,6 +28,8 @@ import (
 type connection struct {
 	// addr is the originating address of the connection.
 	addr string
+	// role is the connection role with respect to the server.
+	role ConnectionRole
 	// msgs is the channel on which messages from the server are received.
 	msgs chan []byte
 	// closed reports whether the underlying connection has been closed.

@@ -158,9 +158,11 @@ class StartAcquisition extends Service {
 
 	handle(ev) {
 		acqSwitch.disabled = true;	// no more clicking until we're done
+		acqSwitch.checked = true;	// enforce DOM state
 	}
 
 	rollback() {
+		acqSwitch.checked = false;	// enforce DOM state
 		acqSwitch.disabled = false;
 	}
 
@@ -168,6 +170,7 @@ class StartAcquisition extends Service {
 		if (msg.error.code !== Proto.ErrorCode.values.ERROR_CODE_SUCCESS) {
 			throw new Error(`Service error: ${msg.error.description} code=${msg.error.code}`);
 		}
+		acqSwitch.checked = true;	// enforce DOM state
 		acqSwitch.disabled = false;
 		console.log(`Service success: ${msg.error.description}`);
 	}
@@ -182,9 +185,11 @@ class StopAcquisition extends Service {
 
 	handle(ev) {
 		acqSwitch.disabled = true;	// no more clicking until we're done
+		acqSwitch.checked = false;	// enforce DOM state
 	}
 
 	rollback() {
+		acqSwitch.checked = true;	// enforce DOM state
 		acqSwitch.disabled = false;
 	}
 
@@ -192,6 +197,7 @@ class StopAcquisition extends Service {
 		if (msg.error.code !== Proto.ErrorCode.values.ERROR_CODE_SUCCESS) {
 			throw new Error(`Service error: ${msg.error.description} code=${msg.error.code}`);
 		}
+		acqSwitch.checked = false;	// enforce DOM state
 		acqSwitch.disabled = false;
 		console.log(`Service success: ${msg.error.description}`);
 	}

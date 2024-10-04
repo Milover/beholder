@@ -17,7 +17,7 @@ var (
 var (
 	errSanity = errors.New("sanity check failed")
 
-	errUUIDVersion = errors.New("UUID version != 7")
+	errUUIDVersion = errors.New("UUID not v7")
 
 	errMsgHeader = errors.New("bad message header")
 	errMsgType   = errors.New("bad message type")
@@ -62,7 +62,7 @@ func (s *AcquisitionServer) processRequest(req request) (*pb.MessageWrapper, str
 		return resp, uuid, fmt.Errorf("%w: %w", ErrProcessReq, err)
 	}
 	// execute service
-	respPayload, err := service(op, s)
+	respPayload, err := service.Execute(op, req.orig.role, s)
 
 	// construct service response
 	var errResp error
@@ -73,10 +73,12 @@ func (s *AcquisitionServer) processRequest(req request) (*pb.MessageWrapper, str
 	return resp, uuid, err
 }
 
-// defaultResponse creates a new default request response with the provided UUID.
+// defaultResponse creates a new default request response with
+// the provided UUID.
+// An optional error can be provided which sets the message error description.
 //
 // The default response message is an op-message with a 'bad-message' error
-// payload.
+// payload and an 'unknown' op-code.
 func defaultResponse(uuid string) (*pb.MessageWrapper, pb.OpCode) {
 	return &pb.MessageWrapper{
 		Header: &pb.MessageHeader{
@@ -104,7 +106,7 @@ func defaultResponse(uuid string) (*pb.MessageWrapper, pb.OpCode) {
 // service, UUIDv7, either req's UUID or a new one, and any errors which occur.
 //
 // verifyRequest always returns a valid UUID, even if there is an error,
-// however, the op-message and the service will be nil ho
+// however the op-message and the service will be nil.
 func verifyRequest(req proto.Message) (*pb.Op, Service, string, error) {
 	// check header
 	r, ok := req.(*pb.MessageWrapper)
@@ -126,11 +128,11 @@ func verifyRequest(req proto.Message) (*pb.Op, Service, string, error) {
 		return nil, nil, uuid, err
 	}
 	// lookup service
-	service, found := services[op.Header.Code]
+	serviceGen, found := services[op.Header.Code]
 	if !found {
 		return nil, nil, uuid, errOpCode
 	}
-	return op, service, uuid, nil
+	return op, serviceGen.New(), uuid, nil
 }
 
 // verifyRequestUUID verifies that s is a valid UUIDv7.

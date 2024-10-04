@@ -539,7 +539,7 @@ func (s *AcquisitionServer) sendTo(msg []byte, c *connection) {
 	}
 }
 
-// register registers a new connection.
+// register registers a new connection and assigns it's role.
 func (s *AcquisitionServer) register(c *connection) {
 	s.connsMu.Lock()
 	defer s.connsMu.Unlock()
@@ -547,12 +547,25 @@ func (s *AcquisitionServer) register(c *connection) {
 	if c == nil {
 		return
 	}
+	// assign role
+	switch {
+	case s.conns.Len() == 0:
+		c.role = RoleController
+	default:
+		c.role = RoleObserver
+	}
 	s.conns.Add(c)
 	s.Logf("registered new connection: %v (%p)", c.addr, c)
 }
 
 // unregister unregisters a connection (but does NOT close it).
+// If the connection was a controller, a new controller is elected.
 func (s *AcquisitionServer) unregister(c *connection) {
+	defer func() {
+		if c.role == RoleController {
+			s.electController()
+		}
+	}()
 	s.connsMu.Lock()
 	defer s.connsMu.Unlock()
 
@@ -561,4 +574,19 @@ func (s *AcquisitionServer) unregister(c *connection) {
 	}
 	s.conns.Remove(c)
 	s.Logf("unregistered connection: %v (%p)", c.addr, c)
+}
+
+// electController assigns a new controller role to
+// an active observer connection.
+func (s *AcquisitionServer) electController() {
+	s.connsMu.Lock()
+	defer s.connsMu.Unlock()
+
+	// randomly pick and promote an observer
+	for c := range s.conns {
+		if c.role == RoleObserver {
+			c.role = RoleController
+			return
+		}
+	}
 }
