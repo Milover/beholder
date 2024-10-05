@@ -172,6 +172,15 @@ type AcquisitionServer struct {
 	//
 	// Defaults to 8.
 	BlobsBufferSize int
+	// ConnBufferSize is the size of the [proto.Message] channel used by each
+	// [connection].
+	//
+	// ConnBufferSize is used (evaluated) each time a new [connection] is
+	// established.
+	// It is not safe to change ConnBufferSize once the server is started.
+	//
+	// Defaults to 8.
+	ConnBufferSize int
 	// InboxBufferSize is the size of the [proto.Message] channel used by the
 	// server.
 	//
@@ -181,7 +190,7 @@ type AcquisitionServer struct {
 	// Defaults to 32.
 	InboxBufferSize int
 	// WriteTimeout is the maximum duration allowed for writing a message
-	// to a connection.
+	// to a [connection].
 	//
 	// WriteTimeout is used (evaluated) each time a connection writes a
 	// message to it's underlying WebSocket connection.
@@ -232,6 +241,7 @@ func NewAcquisitionServer(acq AcquisitionStartStopper) (*AcquisitionServer, erro
 	}
 	s := &AcquisitionServer{
 		BlobsBufferSize: 8,
+		ConnBufferSize:  8,
 		InboxBufferSize: 32,
 		WriteTimeout:    time.Second * 5,
 		Logf:            log.Printf,
@@ -446,7 +456,7 @@ func (s *AcquisitionServer) stopAcquisition() error {
 func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error {
 	conn := &connection{
 		addr: r.RemoteAddr,
-		msgs: make(chan []byte, s.BlobsBufferSize),
+		msgs: make(chan []byte, s.ConnBufferSize),
 	}
 	s.register(conn)
 	defer s.unregister(conn)
