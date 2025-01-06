@@ -1,11 +1,11 @@
 {
-	"tst_camera_test_image": "internal/neural/testdata/images/fima/sawlog_0.png",
+	"tst_camera_test_image": "internal/neural/testdata/images/fima/sawlog_2.png",
 	"output": {
 		"format": "json",
 		"target": "stdout"
 	},
 	"filename": {
-		"f_string": "web/static/img_%v_%v.jpeg",
+		"f_string": "web/static/images/img_%v_%v.jpeg",
 		"fields": [
 			"Timestamp",
 			"ID"
@@ -19,11 +19,9 @@
 			"acquisition_timeout": "3s",
 			"trigger": {
 				"timeout": "3s",
-				"period": "0s"
+				"period": "2s"
 			},
 			"parameters": [
-				{"name": "PixelFormat",             "value": "Mono8"},
-				{"name": "BandwidthReserveMode",    "value": "Performance"},
 				{"name": "AcquisitionMode",         "value": "Continuous"},
 				{"name": "TriggerSelector",         "value": "FrameStart"},
 				{"name": "TriggerMode",             "value": "On"},
@@ -36,9 +34,9 @@
 	"yolov8": {
 		"backend": "cuda",
 		"target": "cuda",
-		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-1280px.onnx",
+		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-640px.onnx",
 		"config": {
-			"size": [1280, 1280],
+			"size": [640, 640],
 			"confidence_threshold": 0.8
 		}
 	},

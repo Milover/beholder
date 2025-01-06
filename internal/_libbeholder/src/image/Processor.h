@@ -57,6 +57,9 @@ private:
 		//- The active image ROI
 		std::unique_ptr<cv::Mat> roi_;
 
+		//- Local encoding buffer
+		std::vector<unsigned char> encoding_;
+
 		//- The camera assigned ID of the current image.
 		//	FIXME: only images received from a camera will have an ID.
 		std::size_t id_ {0};
@@ -95,6 +98,10 @@ public:
 		//	Processor. New memory is not allocated if the Processor
 		//	has enough space to hold the decoded image.
 		bool decodeImage(void* buffer, int bufSize, int flags);
+
+		//- Encode an image (current ROI) into a local buffer in the specified
+		//	format, and return the encoding.
+		const std::vector<unsigned char>& encodeImage(const std::string& ext = ".png");
 
 		//- Get the stored image
 		const cv::Mat& getImage() const;
@@ -147,7 +154,7 @@ public:
 		//- Convert image to grayscale and reset the ROI
 		void toGrayscale() const;
 
-		//- Write an image to disc
+		//- Write an image (current ROI) to disc
 		//	FIXME: hard-coded to use the lowest compression levels for PNG/JPEG.
 		bool writeImage(const std::string& filename = "img.png") const;
 

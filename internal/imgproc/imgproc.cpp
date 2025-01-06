@@ -21,6 +21,15 @@ void Proc_Delete(Proc p) {
 	}
 }
 
+const unsigned char* Proc_EncodeImage(Proc p, const char* ext, int* encSize) {
+	if (!p) {
+		return nullptr;
+	}
+	const auto& enc {p->encodeImage(ext)};
+	*encSize = static_cast<int>(enc.size());	// yolo
+	return enc.data();
+}
+
 Img Proc_GetRawImage(Proc p) {
 	if (!p) {
 		return Img {};

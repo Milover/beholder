@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Demo app</title>
+	<link href="/index.css" rel="stylesheet" />
+</head>
+<body>
+	<div id="root">
+		<h1>Demo app</h1>
+
+		<div class="acq-sw-container">
+			<label class="acq-sw-label" for="acq-sw">
+				Start/stop acquisition
+			</label>
+			<div class="vcenter">
+				<label class="acq-sw" name="acq-sw">
+					<input class="hidden" id="acq-sw-checkbox" type="checkbox" autocomplete="off">
+					<span class="acq-sw-slider"></span>
+				</label>
+			</div>
+		</div>
+
+		<div id="acq-img-container" class="hidden">
+			<h2>Acquired Image:</h2>
+			<div style="max-width:1280px; position:relative;">
+				<img id="acq-img" src="" alt="Acquired image" style="max-width:100%;" />
+				<div class="overlay-text-wrapper">
+					<span class="overlay-text" id="acq-img-source"></span>
+					<span class="overlay-text" id="acq-img-timestamp"></span>
+					<span class="overlay-text" id="acq-img-uuid"></span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.4.0/dist/protobuf.min.js"></script>
+	<script type="module" src="index.js"></script>
+</body>
+</html>

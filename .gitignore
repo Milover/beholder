@@ -18,6 +18,9 @@
 # Test binary, build with `go test -c`
 *.test
 
+# Protobuf generated files
+*.pb.go
+
 # Dependency directories
 vendor/
 

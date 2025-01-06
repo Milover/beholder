@@ -93,6 +93,7 @@ type outCSV struct {
 	hdr bool
 }
 
+// BUG: this is broken
 func (o *outCSV) Write(r *models.Result) error {
 	nLines := len(r.Text)
 	record := make([]string, 0, 2+2*nLines)
@@ -109,7 +110,7 @@ func (o *outCSV) Write(r *models.Result) error {
 		record = record[:0]
 		o.hdr = true
 	}
-	ts, err := r.TimeStamp.MarshalText()
+	ts, err := r.Timestamp.MarshalText()
 	if err != nil {
 		return err
 	}

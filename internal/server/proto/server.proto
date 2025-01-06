@@ -1,0 +1,106 @@
+syntax = "proto3";
+package beholder.server;
+
+option go_package = "github.com/Milover/beholder/internal/server/proto";
+
+// MessageType designates a recognized message type.
+enum MessageType {
+	MESSAGE_TYPE_UNKNOWN = 0;
+	MESSAGE_TYPE_ERROR = 1;		// an error message
+	MESSAGE_TYPE_INFO = 2;		// an info message
+	MESSAGE_TYPE_IMAGE = 3;		// an image message
+	// TODO: remove when custom RPC is implemented
+	MESSAGE_TYPE_OP = 4;		// an operation control message (fake RPC)
+}
+
+// MessageHeader is the basic message metadata each message must contain.
+message MessageHeader {
+	string uuid = 1;		// message UUIDv7
+	MessageType type = 2;	// message type
+}
+
+// MessageWrapper is wraps a message header and payload.
+// It is used to simplify unmarshalling received messages.
+message MessageWrapper {
+	MessageHeader header = 1;	// message header
+	oneof payload {
+		Error error = 2;		// an error message payload
+		Info info = 3;			// an info message payload
+		Image image = 4;		// an image message payload
+		Op op = 5;				// an op message payload
+	}
+}
+
+// ErrorCode designates a recognized error code.
+//
+// Code 0 signifies failure so that users must explicitly set the error code,
+// or generate a 'failed' Error.
+enum ErrorCode {
+	ERROR_CODE_FAIL = 0;	// a (generic) error occured
+	ERROR_CODE_SUCCESS = 1;	// everything OK, no errors occured
+}
+
+// Error is a message containing an error code and description.
+message Error {
+	ErrorCode code = 1;		// error code
+	string description = 2;	// error description
+}
+
+// Info is a message containing an informative description.
+message Info {
+	string description = 1;	// description
+}
+
+// Image is a message containing bytes of an encoded image and some image
+// metadata.
+message Image {
+	string source = 1;	// image generation source
+	string mime = 2;	// image MIME type
+	bytes raw = 3;		// encoded image bytes
+}
+
+// TODO: the definitions below are provisional because we currently don't have
+// a viable RPC framework:
+//	1. gRPC requires HTTP/2 (we're using WebSockets)
+//	2. net/rpc uses encoding/gob (we're using protobufs)
+//
+// So for the time being we're making do with raw messages which the server
+// processes.
+// This is super-duper ugly and will probably become unmaintainable once
+// we start adding front-end functionality, so we'll have to implement
+// a custom RPC or some other workaround.
+//
+// But not today.
+
+// OpMessageType designates a recognized operation message type.
+enum OpMessageType {
+	OP_MESSAGE_TYPE_UNKNOWN = 0;
+	OP_MESSAGE_TYPE_REQUEST = 1;
+	OP_MESSAGE_TYPE_RESPONSE = 2;
+}
+
+// OpCode designates a recognized operation (fake RPC).
+enum OpCode {
+	OP_CODE_UNKNOWN = 0;
+	OP_CODE_START_ACQUISITION = 1;	// start acquisition
+	OP_CODE_STOP_ACQUISITION = 2;	// stop acquisition
+}
+
+// OpHeader is the basic metadata each operation control message must contain.
+message OpHeader {
+	OpMessageType type = 1;	// operation message type
+	OpCode code = 2;		// op-code for the function/service call (fake RPC call)
+}
+
+// Op is a message containing operation input or output data.
+//
+// NOTE: at this point we only support operations that require no input
+// arguments and return only an [Error], reporting whether they've succeeded.
+message Op {
+	OpHeader header = 1;	// op header
+	oneof payload {
+		// OpInput input = 2;
+		// OpOutput output = 3;
+		Error error = 4;	// an error, if the op is a response
+	}
+}

@@ -36,11 +36,11 @@ type Result struct {
 	Confidences []float64 `json:"confidences"`
 	// Status is the final status of the result.
 	Status ResultStatus `json:"status"`
-	// TimeStamp is the time at which the result was created, which is usually
+	// Timestamp is the time at which the result was created, which is usually
 	// the time at which the processing pipeline started.
 	//
 	// TODO: move to the 'PipelineMessage' type
-	TimeStamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp"`
 	// Timings are the named durations of various parts of the processing
 	// pipeline.
 	//
@@ -61,7 +61,7 @@ func (r *Result) Reset() {
 	r.Boxes = r.Boxes[:0]
 	r.Angles = r.Angles[:0]
 	r.Status = RSNone
-	r.TimeStamp = time.Time{}
+	r.Timestamp = time.Time{}
 	r.Timings.Reset()
 }
 

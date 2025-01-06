@@ -1,0 +1,83 @@
+{
+	"output": {
+		"format": "json",
+		"target": "stdout"
+	},
+	"filename": {
+		"f_string": "web/static/images/img_%v_%v.jpeg",
+		"fields": [
+			"Timestamp",
+			"ID"
+		]
+	},
+	"cameras": [
+		{
+			"no_reboot": true,
+			"type": "gige",
+			"serial_number": "pick-first",
+			"acquisition_timeout": "3s",
+			"trigger": {
+				"timeout": "3s",
+				"period": "2s"
+			},
+			"parameters": [
+				{"name": "PixelFormat",             "value": "Mono8"},
+				{"name": "BandwidthReserveMode",    "value": "Performance"},
+				{"name": "AcquisitionMode",         "value": "Continuous"},
+				{"name": "TriggerSelector",         "value": "FrameStart"},
+				{"name": "TriggerMode",             "value": "On"},
+				{"name": "TriggerSource",           "value": "Software"},
+				{"name": "ExposureMode",            "value": "Timed"},
+				{"name": "ExposureTime",            "value": "5000"}
+			]
+		}
+	],
+	"yolov8": {
+		"backend": "cuda",
+		"target": "cuda",
+		"model": "internal/neural/model/_internal/yolo/fima_v8n_640-50e-b16-640px.onnx",
+		"config": {
+			"size": [640, 640],
+			"confidence_threshold": 0.8
+		}
+	},
+	"craft": {
+		"backend": "cuda",
+		"target": "cuda",
+		"model": "internal/neural/model/_internal/craft/craft-320px.onnx",
+		"config": {
+			"size": [320, 320]
+		}
+	},
+	"parseq": {
+		"backend": "cuda",
+		"target": "cuda",
+		"model": "internal/neural/model/_internal/parseq/vitstr-128x32px.onnx",
+		"config": {
+			"charset": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+			"size": [128, 32]
+		}
+	},
+	"image_processing": {
+		"preprocessing": [
+			{
+				"bgr": null
+			}
+		],
+		"postprocessing": [
+			{
+				"draw_bounding_boxes": {
+					"color": [0, 255, 0, 0],
+					"thickness": 2
+				}
+			},
+			{
+				"draw_labels": {
+					"color": [0, 255, 0, 0],
+					"font_scale": 1.5,
+					"thickness": 2
+				}
+			}
+		]
+	}
+}
