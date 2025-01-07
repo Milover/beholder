@@ -1,0 +1,159 @@
+{
+	"version": 6,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 25,
+		"patch": 1
+	},
+	"configurePresets": [
+		{
+			"name": "default",
+			"hidden": true,
+			"displayName": "Default config",
+			"description": "Default build using Ninja generator",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_CXX_STANDARD": "20",
+				"CMAKE_CXX_STANDARD_REQUIRED": true,
+				"CMAKE_CXX_EXTENSIONS": false,
+				"CMAKE_EXPORT_COMPILE_COMMANDS": true,
+				"BUILD_SHARED_LIBS": false
+			}
+		},
+		{
+			"name": "release",
+			"inherits": "default",
+			"displayName": "Default Release config",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_INTERPROCEDURAL_OPTIMIZATION": true,
+				"CMAKE_CXX_FLAGS": "-march=native"
+			}
+		},
+		{
+			"name": "debug",
+			"inherits": "default",
+			"displayName": "Default Debug config",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug"
+			}
+		},
+		{
+			"name": "clang-default",
+			"hidden": true,
+			"inherits": "default",
+			"displayName": "Default Clang config",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "clang",
+				"CMAKE_CXX_COMPILER": "clang++"
+			}
+		},
+		{
+			"name": "gnu-default",
+			"hidden": true,
+			"inherits": "default",
+			"cacheVariables": {
+				"CMAKE_C_COMPILER": "gcc",
+				"CMAKE_CXX_COMPILER": "g++"
+			}
+		},
+		{ "name": "clang-release", "inherits": ["clang-default", "release"] },
+		{ "name": "gnu-release",   "inherits": ["gnu-default",   "release"] },
+		{ "name": "clang-debug",   "inherits": ["clang-default", "debug"] },
+		{ "name": "gnu-debug",     "inherits": ["gnu-default",   "debug"] }
+	],
+	"buildPresets": [
+		{ "name": "release",       "configurePreset": "release",       "verbose": true },
+		{ "name": "debug",         "configurePreset": "debug",         "verbose": true },
+		{ "name": "clang-release", "configurePreset": "clang-release", "verbose": true },
+		{ "name": "gnu-release",   "configurePreset": "gnu-release",   "verbose": true },
+		{ "name": "clang-debug",   "configurePreset": "clang-debug",   "verbose": true },
+		{ "name": "gnu-debug",     "configurePreset": "gnu-debug",     "verbose": true }
+	],
+	"testPresets": [
+		{
+			"name": "release",
+			"configurePreset": "release",
+			"output": {
+				"outputOnFailure": true,
+				"outputJUnitFile": "xunit/results.xml"
+			},
+			"execution": {
+				"noTestsAction": "error",
+				"stopOnFailure": false
+			}
+		},
+		{ "name": "debug",         "inherits": "release", "configurePreset": "debug" },
+		{ "name": "clang-release", "inherits": "release", "configurePreset": "clang-release" },
+		{ "name": "gnu-release",   "inherits": "release", "configurePreset": "gnu-release" },
+		{ "name": "clang-debug",   "inherits": "debug",   "configurePreset": "clang-debug" },
+		{ "name": "gnu-debug",     "inherits": "debug",   "configurePreset": "gnu-debug" }
+	],
+	"packagePresets": [
+		{
+			"name": "release",
+			"configurePreset": "release",
+			"generators": [ "TGZ" ]
+		},
+		{
+			"name": "debug",
+			"configurePreset": "debug",
+			"generators": [ "TGZ" ]
+		},
+		{ "name": "clang-release", "inherits": "release", "configurePreset": "clang-release" },
+		{ "name": "gnu-release",   "inherits": "release", "configurePreset": "gnu-release" },
+		{ "name": "clang-debug",   "inherits": "debug",   "configurePreset": "clang-debug" },
+		{ "name": "gnu-debug",     "inherits": "debug",   "configurePreset": "gnu-debug" }
+	],
+	"workflowPresets": [
+		{
+			"name": "release",
+			"steps": [
+				{ "type": "configure", "name": "release" },
+				{ "type": "build",     "name": "release" },
+				{ "type": "package",   "name": "release" }
+			]
+		},
+		{
+			"name": "debug",
+			"steps": [
+				{ "type": "configure", "name": "debug" },
+				{ "type": "build",     "name": "debug" },
+				{ "type": "package",   "name": "debug" }
+			]
+		},
+		{
+			"name": "clang-release",
+			"steps": [
+				{ "type": "configure", "name": "clang-release" },
+				{ "type": "build",     "name": "clang-release" },
+				{ "type": "package",   "name": "clang-release" }
+			]
+		},
+		{
+			"name": "gnu-release",
+			"steps": [
+				{ "type": "configure", "name": "gnu-release" },
+				{ "type": "build",     "name": "gnu-release" },
+				{ "type": "package",   "name": "gnu-release" }
+			]
+		},
+		{
+			"name": "clang-debug",
+			"steps": [
+				{ "type": "configure", "name": "clang-debug" },
+				{ "type": "build",     "name": "clang-debug" },
+				{ "type": "package",   "name": "clang-debug" }
+			]
+		},
+		{
+			"name": "gnu-debug",
+			"steps": [
+				{ "type": "configure", "name": "gnu-debug" },
+				{ "type": "build",     "name": "gnu-debug" },
+				{ "type": "package",   "name": "gnu-debug" }
+			]
+		}
+	]
+}

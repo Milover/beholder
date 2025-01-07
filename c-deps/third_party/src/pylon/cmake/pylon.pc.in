@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: pylon
+Description: Fast and easy image acquisition
+Version: @pylon-ver@
+
+URL: https://baslerweb.com/en/software/pylon/
+Cflags: -I${includedir}
+Libs: -L${exec_prefix}/lib -lpylonc -lpylonutility -lpylonbase -lGenApi_gcc_v3_1_Basler_pylon -lGCBase_gcc_v3_1_Basler_pylon
+Libs.private: -lLog_gcc_v3_1_Basler_pylon -lMathParser_gcc_v3_1_Basler_pylon -lXmlParser_gcc_v3_1_Basler_pylon -lNodeMapData_gcc_v3_1_Basler_pylon -ldl -lm -lpthread -lrt

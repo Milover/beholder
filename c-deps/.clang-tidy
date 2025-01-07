@@ -1,0 +1,29 @@
+---
+Checks: >
+  -*,
+  cppcoreguidelines-*,
+  clang-analyzer-*,
+  google-*,
+  readability-*,
+  modernize-*,
+  bugprone-*,
+  performance-*,
+  misc-*,
+  -cppcoreguidelines-macro-usage,
+  -google-readability-todo,
+  -google-runtime-references,
+  -modernize-concat-nested-namespaces,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readbility-uppercase-literal-suffix,
+  -readability-avoid-const-params-in-decls,
+  -misc-non-private-member-variables-in-classes,
+WarningsAsErrors: ""
+HeaderFilterRegex: ""
+FormatStyle: none
+
+CheckOptions:
+  - key: readability-identifier-length.IgnoredVariableNames
+    value: 'x|y|z'
+  - key: readability-identifier-length.IgnoredParameterNames
+    value: 'x|y|z'

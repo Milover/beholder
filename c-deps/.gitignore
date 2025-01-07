@@ -1,0 +1,9 @@
+# Local configs
+CMakeUserPresets.json
+
+# Build stuff
+.cache/
+build/
+
+# Local archives
+*.tar.gz

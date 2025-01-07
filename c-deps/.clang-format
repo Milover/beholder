@@ -1,0 +1,12 @@
+﻿Language: Cpp
+BasedOnStyle: Google
+ColumnLimit: 80
+ContinuationIndentWidth: 4
+AccessModifierOffset: "-4"
+IndentWidth: 4
+PenaltyReturnTypeOnItsOwnLine: 10
+PointerAlignment: Left
+ReflowComments: false
+SpaceAfterTemplateKeyword: false
+TabWidth: 4
+UseTab: Always

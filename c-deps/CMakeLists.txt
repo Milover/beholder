@@ -43,6 +43,23 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 ###############################################################################
+# set up dependencies
+#
+# TODO: this should build the deps if the archive is unavailable
+
+set(bh_third_party_pkg "beholder-thirdparty-0.1.0-x86_64-linux-gnu-release")
+
+include(FetchContent)
+FetchContent_Declare(
+	bh-third-party
+	URL "file://${CMAKE_BINARY_DIR}/../${bh_third_party_pkg}.tar.gz"
+	URL_MD5 6a15c3b0cdda19f9e0994ee9df1ed8a3
+)
+FetchContent_MakeAvailable(bh-third-party)
+list(APPEND CMAKE_PREFIX_PATH "${bh-third-party_SOURCE_DIR}/lib/cmake")
+# find_package happens below
+
+###############################################################################
 # set up main library target
 
 set(BEHOLDER_INCLUDE_DIRS "")
@@ -54,54 +71,23 @@ set(BEHOLDER_LIBRARIES "")
 # we always build the main library statically, so we use static third-party
 # libraries only
 # Leptonica
-set(Leptonica_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/leptonica")
-#find_package(Leptonica REQUIRED)
+#set(Leptonica_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/leptonica")
+find_package(Leptonica REQUIRED)
 #list(APPEND BEHOLDER_INCLUDE_DIRS ${Leptonica_INCLUDE_DIRS})
 #list(APPEND BEHOLDER_LIBRARIES ${Leptonica_LIBRARIES})
 
 # Tesseract
-set(Tesseract_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/tesseract")
+#set(Tesseract_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/tesseract")
 find_package(Tesseract REQUIRED)
 list(APPEND BEHOLDER_INCLUDE_DIRS ${Tesseract_INCLUDE_DIRS})
 list(APPEND BEHOLDER_LIBRARIES "Tesseract::libtesseract")
 
 # OpenCV
-set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/opencv4")
-find_package(
-	OpenCV
-	REQUIRED COMPONENTS
-	core
-	imgproc
-	imgcodecs
-	videoio
-	highgui
-	video
-	dnn
-	photo
-	gapi
-	cudev
-	cudaimgproc
-	cudaarithm
-	#cudalegacy
-)
+#set(OpenCV_DIR "${PROJECT_SOURCE_DIR}/lib/cmake/opencv4")
+find_package(Iconv REQUIRED)
+find_package(OpenCV REQUIRED)
 list(APPEND BEHOLDER_INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
-list(
-	APPEND
-	BEHOLDER_LIBRARIES
-	opencv_core
-	opencv_imgproc
-	opencv_imgcodecs
-	opencv_videoio
-	opencv_highgui
-	opencv_video
-	opencv_dnn
-	opencv_photo
-	opencv_gapi
-	opencv_cudev
-	opencv_cudaimgproc
-	opencv_cudaarithm
-	#opencv_cudalegacy
-)
+list(APPEND BEHOLDER_LIBRARIES ${OpenCV_LIBS})
 
 # Threads
 #find_package(Threads REQUIRED)
@@ -189,12 +175,12 @@ install(FILES ${BEHOLDER_HDR} DESTINATION "${PROJECT_SOURCE_DIR}/include/beholde
 # set up camera library target
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-
 	set(BEHOLDER_CAMERA_INCLUDE_DIRS "")
 	set(BEHOLDER_CAMERA_LIBRARIES "")
 
 	# pylon
-	find_package(pylon 7.5.0 REQUIRED)
+	#find_package(pylon 7.5.0 REQUIRED)
+	find_package(pylon REQUIRED)
 	list(APPEND BEHOLDER_CAMERA_INCLUDE_DIRS ${pylon_INCLUDE_DIRS})
 	list(APPEND BEHOLDER_CAMERA_LIBRARIES "pylon::pylon")
 
