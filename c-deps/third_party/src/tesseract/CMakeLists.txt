@@ -25,7 +25,7 @@ list(APPEND CMAKE_ARGS
 ExternalProject_Add(
 	bh-tesseract
 	GIT_REPOSITORY https://github.com/tesseract-ocr/tesseract.git
-	GIT_TAG b5f279ec7582dc57f6464557ed938558791f200d # 5.4.1
+	GIT_TAG 64eab6c457b2337dd690746a5fde5c222b40d5f8 # 5.5.0
 	GIT_SHALLOW TRUE
 	UPDATE_DISCONNECTED TRUE
 	INSTALL_DIR "${bh_staging_prefix}"

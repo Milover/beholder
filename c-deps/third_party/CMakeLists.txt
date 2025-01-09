@@ -7,7 +7,7 @@ include(cmake/bhGrabCli.cmake)
 bh_grab_cli(bh_cmake_args)
 
 project(beholder-thirdparty
-	VERSION 0.1.0
+	VERSION 0.2.0
 	DESCRIPTION "beholder C++ library third party dependencies"
 	LANGUAGES CXX
 )
