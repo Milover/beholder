@@ -6,4 +6,4 @@ find_dependency(beholder-leptonica)
 find_dependency(beholder-tesseract)
 find_dependency(beholder-pylon)
 
-include("${CMAKE_CURRENT_LIST_DIR}/beholder-thirdpartyTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/beholder_third_partyTargets.cmake")

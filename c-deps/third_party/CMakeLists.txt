@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.25.1)
 include(cmake/bhGrabCli.cmake)
 bh_grab_cli(bh_cmake_args)
 
-project(beholder-thirdparty
+project(beholder-third-party
 	VERSION 0.2.0
 	DESCRIPTION "beholder C++ library third party dependencies"
 	LANGUAGES CXX
@@ -20,21 +20,21 @@ include(FetchContent)
 add_subdirectory(src)
 
 # library setup
-add_library(thirdparty INTERFACE)
-add_library(beholder::thirdparty ALIAS thirdparty)
-set_property(TARGET thirdparty
+add_library(third_party INTERFACE)
+add_library(beholder::third_party ALIAS third_party)
+set_property(TARGET third_party
 	PROPERTY SOVERSION "${CMAKE_PROJECT_VERSION}"
 )
-add_dependencies(thirdparty bh-opencv bh-leptonica bh-tesseract bh-pylon)
+add_dependencies(third_party bh-opencv bh-leptonica bh-tesseract bh-pylon)
 
 # NOTE: not sure if this necessarily has to go last/after installs
 ExternalProject_Add(
-	bh-thirdparty-test
+	bh-third-party-test
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/test"
 	INSTALL_DIR "${bh_staging_prefix}"
 	TEST_AFTER_INSTALL TRUE
 	INSTALL_COMMAND ""
-	DEPENDS thirdparty
+	DEPENDS third_party
 	CMAKE_ARGS ${bh_cmake_args}
 		-Dbh_binary_dir=${CMAKE_CURRENT_BINARY_DIR}
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
@@ -43,37 +43,37 @@ ExternalProject_Add(
 
 install(
 	TARGETS
-		thirdparty
-	EXPORT beholder-thirdpartyTargets
+		third_party
+	EXPORT beholder_third_partyTargets
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )
 install(
-	EXPORT beholder-thirdpartyTargets
-	FILE beholder-thirdpartyTargets.cmake
+	EXPORT beholder_third_partyTargets
+	FILE beholder_third_partyTargets.cmake
 	NAMESPACE beholder::
-	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder-thirdparty"
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder_third_party"
 )
 #export(
-#	EXPORT beholder-thirdpartyTargets
+#	EXPORT beholder_third_partyTargets
 #	NAMESPACE beholder::
-#	FILE "${CMAKE_CURRENT_BINARY_DIR}/beholder-thirdpartyTargets.cmake"
+#	FILE "${CMAKE_CURRENT_BINARY_DIR}/beholder_third_partyTargets.cmake"
 #)
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in"
-	"${CMAKE_CURRENT_BINARY_DIR}/beholder-thirdpartyConfig.cmake"
-	INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder-thirdparty"
+	"${CMAKE_CURRENT_BINARY_DIR}/beholder_third_partyConfig.cmake"
+	INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder_third_party"
 )
 #write_basic_package_version_file(
-#	"${CMAKE_CURRENT_BINARY_DIR}/beholder-thirdpartyConfigVersion.cmake"
+#	"${CMAKE_CURRENT_BINARY_DIR}/beholder_third_partyConfigVersion.cmake"
 #	VERSION "${CMAKE_PROJECT_VERSION}"
 #	COMPATIBILITY AnyNewerVersion
 #)
 install(
 	FILES
-		"${CMAKE_CURRENT_BINARY_DIR}/beholder-thirdpartyConfig.cmake"
-		#"${CMAKE_CURRENT_BINARY_DIR}/beholder-thirdpartyConfigVersion.cmake"
-	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder-thirdparty"
+		"${CMAKE_CURRENT_BINARY_DIR}/beholder_third_partyConfig.cmake"
+		#"${CMAKE_CURRENT_BINARY_DIR}/beholder_third_partyConfigVersion.cmake"
+	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder_third_party"
 )
 #install(DIRECTORY "${bh_staging_prefix}/bin/" TYPE BIN)
 install(DIRECTORY "${bh_staging_prefix}/lib/" TYPE LIB)

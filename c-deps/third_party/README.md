@@ -21,7 +21,7 @@ Some notes in no apparent order:
 - the main project Docker image (the main project's CI pipeline, when building
   locally, the previous bullet applies, since the packaged dependencies will
   likely be unavailable by themselves) should be built using this project's
-  image as the base, i.e. use `FROM beholder-thirdparty:latest as base`
+  image as the base, i.e. use `FROM beholder-third_party:latest as base`
   instead of `COPY some/packaged/archives ./` in the main project's Dockerfile
 
 
