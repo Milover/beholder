@@ -1,125 +1,82 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// Wrapper classes for GenICam parameters.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	A wrapper class for parameter types.
-
-SourceFiles
-	ParamEntry.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_PARAM_ENTRY_H
-#define BEHOLDER_PARAM_ENTRY_H
+#ifndef BEHOLDER_CAMERA_PARAM_ENTRY_H
+#define BEHOLDER_CAMERA_PARAM_ENTRY_H
 
 #include <string>
 #include <vector>
 
-#include <GenApi/Types.h>
+#include "BeholderCameraExport.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-	class ParamEntry;
-	using ParamList = std::vector<ParamEntry>;
-}
+class ParamEntry;
+using ParamList = std::vector<ParamEntry>;
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace beholder
-{
-
-enum class ParamType : int
-{
-	Int = GenApi::intfIInteger,
-	Bool = GenApi::intfIBoolean,
-	Command = GenApi::intfICommand,
-	Float = GenApi::intfIFloat,
-	String = GenApi::intfIString,
-	Enum = GenApi::intfIEnumeration,
-	Register = GenApi::intfIRegister,
-	Unknown = -1	// we don't actually know if this is ok; yolo
+// Supported GenICam parameter types.
+enum class BH_CAM_API ParamType : int {
+	_val,		  // GenAPI value (unused)
+	_base,		  // GenAPI base (unused)
+	Int,		  // GenAPI integer
+	Bool,		  // GenAPI boolean
+	Cmd,		  // GenAPI command
+	Float,		  // GenAPI float
+	Str,		  // GenAPI string
+	Reg,		  // GenAPI register
+	_cat,		  // GenAPI category (unused)
+	Enum,		  // GenAPI enumeration
+	_entry,		  // GenAPI enumeration entry (unused)
+	_port,		  // GenAPI port (unused)
+	Unknown = -1  // we don't actually know if this is ok; yolo
 };
 
-enum class ParamAccessMode
-{
-	Read,
-	ReadWrite,
-	Unknown = -1
-};
+// Supported parameter access modes.
+enum class BH_CAM_API ParamAccessMode { Read, ReadWrite, Unknown = -1 };
 
-/*---------------------------------------------------------------------------*\
-                        Class ParamEntry Declaration
-\*---------------------------------------------------------------------------*/
-
-
-class ParamEntry
-{
+// ParamEntry represents a GenICam parameter.
+class BH_CAM_API ParamEntry {
 public:
+	std::string name;					 // parameter name
+	std::string value;					 // parameter value
+	ParamType type{ParamType::Unknown};	 // parameter type
 
-	// Public data
+	// Construct from parts.
+	ParamEntry(const std::string& n, const std::string& v, const ParamType& t);
 
-		std::string name;
-		std::string value;
-		ParamType type {ParamType::Unknown};
+	// Construct from parts.
+	ParamEntry(std::string&& n, std::string&& v, ParamType&& t);
 
-	// Constructors
+	// Construct from name and value.
+	ParamEntry(const std::string& n, const std::string& v);
 
-		// Default constructor
-		ParamEntry() = default;
+	// Construct from name and value.
+	ParamEntry(std::string&& n, std::string&& v);
 
-		// Construct from parts
-		ParamEntry
-		(
-			const std::string& n,
-			const std::string& v,
-			const ParamType& t
-		);
+	ParamEntry() = default;
+	ParamEntry(const ParamEntry&) = default;
+	ParamEntry(ParamEntry&&) = default;
 
-		// Construct from parts
-		ParamEntry(std::string&& n, std::string&& v, ParamType&& t);
-
-		// Construct from name and value
-		ParamEntry(const std::string& n, const std::string& v);
-
-		// Construct from name and value
-		ParamEntry(std::string&& n, std::string&& v);
-
-		// Construct from a copy
-		ParamEntry(const ParamEntry& pe) = default;
-
-	// Destructor
 	~ParamEntry() = default;
 
-	// Member functions
-
-
+	ParamEntry& operator=(const ParamEntry&) = default;
+	ParamEntry& operator=(ParamEntry&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// Convert a GenApi::EInterfaceType to a ParamType.
-ParamType convertInterfaceType(GenApi::EInterfaceType e);
+// Convert a GenAPI EInterfaceType to a ParamType.
+[[nodiscard]] BH_CAM_API ParamType fromGenAPI(unsigned int i);
 
 // Get a parameter named 'pName' from 'list'.
 // Returns an empty ParamEntry if the parameter is not available.
-ParamEntry getParameter(const std::string& pName, const ParamList& list);
+[[nodiscard]] BH_CAM_API ParamEntry getParameter(const std::string& pName,
+												 const ParamList& list);
 
 // Check if a parameter named 'pName' is present in 'list'.
-bool hasParameter(const std::string& pName, const ParamList& list);
+BH_CAM_API bool hasParameter(const std::string& pName, const ParamList& list);
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_CAMERA_PARAM_ENTRY_H

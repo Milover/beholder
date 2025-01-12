@@ -1,97 +1,40 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image-to-grayscale-image conversion operation.
-
-SourceFiles
-	Grayscale.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_GRAYSCALE_OP_H
-#define BEHOLDER_GRAYSCALE_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_GRAYSCALE_H
+#define BEHOLDER_IMAGE_OPS_GRAYSCALE_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Grayscale Declaration
-\*---------------------------------------------------------------------------*/
-
-class Grayscale
-:
-	public ProcessingOp
-{
+class Grayscale : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	Grayscale() = default;
+	Grayscale(const Grayscale&) = default;
+	Grayscale(Grayscale&&) = default;
 
-	//- Public data
+	~Grayscale() override = default;
 
-		//- Default constructor
-		Grayscale() = default;
-
-		//- Default copy constructor
-		Grayscale(const Grayscale&) = default;
-
-		//- Default move constructor
-		Grayscale(Grayscale&&) = default;
-
-	//- Destructor
-	virtual ~Grayscale() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Grayscale& operator=(const Grayscale&) = default;
-
-		//- Default move assignment
-		Grayscale& operator=(Grayscale&&) = default;
-
+	Grayscale& operator=(const Grayscale&) = default;
+	Grayscale& operator=(Grayscale&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_GRAYSCALE_H

@@ -1,74 +1,44 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// A helper class for holding temporary structures created during
+// object detection.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	A helper class for holding temporary structures created during
-	object detection.
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_OBJ_DETECTOR_BUFFERS_H
-#define BEHOLDER_OBJ_DETECTOR_BUFFERS_H
-
-#include <vector>
+#ifndef BEHOLDER_NEURAL_INTERNAL_OBJ_DETECTOR_BUFFERS_H
+#define BEHOLDER_NEURAL_INTERNAL_OBJ_DETECTOR_BUFFERS_H
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
+#include <vector>
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
+namespace internal {
 
-namespace beholder
-{
-namespace internal
-{
-
-/*---------------------------------------------------------------------------*\
-                     Class ObjDetectorBuffers Declaration
-\*---------------------------------------------------------------------------*/
-
-class ObjDetectorBuffers
-{
+class ObjDetectorBuffers {
 public:
-
-	// Public data
-
-	//- Temporaries used during ObjDetector::detect() and ObjDetector::extract()
-    cv::Mat blob;
-    std::vector<cv::Mat> outs;			// forward results
+	// Temporaries used during ObjDetector::detect and ObjDetector::extract.
+	cv::Mat blob;
+	std::vector<cv::Mat> outs;	// forward results
 	// XXX: could also use RotatedRects
-	std::vector<cv::Rect> tBoxes;		// unfiltered blob boxes
-	std::vector<double> tAngles;		// box rotation angles
-	std::vector<int> tClassIDs;			// unfiltered class IDs
-	std::vector<float> tConfidences;	// unfiltered confidences
-	std::vector<int> tNMSIDs;			// IDs used during NMS filtering
+	std::vector<cv::Rect> tBoxes;	  // unfiltered blob boxes
+	std::vector<double> tAngles;	  // box rotation angles
+	std::vector<int> tClassIDs;		  // unfiltered class IDs
+	std::vector<float> tConfidences;  // unfiltered confidences
+	std::vector<int> tNMSIDs;		  // IDs used during NMS filtering
 
-	// Member functions
-
-		//- Clear buffers, but keep allocated memory.
-		void clear()
-		{
-			outs.clear();
-			tBoxes.clear();
-			tAngles.clear();
-			tClassIDs.clear();
-			tConfidences.clear();
-			tNMSIDs.clear();
-		}
+	// Clear buffers, but keep allocated memory.
+	void clear() {
+		outs.clear();
+		tBoxes.clear();
+		tAngles.clear();
+		tClassIDs.clear();
+		tConfidences.clear();
+		tNMSIDs.clear();
+	}
 };
 
+}  // namespace internal
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace internal
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_NEURAL_INTERNAL_OBJ_DETECTOR_BUFFERS_H

@@ -1,69 +1,36 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+#include "image/ops/CorrectGamma.h"
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
 #include <cmath>
-
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
+#include <vector>
 
 #include "image/ProcessingOp.h"
-#include "image/ops/CorrectGamma.h"
+#include "util/Constants.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool CorrectGamma::execute(const cv::Mat& in, cv::Mat& out) const
-{
-	cv::Mat lut {cv::Size {1, 256}, CV_8U};
-	uchar* p {lut.ptr()};
-	for (auto i {0ul}; i < 256; ++i)
-	{
-		p[i] = cv::saturate_cast<uchar>
-		(
-			std::pow(static_cast<double>(i) / 255.0, gamma) * 255.0
-		);
+bool CorrectGamma::execute(const cv::Mat& in, cv::Mat& out) const {
+	cv::Mat lut{cv::Size{1, cst::max8bit + 1}, CV_8U};
+	for (auto i{0UL}; i < cst::max8bit + 1; ++i) {
+		lut.at<uchar>(static_cast<int>(i)) = cv::saturate_cast<uchar>(
+			std::pow(static_cast<double>(i) / cst::max8bit, gamma) *
+			cst::max8bit);
 	}
 	cv::LUT(in, lut, out);
 	return true;
 }
 
-bool CorrectGamma::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool CorrectGamma::execute(
+	const cv::Mat& in, cv::Mat& out,
+	[[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

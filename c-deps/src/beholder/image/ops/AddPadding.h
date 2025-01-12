@@ -1,111 +1,56 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An operation which adds uniform padding around the border of an image
-
-SourceFiles
-	AddPadding.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_ADD_PADDING_OP_H
-#define BEHOLDER_ADD_PADDING_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_ADD_PADDING_H
+#define BEHOLDER_IMAGE_OPS_ADD_PADDING_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
+#include "util/Constants.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class AddPadding Declaration
-\*---------------------------------------------------------------------------*/
-
-class AddPadding
-:
-	public ProcessingOp
-{
+// AddPadding is an operation which adds uniform padding around
+// the border of an image.
+class AddPadding : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// NOLINTBEGIN(*-magic-numbers)
 
-	//- Public data
+	int padding{10};				// number of pixel layers of padding
+	double padValue{cst::max8bit};	// pixel value to use for padding
 
-		//- Kernel size
-		int padding {10};
-		//- Pixel value to use for padding
-		double padValue {255.0};
+	// NOLINTEND(*-magic-numbers)
 
-	//- Constructors
+	// Default constructor.
+	AddPadding() = default;
 
-		//- Default constructor
-		AddPadding() = default;
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	AddPadding(int pad, double pv) : padding{pad}, padValue{pv} {}
 
-		//- Default constructor
-		AddPadding(int pad, double pv)
-		:
-			padding {pad},
-			padValue {pv}
-		{}
+	AddPadding(const AddPadding&) = default;
+	AddPadding(AddPadding&&) = default;
 
-		//- Default copy constructor
-		AddPadding(const AddPadding&) = default;
+	~AddPadding() override = default;
 
-		//- Default move constructor
-		AddPadding(AddPadding&&) = default;
-
-	//- Destructor
-	virtual ~AddPadding() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		AddPadding& operator=(const AddPadding&) = default;
-
-		//- Default move assignment
-		AddPadding& operator=(AddPadding&&) = default;
-
+	AddPadding& operator=(const AddPadding&) = default;
+	AddPadding& operator=(AddPadding&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_ADD_PADDING_H

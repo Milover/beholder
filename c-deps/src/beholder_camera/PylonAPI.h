@@ -1,65 +1,43 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// A wrapper class for the pylon runtime manager.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
+#ifndef BEHOLDER_CAMERA_PYLON_H
+#define BEHOLDER_CAMERA_PYLON_H
 
-Description
-	A wrapper class for the pylon runtime manager.
+#include "BeholderCameraExport.h"
 
-\*---------------------------------------------------------------------------*/
+namespace beholder {
 
-#ifndef BEHOLDER_PYLON_H
-#define BEHOLDER_PYLON_H
-
-#include <pylon/PylonBase.h>
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                    Class PylonAPI Declaration
-\*---------------------------------------------------------------------------*/
-
-class PylonAPI
-{
-private:
-
-	// Private data
-
-		//- Pylon API handle
-		Pylon::PylonAutoInitTerm py_;
-
+// PylonAPI is a helper class to initialize and free resources managed by
+// the pylon runtime manager.
+//
+// WARNING: PylonAPI must be initialized before calling functions defined
+// in the 'beholder_camera' library.
+//
+// NOTE: we could hide this, and just make it get called when anything
+// from the library is used, however, this will probably complicate things
+// from the Go side --- so we let Go code ensure this gets initialized/freed
+// when necessary.
+class BH_CAM_API PylonAPI {
 public:
+	// Default constructor.
+	// Initializes the pylon runtime manager and resources.
+	PylonAPI();
 
-	// Constructors
+	PylonAPI(const PylonAPI&) = delete;
+	PylonAPI(PylonAPI&&) = delete;
 
-		//- Default constructor
-		PylonAPI() = default;
+	// Destructor.
+	// Frees resources managed by the pylon runtime manager.
+	~PylonAPI();
 
-		//- Disable copy constructor
-		PylonAPI(const PylonAPI&) = delete;
-
-	//- Destructor
-	~PylonAPI() = default;
-
-	// Member operators
-
-		//- Disable copy assignment
-		PylonAPI& operator=(const PylonAPI&) = delete;
-
+	PylonAPI& operator=(const PylonAPI&) = delete;
+	PylonAPI& operator=(PylonAPI&&) = delete;
 };
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_CAMERA_PYLON_H

@@ -1,111 +1,64 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
+#include "image/ops/NormalizeBrightnessContrast.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
+#include <vector>
 
 #include "image/ProcessingOp.h"
-#include "image/ops/NormalizeBrightnessContrast.h"
+#include "util/Constants.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool NormalizeBrightnessContrast::execute(const cv::Mat& in, cv::Mat& out) const
-{
-	return normalizeBrightnessContrast(in, out, clipLowPct, clipHighPct);
-}
-
-bool NormalizeBrightnessContrast::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
-	return execute(in, out);
-}
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-bool normalizeBrightnessContrast
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	float clipLowPct,
-	float clipHighPct
-)
-{
+bool NormalizeBrightnessContrast::execute(const cv::Mat& in,
+										  cv::Mat& out) const {
 	// compute histogram
-	std::vector<cv::Mat> input {in};	// FIXME: this is wasteful
-	std::vector<int> channels {0};		// FIXME: read from image
-	std::vector<int> histSize {255};
+	const std::vector<cv::Mat> input{in};  // FIXME: this is wasteful
+	const std::vector<int> channels{0};	   // FIXME: read from image
+	std::vector<int> histSize{cst::max8bit};
 	cv::Mat hist;
 
-	cv::calcHist(input, channels, cv::Mat{}, hist, histSize, std::vector<float>{});
-
+	cv::calcHist(input, channels, cv::Mat{}, hist, histSize,
+				 std::vector<float>{});
 	// compute cumulative distribution
 	std::vector<float> acc;
 	acc.reserve(hist.total());
 	acc.emplace_back(hist.at<float>(0));
-	for (auto i {1ul}; i < hist.total(); ++i)
-	{
-		acc.emplace_back(acc[i-1] + hist.at<float>(i));
+	for (auto i{1UL}; i < hist.total(); ++i) {
+		acc.emplace_back(acc[i - 1] + hist.at<float>(static_cast<int>(i)));
 	}
-
 	// locate clip points
-	float max {acc.back()};
-	clipLowPct *= max / 100.0;	// convert from pct. to actual value
-	clipHighPct *= max / 100.0;	// convert from pct. to actual value
-	//clipPct /= 2.0;			// because we clip from both sides
-
+	const float max{acc.back()};
+	const float lo{clipLowPct * max / 100.0F};	 // percent to value
+	const float hi{clipHighPct * max / 100.0F};	 // percent to value
 	// FIXME: this is looks kinda dumb
 	// locate left cut
-	int min_gray {0};
-	while (acc[min_gray] < clipLowPct)
-	{
+	int min_gray{0};
+	while (acc[min_gray] < lo) {
 		++min_gray;
 	}
-
 	// locate right cut
-	int max_gray {histSize[0] - 1};
-	while (acc[max_gray] >= (max - clipHighPct))
-	{
+	int max_gray{histSize[0] - 1};
+	while (acc[max_gray] >= (max - hi)) {
 		--max_gray;
 	}
-
-	float alpha {255.0f / static_cast<float>((max_gray - min_gray))};
-	float beta {-min_gray * alpha};
+	const float alpha{static_cast<float>(cst::max8bit) /
+					  static_cast<float>((max_gray - min_gray))};
+	const float beta{static_cast<float>(-min_gray) * alpha};
 
 	cv::convertScaleAbs(in, out, alpha, beta);
 
 	return true;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+bool NormalizeBrightnessContrast::execute(
+	const cv::Mat& in, cv::Mat& out,
+	[[maybe_unused]] const std::vector<Result>& res) const {
+	return execute(in, out);
+}
 
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

@@ -1,115 +1,52 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image cropping operation.
-
-SourceFiles
-	Crop.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_CROP_OP_H
-#define BEHOLDER_CROP_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_CROP_H
+#define BEHOLDER_IMAGE_OPS_CROP_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Crop Declaration
-\*---------------------------------------------------------------------------*/
-
-class Crop
-:
-	public ProcessingOp
-{
+class Crop : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Crop boundaries (inclusive)
+	int left{};
+	int top{};
+	int width{};
+	int height{};
 
-	//- Public data
+	// Default constructor.
+	Crop() = default;
 
-		//- Crop boundaries (inclusive)
-		int left;
-		int top;
-		int width;
-		int height;
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	Crop(int l, int t, int w, int h) : left{l}, top{t}, width{w}, height{h} {}
 
-	//- Constructors
+	Crop(const Crop&) = default;
+	Crop(Crop&&) = default;
 
-		//- Default constructor
-		Crop() = default;
+	~Crop() override = default;
 
-		//- Default constructor
-		Crop(int l, int t, int w, int h)
-		:
-			ProcessingOp(),
-			left {l},
-			top {t},
-			width {w},
-			height {h}
-		{}
-
-		//- Default copy constructor
-		Crop(const Crop&) = default;
-
-		//- Default move constructor
-		Crop(Crop&&) = default;
-
-	//- Destructor
-	virtual ~Crop() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Crop& operator=(const Crop&) = default;
-
-		//- Default move assignment
-		Crop& operator=(Crop&&) = default;
-
+	Crop& operator=(const Crop&) = default;
+	Crop& operator=(Crop&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_CROP_H

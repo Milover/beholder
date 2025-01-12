@@ -1,108 +1,47 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	A gamma correction operation.
-
-SourceFiles
-	CorrectGamma.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_CORRECT_GAMMA_OP_H
-#define BEHOLDER_CORRECT_GAMMA_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_CORRECT_GAMMA_H
+#define BEHOLDER_IMAGE_OPS_CORRECT_GAMMA_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                         Class CorrectGamma Declaration
-\*---------------------------------------------------------------------------*/
-
-class CorrectGamma
-:
-	public ProcessingOp
-{
+class CorrectGamma : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	double gamma{1.0};	// gamma correction value
 
-	//- Public data
+	// Default constructor.
+	CorrectGamma() = default;
 
-		//- Gamma correction value
-		double gamma {1.0};
+	// Default constructor.
+	explicit CorrectGamma(double g) : gamma{g} {}
 
-	//- Constructors
+	CorrectGamma(const CorrectGamma&) = default;
+	CorrectGamma(CorrectGamma&&) = default;
 
-		//- Default constructor
-		CorrectGamma() = default;
+	~CorrectGamma() override = default;
 
-		//- Default constructor
-		CorrectGamma(double g)
-		:
-			gamma {g}
-		{}
-
-		//- Default copy constructor
-		CorrectGamma(const CorrectGamma&) = default;
-
-		//- Default move constructor
-		CorrectGamma(CorrectGamma&&) = default;
-
-	//- Destructor
-	virtual ~CorrectGamma() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		CorrectGamma& operator=(const CorrectGamma&) = default;
-
-		//- Default move assignment
-		CorrectGamma& operator=(CorrectGamma&&) = default;
-
+	CorrectGamma& operator=(const CorrectGamma&) = default;
+	CorrectGamma& operator=(CorrectGamma&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_CORRECT_GAMMA_H

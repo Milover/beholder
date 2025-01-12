@@ -1,118 +1,60 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An adaptive thresholding operation.
-
-SourceFiles
-	AdaptiveThreshold.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_ADAPTIVE_THRESHOLD_OP_H
-#define BEHOLDER_ADAPTIVE_THRESHOLD_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_ADAPTIVE_THRESHOLD_H
+#define BEHOLDER_IMAGE_OPS_ADAPTIVE_THRESHOLD_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
+#include "util/Constants.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class AdaptiveThreshold Declaration
-\*---------------------------------------------------------------------------*/
-
-class AdaptiveThreshold
-:
-	public ProcessingOp
-{
+class AdaptiveThreshold : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Supported thresholding modes.
+	enum class Type { Mean, Gaussian };
 
-	//- Public data
+	// NOLINTBEGIN(*-magic-numbers)
 
-		//- Max value
-		double maxValue {255.0};
-		//- Kernel size
-		int size {11};	// XXX: magic
-		//- A constant subtracted from the mean or weighted mean
-		double c {2};	// XXX: magic
-		//- AdaptiveThreshold type
-		//	0 = cv::ADAPTIVE_THRESH_MEAN_C; 1 = cv::ADAPTIVE_THRESH_GAUSSIAN_C
-		int type {1};
+	double maxValue{cst::max8bit};  // max value
+	int size{11};			   // kernel size
+	double c{2};   // constant subtracted from the mean or weighted mean
+	Type type{1};  // thresholding mode
 
-	//- Constructors
+	// NOLINTEND(*-magic-numbers)
 
-		//- Default constructor
-		AdaptiveThreshold() = default;
+	// Default constructor.
+	AdaptiveThreshold() = default;
 
-		//- Default constructor
-		AdaptiveThreshold(double max, int sz, double cnst, int typ)
-		:
-			maxValue {max},
-			size {sz},
-			c {cnst},
-			type {typ}
-		{}
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	AdaptiveThreshold(double max, int sz, double cnst, Type typ)
+		: maxValue{max}, size{sz}, c{cnst}, type{typ} {}
 
-		//- Default copy constructor
-		AdaptiveThreshold(const AdaptiveThreshold&) = default;
+	AdaptiveThreshold(const AdaptiveThreshold&) = default;
+	AdaptiveThreshold(AdaptiveThreshold&&) = default;
 
-		//- Default move constructor
-		AdaptiveThreshold(AdaptiveThreshold&&) = default;
+	~AdaptiveThreshold() override = default;
 
-	//- Destructor
-	virtual ~AdaptiveThreshold() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		AdaptiveThreshold& operator=(const AdaptiveThreshold&) = default;
-
-		//- Default move assignment
-		AdaptiveThreshold& operator=(AdaptiveThreshold&&) = default;
-
+	AdaptiveThreshold& operator=(const AdaptiveThreshold&) = default;
+	AdaptiveThreshold& operator=(AdaptiveThreshold&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_ADAPTIVE_THRESHOLD_H

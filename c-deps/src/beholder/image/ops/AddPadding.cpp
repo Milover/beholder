@@ -1,71 +1,31 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
+#include "image/ops/AddPadding.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
+#include <vector>
 
 #include "capi/Result.h"
 #include "image/ProcessingOp.h"
-#include "image/ops/AddPadding.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool AddPadding::execute(const cv::Mat& in, cv::Mat& out) const
-{
-	cv::Mat tmp {in.rows + 2*padding, in.cols + 2*padding, in.depth()};
+bool AddPadding::execute(const cv::Mat& in, cv::Mat& out) const {
+	cv::Mat tmp{in.rows + 2 * padding, in.cols + 2 * padding, in.depth()};
 	// assume white background
-	cv::copyMakeBorder
-	(
-		in,
-		tmp,
-		padding,
-		padding,
-		padding,
-		padding,
-		cv::BORDER_ISOLATED,
-		cv::Scalar::all(padValue)
-	);
+	cv::copyMakeBorder(in, tmp, padding, padding, padding, padding,
+					   cv::BORDER_ISOLATED, cv::Scalar::all(padValue));
 	out = tmp;
 	return true;
 }
 
-bool AddPadding::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool AddPadding::execute(
+	const cv::Mat& in, cv::Mat& out,
+	[[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

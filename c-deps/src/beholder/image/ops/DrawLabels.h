@@ -1,118 +1,57 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	DrawLabels.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_DRAW_LABELS_OP_H
-#define BEHOLDER_DRAW_LABELS_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_DRAW_LABELS_H
+#define BEHOLDER_IMAGE_OPS_DRAW_LABELS_H
 
 #include <array>
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                    Class DrawLabels Declaration
-\*---------------------------------------------------------------------------*/
-
-class DrawLabels
-:
-	public ProcessingOp
-{
+// An operation for drawing text labels on an image.
+// Labels are drawn based on processing results.
+class DrawLabels : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	// No-op, always returns true.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat&, cv::Mat&) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat&,
-			cv::Mat& out,
-			const std::vector<Result>& res
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
-
 	using Color = std::array<float, 4>;
 
-	//- Public data
+	Color color{0.0, 0.0, 0.0, 0.0};  // font color
+	double fontScale{1};			  // font scale
+	int thickness{2};				  // line thickness
 
-		//- Font color
-		Color color {0.0, 0.0, 0.0, 0.0};
-		//- Font scale
-		double fontScale {1};
-		//- Line thickness
-		int thickness {2};
+	// Default constructor.
+	DrawLabels() = default;
 
-	//- Constructors
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	DrawLabels(const Color& c, double s, int t)
+		: color{c}, fontScale{s}, thickness{t} {}
 
-		//- Default constructor
-		DrawLabels() = default;
+	DrawLabels(const DrawLabels&) = default;
+	DrawLabels(DrawLabels&&) = default;
 
-		//- Default constructor
-		DrawLabels(const Color& c, double s, int t)
-		:
-			ProcessingOp(),
-			color {c},
-			fontScale {s},
-			thickness {t}
-		{}
+	~DrawLabels() override = default;
 
-		//- Default copy constructor
-		DrawLabels(const DrawLabels&) = default;
-
-		//- Default move constructor
-		DrawLabels(DrawLabels&&) = default;
-
-	//- Destructor
-	virtual ~DrawLabels() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		DrawLabels& operator=(const DrawLabels&) = default;
-
-		//- Default move assignment
-		DrawLabels& operator=(DrawLabels&&) = default;
-
+	DrawLabels& operator=(const DrawLabels&) = default;
+	DrawLabels& operator=(DrawLabels&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_DRAW_LABELS_H

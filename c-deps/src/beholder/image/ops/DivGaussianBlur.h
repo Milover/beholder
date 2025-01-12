@@ -1,116 +1,56 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	A background removal operation by means of Gaussian blur division.
-
-SourceFiles
-	DivGaussianBlur.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_DIV_GAUSSIAN_BLUR_OP_H
-#define BEHOLDER_DIV_GAUSSIAN_BLUR_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_DIV_GAUSSIAN_BLUR_H
+#define BEHOLDER_IMAGE_OPS_DIV_GAUSSIAN_BLUR_H
 
 #include <vector>
 
 #include "image/ops/GaussianBlur.h"
+#include "util/Constants.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class DivGaussianBlur Declaration
-\*---------------------------------------------------------------------------*/
-
-class DivGaussianBlur
-:
-	public GaussianBlur
-{
+// A background removal operation by means of Gaussian blur division.
+class DivGaussianBlur : public GaussianBlur {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		virtual bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Scale factor.
+	float scaleFactor{cst::max8bit};
 
-	//- Public data
+	// Default constructor.
+	DivGaussianBlur() = default;
 
-		//- Scale factor
-		float scaleFactor {255.0};
+	// NOLINTBEGIN(*-magic-numbers, bugprone-easily-swappable-parameters)
 
-	//- Constructors
+	// Default constructor.
+	explicit DivGaussianBlur(float scale = cst::max8bit, float sX = 33.0,
+							 float sY = 33.0, int kW = 0, int kH = 0)
+		: GaussianBlur(kW, kH, sX, sY), scaleFactor{scale} {}
 
-		//- Default constructor
-		DivGaussianBlur() = default;
+	// NOLINTEND(*-magic-numbers, bugprone-easily-swappable-parameters)
 
-		//- Default constructor
-		DivGaussianBlur
-		(
-			float scale = 255.0,
-			float sX = 33.0,
-			float sY = 33.0,
-			int kW = 0,
-			int kH = 0
-		)
-		:
-			GaussianBlur(kW, kH, sX, sY),
-			scaleFactor {scale}
-		{}
+	DivGaussianBlur(const DivGaussianBlur&) = default;
+	DivGaussianBlur(DivGaussianBlur&&) = default;
 
-		//- Default copy constructor
-		DivGaussianBlur(const DivGaussianBlur&) = default;
+	~DivGaussianBlur() override = default;
 
-		//- Default move constructor
-		DivGaussianBlur(DivGaussianBlur&&) = default;
-
-	//- Destructor
-	virtual ~DivGaussianBlur() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		DivGaussianBlur& operator=(const DivGaussianBlur&) = default;
-
-		//- Default move assignment
-		DivGaussianBlur& operator=(DivGaussianBlur&&) = default;
-
+	DivGaussianBlur& operator=(const DivGaussianBlur&) = default;
+	DivGaussianBlur& operator=(DivGaussianBlur&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_DIV_GAUSSIAN_BLUR_H

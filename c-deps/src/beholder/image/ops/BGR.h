@@ -1,97 +1,43 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	A grayscale-image-to-image conversion operation.
-
-SourceFiles
-	BGR.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_BGR_OP_H
-#define BEHOLDER_BGR_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_BGR_H
+#define BEHOLDER_IMAGE_OPS_BGR_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                            Class BGR Declaration
-\*---------------------------------------------------------------------------*/
-
-class BGR
-:
-	public ProcessingOp
-{
+// A grayscale-image-to-image conversion operation.
+class BGR : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Default constructor.
+	BGR() = default;
 
-	//- Public data
+	BGR(const BGR&) = default;
+	BGR(BGR&&) = default;
 
-		//- Default constructor
-		BGR() = default;
+	~BGR() override = default;
 
-		//- Default copy constructor
-		BGR(const BGR&) = default;
-
-		//- Default move constructor
-		BGR(BGR&&) = default;
-
-	//- Destructor
-	virtual ~BGR() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		BGR& operator=(const BGR&) = default;
-
-		//- Default move assignment
-		BGR& operator=(BGR&&) = default;
-
+	BGR& operator=(const BGR&) = default;
+	BGR& operator=(BGR&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_BGR_H

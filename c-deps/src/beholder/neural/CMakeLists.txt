@@ -1,3 +1,8 @@
+target_compile_definitions(beholder
+	PRIVATE
+		CV_DNN_DONT_ADD_INLINE_NS
+)
+
 add_subdirectory(internal)
 
 target_sources(beholder

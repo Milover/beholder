@@ -4,8 +4,8 @@ target_sources(beholder
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
-			CWrapperBase.h
-			RawImage.h
+			Image.h
 			Rectangle.h
 			Result.h
+			Wrapper.h
 )

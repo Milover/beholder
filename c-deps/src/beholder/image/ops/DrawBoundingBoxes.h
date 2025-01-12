@@ -1,116 +1,54 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	DrawBoundingBoxes.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_DRAW_BOUNDING_BOXES_OP_H
-#define BEHOLDER_DRAW_BOUNDING_BOXES_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_DRAW_BOUNDING_BOXES_H
+#define BEHOLDER_IMAGE_OPS_DRAW_BOUNDING_BOXES_H
 
 #include <array>
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                    Class DrawBoundingBoxes Declaration
-\*---------------------------------------------------------------------------*/
-
-class DrawBoundingBoxes
-:
-	public ProcessingOp
-{
+// An operation for drawing bounding boxes on an image.
+// Bounding box definitions are taken from a list of processing results.
+class DrawBoundingBoxes : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	// No-op, always returns true.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat&, cv::Mat&) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat&,
-			cv::Mat& out,
-			const std::vector<Result>& res
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
-
 	using Color = std::array<float, 4>;
 
-	//- Public data
+	Color color{0.0, 0.0, 0.0, 0.0};  // bounding box border color
+	int thickness{2};				  // bounding box border thickness
 
-		//- Bounding box border color
-		Color color {0.0, 0.0, 0.0, 0.0};
+	// Default constructor.
+	DrawBoundingBoxes() = default;
 
-		//- Bounding box border thickness
-		int thickness {2};
+	// Default constructor.
+	DrawBoundingBoxes(const Color& c, int t) : color{c}, thickness{t} {}
 
-	//- Constructors
+	DrawBoundingBoxes(const DrawBoundingBoxes&) = default;
+	DrawBoundingBoxes(DrawBoundingBoxes&&) = default;
 
-		//- Default constructor
-		DrawBoundingBoxes() = default;
+	~DrawBoundingBoxes() override = default;
 
-		//- Default constructor
-		DrawBoundingBoxes(const Color& c, int t)
-		:
-			ProcessingOp(),
-			color {c},
-			thickness {t}
-		{}
-
-		//- Default copy constructor
-		DrawBoundingBoxes(const DrawBoundingBoxes&) = default;
-
-		//- Default move constructor
-		DrawBoundingBoxes(DrawBoundingBoxes&&) = default;
-
-	//- Destructor
-	virtual ~DrawBoundingBoxes() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		DrawBoundingBoxes& operator=(const DrawBoundingBoxes&) = default;
-
-		//- Default move assignment
-		DrawBoundingBoxes& operator=(DrawBoundingBoxes&&) = default;
-
+	DrawBoundingBoxes& operator=(const DrawBoundingBoxes&) = default;
+	DrawBoundingBoxes& operator=(DrawBoundingBoxes&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_DRAW_BOUNDING_BOXES_H

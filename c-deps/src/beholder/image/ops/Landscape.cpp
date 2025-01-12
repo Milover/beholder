@@ -1,63 +1,28 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
+#include "image/ops/Landscape.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
+#include <vector>
 
 #include "capi/Result.h"
 #include "image/ProcessingOp.h"
-#include "image/ops/Landscape.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool Landscape::execute(const cv::Mat& in, cv::Mat& out) const
-{
-	if (in.cols > in.rows)
-	{
-		return true;
+bool Landscape::execute(const cv::Mat& in, cv::Mat& out) const {
+	if (in.cols < in.rows) {
+		cv::rotate(in, out, cv::ROTATE_90_CLOCKWISE);
 	}
-	cv::rotate(in, out, cv::ROTATE_90_CLOCKWISE);
-
 	return true;
 }
 
-bool Landscape::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool Landscape::execute(const cv::Mat& in, cv::Mat& out,
+						[[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

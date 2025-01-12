@@ -1,105 +1,58 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// A generic exception class which simplifies re-throwing/wrapping
+// other exceptions.
+//
+// TODO: this class should probably get removed once 'Result' gets properly
+// implemented.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	A generic exception class which simplifies re-throwing/wrapping
-	other exceptions.
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_EXCEPTION_H
-#define BEHOLDER_EXCEPTION_H
+#ifndef BEHOLDER_CAMERA_EXCEPTION_H
+#define BEHOLDER_CAMERA_EXCEPTION_H
 
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "BeholderCameraExport.h"
 
-namespace beholder
-{
+namespace beholder {
 
-/*---------------------------------------------------------------------------*\
-                          Class Exception Definition
-\*---------------------------------------------------------------------------*/
-
-class Exception
-:
-	public std::runtime_error
-{
+class BH_CAM_API Exception : public std::runtime_error {
 public:
-
 	using Base = std::runtime_error;
 
-	// Constructors
+	// Construct from a string description.
+	explicit Exception(const std::string& what_arg) : Base(what_arg) {}
 
-		//- Construct from a string description
-		Exception(const std::string& what_arg)
-		:
-			Base(what_arg)
-		{}
+	// Construct from a char* description.
+	explicit Exception(const char* what_arg) : Base(what_arg) {}
 
-		//- Construct from a char* description
-		Exception(const char* what_arg)
-		:
-			Base(what_arg)
-		{}
+	// Construct from a string description and another exception 'e',
+	// by appending 'e.what()' to the description.
+	template<typename E, typename = std::enable_if_t<std::is_invocable_r_v<
+							 const char*, decltype(&E::what), E&> > >
+	Exception(const std::string& what_arg, const E& e)
+		: Base(what_arg + e.what()) {}
 
-		//- Construct from a string description and another exception 'e',
-		//	by appending 'e.what()' to the description.
-		template
-		<
-			typename E,
-			typename = std::enable_if_t
-			<
-				std::is_invocable_r_v<const char*, decltype(&E::what), E&>
-			>
-		>
-		Exception(const std::string& what_arg, const E& e)
-		:
-			Base(what_arg + e.what())
-		{}
+	// Construct from a char* description and another exception 'e',
+	// by appending 'e.what()' to the description.
+	template<typename E, typename = std::enable_if_t<std::is_invocable_r_v<
+							 const char*, decltype(&E::what), E&> > >
+	Exception(const char* what_arg, const E& e)
+		: Base(std::string{what_arg} + e.what()) {}
 
-		//- Construct from a char* description and another exception 'e',
-		//	by appending 'e.what()' to the description.
-		template
-		<
-			typename E,
-			typename = std::enable_if_t
-			<
-				std::is_invocable_r_v<const char*, decltype(&E::what), E&>
-			>
-		>
-		Exception(const char* what_arg, const E& e)
-		:
-			Base(std::string {what_arg} + e.what())
-		{}
+	Exception(const Exception&) = default;
+	Exception(Exception&&) = default;
 
-		//- Default copy constructor
-		Exception(const Exception&) = default;
+	Exception& operator=(const Exception&) = default;
+	Exception& operator=(Exception&&) = default;
 
-	//- Destructor
-	virtual ~Exception() = default;
-
-	// Member operators
-
-		//- Default copy assignment
-		Exception& operator=(const Exception&) = default;
-
+	~Exception() override = default;
 };
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_CAMERA_EXCEPTION_H

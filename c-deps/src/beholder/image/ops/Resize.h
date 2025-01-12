@@ -1,111 +1,50 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	Resize.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_RESIZE_OP_H
-#define BEHOLDER_RESIZE_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_RESIZE_H
+#define BEHOLDER_IMAGE_OPS_RESIZE_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Resize Declaration
-\*---------------------------------------------------------------------------*/
-
-class Resize
-:
-	public ProcessingOp
-{
+class Resize : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// New image dimensions.
+	int width{};
+	int height{};
 
-	//- Public data
+	// Default constructor.
+	Resize() = default;
 
-		//- New image dimensions
-		int width;
-		int height;
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	Resize(int w, int h) : width{w}, height{h} {}
 
-	//- Constructors
+	Resize(const Resize&) = default;
+	Resize(Resize&&) = default;
 
-		//- Default constructor
-		Resize() = default;
+	~Resize() override = default;
 
-		//- Default constructor
-		Resize(int w, int h)
-		:
-			ProcessingOp(),
-			width {w},
-			height {h}
-		{}
-
-		//- Default copy constructor
-		Resize(const Resize&) = default;
-
-		//- Default move constructor
-		Resize(Resize&&) = default;
-
-	//- Destructor
-	virtual ~Resize() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Resize& operator=(const Resize&) = default;
-
-		//- Default move assignment
-		Resize& operator=(Resize&&) = default;
-
+	Resize& operator=(const Resize&) = default;
+	Resize& operator=(Resize&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_RESIZE_H

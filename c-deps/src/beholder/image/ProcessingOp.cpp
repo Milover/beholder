@@ -1,61 +1,27 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
+#include "image/ProcessingOp.h"
 
 #include <algorithm>
 #include <memory>
+#include <opencv2/core/mat.hpp>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <opencv2/core/mat.hpp>
-
 #include "capi/Result.h"
-#include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-// * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * * //
-
-bool ProcessingOp::operator()(const cv::Mat& in, cv::Mat& out) const
-{
+bool ProcessingOp::operator()(const cv::Mat& in, cv::Mat& out) const {
 	return execute(in, out);
 }
 
-
-bool ProcessingOp::operator()
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>& res
-) const
-{
+bool ProcessingOp::operator()(const cv::Mat& in, cv::Mat& out,
+							  const std::vector<Result>& res) const {
 	return execute(in, out, res);
 }
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

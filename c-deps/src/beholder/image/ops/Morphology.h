@@ -1,119 +1,71 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	Morphology.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_MORPHOLOGY_OP_H
-#define BEHOLDER_MORPHOLOGY_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_MORPHOLOGY_H
+#define BEHOLDER_IMAGE_OPS_MORPHOLOGY_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Morphology Declaration
-\*---------------------------------------------------------------------------*/
-
-class Morphology
-:
-	public ProcessingOp
-{
+class Morphology : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Supported types of morphological operations.
+	// For more info, see:
+	// https://docs.opencv.org/4.10.0/d4/d86/group__imgproc__filter.html#ga67493776e3ad1a3df63883829375201f
+	enum class Type {
+		Erode,
+		Dilate,
+		Open,
+		Close,
+		Gradient,
+		TopHat,
+		BlackHat,
+		HitMiss
+	};
+	// Supported kernel shapes for morphological operations.
+	// For more info, see:
+	// https://docs.opencv.org/4.10.0/d4/d86/group__imgproc__filter.html#gac2db39b56866583a95a5680313c314ad
+	enum class Shape { Box, Cross, Ellipse };
 
-	//- Public data
+	Type type{Type::Open};	  // morphology type
+	Shape shape{Shape::Box};  // kernel shape type
+	int width{3};			  // kernel width
+	int height{3};			  // kernel width
+	int iterations{1};		  // number of morphology iterations
 
-		//- Kernel
-		int kernelType {0};	// cv::MORPH_RECT
-		int kernelWidth {3};
-		int kernelHeight {3};
-		//- Morphology type
-		int type {2};	// cv::MORPH_OPEN
-		//- Number of morphology iterations
-		int iterations {1};
+	// Default constructor.
+	Morphology() = default;
 
-	//- Constructors
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	Morphology(Shape s, int w, int h, Type typ, int iter)
+		: type{typ}, shape{s}, width{w}, height{h}, iterations{iter} {}
 
-		//- Default constructor
-		Morphology() = default;
+	Morphology(const Morphology&) = default;
+	Morphology(Morphology&&) = default;
 
-		//- Default constructor
-		Morphology(int kTyp, int kW, int kH, int typ, int iter)
-		:
-			ProcessingOp(),
-			kernelType {kTyp},
-			kernelWidth {kW},
-			kernelHeight {kH},
-			type {typ},
-			iterations {iter}
-		{}
+	~Morphology() override = default;
 
-		//- Default copy constructor
-		Morphology(const Morphology&) = default;
-
-		//- Default move constructor
-		Morphology(Morphology&&) = default;
-
-	//- Destructor
-	virtual ~Morphology() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Morphology& operator=(const Morphology&) = default;
-
-		//- Default move assignment
-		Morphology& operator=(Morphology&&) = default;
-
+	Morphology& operator=(const Morphology&) = default;
+	Morphology& operator=(Morphology&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_MORPHOLOGY_H

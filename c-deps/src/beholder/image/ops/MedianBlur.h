@@ -1,109 +1,47 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	MedianBlur.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_MEDIAN_BLUR_OP_H
-#define BEHOLDER_MEDIAN_BLUR_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_MEDIAN_BLUR_H
+#define BEHOLDER_IMAGE_OPS_MEDIAN_BLUR_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class MedianBlur Declaration
-\*---------------------------------------------------------------------------*/
-
-class MedianBlur
-:
-	public ProcessingOp
-{
+class MedianBlur : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	int kernelSize{3};	// kernel size
 
-	//- Public data
+	// Default constructor
+	MedianBlur() = default;
 
-		//- Kernel size
-		int kernelSize {3};
+	// Default constructor.
+	explicit MedianBlur(int ksize) : kernelSize{ksize} {}
 
-	//- Constructors
+	MedianBlur(const MedianBlur&) = default;
+	MedianBlur(MedianBlur&&) = default;
 
-		//- Default constructor
-		MedianBlur() = default;
+	~MedianBlur() override = default;
 
-		//- Default constructor
-		MedianBlur(int ksize)
-		:
-			ProcessingOp(),
-			kernelSize {ksize}
-		{}
-
-		//- Default copy constructor
-		MedianBlur(const MedianBlur&) = default;
-
-		//- Default move constructor
-		MedianBlur(MedianBlur&&) = default;
-
-	//- Destructor
-	virtual ~MedianBlur() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		MedianBlur& operator=(const MedianBlur&) = default;
-
-		//- Default move assignment
-		MedianBlur& operator=(MedianBlur&&) = default;
-
+	MedianBlur& operator=(const MedianBlur&) = default;
+	MedianBlur& operator=(MedianBlur&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_MEDIAN_BLUR_H

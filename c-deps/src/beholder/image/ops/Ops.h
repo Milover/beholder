@@ -1,20 +1,11 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// Headers for image processing operations, collected for ease of use.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	Headers for the library, collected for ease of use.
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_OPS_H
-#define BEHOLDER_OPS_H
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#ifndef BEHOLDER_IMAGE_OPS_OPS_H
+#define BEHOLDER_IMAGE_OPS_OPS_H
 
 #include "image/ops/AdaptiveThreshold.h"
 #include "image/ops/AddPadding.h"
@@ -44,8 +35,4 @@ Description
 #include "image/ops/Threshold.h"
 #include "image/ops/UnsharpMask.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_OPS_H

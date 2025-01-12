@@ -1,41 +1,21 @@
-/*---------------------------------------------------------------------------*\
-
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <cstddef>
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
 #include "capi/Result.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include <cstddef>
 
-namespace beholder
-{
-namespace capi
-{
-extern "C"
-{
+namespace beholder {
+namespace capi {
+extern "C" {
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-void Result_Delete(Result* r)
-{
-	if (r->text)
-	{
+void Result_Delete(Result* r) {
+	if (static_cast<bool>(r)) {
 		delete[] r->text;
-		r->text = nullptr;
 	}
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace capi
-} // End extern "C"
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace capi
+}  // namespace capi
+}  // namespace beholder

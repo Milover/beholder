@@ -1,104 +1,45 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// Common utility functions.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
+#ifndef BEHOLDER_UTIL_UTILITY_H
+#define BEHOLDER_UTIL_UTILITY_H
 
-Description
-	Common utility functions.
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_UTILITY_H
-#define BEHOLDER_UTILITY_H
-
-#include <algorithm>
-#include <cctype>
-#include <cstring>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "util/Traits.h"
 
-namespace beholder
-{
+namespace beholder {
 
-// * * * * * * * * * * * * * * * * Functions * * * * * * * * * * * * * * * * //
+// Helper function for setting ch to raw.
+// If ch != nullptr, calls delete[] on ch.
+void chPtrFromLiteral(char*& ch, const char* lit);
 
-//- Helper function for setting ch to raw.
-//	If ch != nullptr, calls delete[] on ch.
-inline void chPtrFromLiteral(char*& ch, const char* lit)
-{
-	if (ch)
-	{
-		delete[] (ch);
-	}
-	ch = new char[std::strlen(lit) + 1];
-	std::strcpy(ch, lit);
+// Convert a vector of strings into an array of char*.
+// NOLINTNEXTLINE(*-c-arrays)
+std::unique_ptr<char*[]> vecStr2ChPtrArr(const std::vector<std::string>& v);
+
+// Trim leading whitespace (left trim).
+void trimWhiteL(std::string& s);
+
+// Trim trailing whitespace (right trim).
+void trimWhiteR(std::string& s);
+
+// Trim leading and trailing whitespace (left-right trim).
+void trimWhiteLR(std::string& s);
+
+// Global addition operator for enum class types.
+template<typename E, enums::enable_if_enum<E> = true>
+E operator+(E a, E b) noexcept {
+	using T = enums::underlying<E>;
+	return static_cast<E>(static_cast<T>(a) + static_cast<T>(b));
 }
 
-//- Convert a vector of strings into an array of char*.
-inline std::unique_ptr<char*[]>
-vecStr2ChPtrArr(const std::vector<std::string>& v)
-{
-	std::unique_ptr<char*[]> result {new char*[v.size() + 1]};
+}  // namespace beholder
 
-	for (auto i {0ul}; i < v.size(); ++i)
-	{
-		result[i] = new char[v[i].length() + 1];
-		std::strcpy(result[i], v[i].c_str());
-	}
-	result[v.size()] = nullptr;
-
-	return result;
-}
-
-//- Trim leading whitespace (left trim)
-inline void trimWhiteL(std::string& s)
-{
-	s.erase
-	(
-		s.begin(),
-		std::find_if
-		(
-			s.begin(),
-			s.end(),
-			[](int ch) { return !std::isspace(ch); }
-		)
-	);
-}
-
-//- Trim trailing whitespace (right trim)
-inline void trimWhiteR(std::string& s)
-{
-	s.erase
-	(
-		std::find_if
-		(
-			s.rbegin(),
-			s.rend(),
-			[](int ch) { return !std::isspace(ch); }
-		).base(),
-		s.end()
-	);
-}
-
-//- Trim leading and trailing whitespace (left-right trim)
-inline void trimWhiteLR(std::string& s)
-{
-	trimWhiteL(s);
-	trimWhiteR(s);
-}
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_UTIL_UTILITY_H

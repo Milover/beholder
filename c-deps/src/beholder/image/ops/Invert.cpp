@@ -1,58 +1,26 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
+#include "image/ops/Invert.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
+#include <vector>
 
 #include "capi/Result.h"
 #include "image/ProcessingOp.h"
-#include "image/ops/Invert.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool Invert::execute(const cv::Mat& in, cv::Mat& out) const
-{
+bool Invert::execute(const cv::Mat& in, cv::Mat& out) const {
 	cv::bitwise_not(in, out);
 	return true;
 }
 
-bool Invert::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool Invert::execute(const cv::Mat& in, cv::Mat& out,
+					 [[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

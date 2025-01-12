@@ -1,58 +1,26 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
+#include "image/ops/Grayscale.h"
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
+#include <vector>
 
 #include "capi/Result.h"
 #include "image/ProcessingOp.h"
-#include "image/ops/Grayscale.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool Grayscale::execute(const cv::Mat& in, cv::Mat& out) const
-{
+bool Grayscale::execute(const cv::Mat& in, cv::Mat& out) const {
 	cv::cvtColor(in, out, cv::COLOR_BGR2GRAY, 1);
 	return true;
 }
 
-bool Grayscale::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool Grayscale::execute(const cv::Mat& in, cv::Mat& out,
+						[[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

@@ -1,115 +1,66 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	Threshold.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_THRESHOLD_OP_H
-#define BEHOLDER_THRESHOLD_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_THRESHOLD_H
+#define BEHOLDER_IMAGE_OPS_THRESHOLD_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
+#include "util/Constants.h"
+#include "util/Utility.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Threshold Declaration
-\*---------------------------------------------------------------------------*/
-
-class Threshold
-:
-	public ProcessingOp
-{
+class Threshold : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Supported types of thresholding. For more info, see:
+	// https://docs.opencv.org/4.10.0/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576
+	enum class Type {
+		Binary,
+		BinaryInv,
+		Truncate,
+		ToZero,
+		ToZeroInv,
+		Mask = 7,
+		Otsu,
+		Triangle = 16
+	};
 
-	//- Public data
+	float threshold{0.0};				   // threshold value
+	float maxValue{cst::max8bit};		   // max threshold value
+	Type type{Type::Binary + Type::Otsu};  // threshold type
 
-		//- Threshold value
-		float threshold {0.0};
-		//- Max value
-		float maxValue {255.0};
-		//- Threshold type
-		int type {8};	// cv::THRESH_BINARY+cv::THRESH_OTSU
+	// Default constructor.
+	Threshold() = default;
 
-	//- Constructors
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	Threshold(float thresh, float maxv, Type typ)
+		: threshold{thresh}, maxValue{maxv}, type{typ} {}
 
-		//- Default constructor
-		Threshold() = default;
+	Threshold(const Threshold&) = default;
+	Threshold(Threshold&&) = default;
 
-		//- Default constructor
-		Threshold(float thresh, float maxv, int typ)
-		:
-			ProcessingOp(),
-			threshold {thresh},
-			maxValue {maxv},
-			type {typ}
-		{}
+	~Threshold() override = default;
 
-		//- Default copy constructor
-		Threshold(const Threshold&) = default;
-
-		//- Default move constructor
-		Threshold(Threshold&&) = default;
-
-	//- Destructor
-	virtual ~Threshold() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Threshold& operator=(const Threshold&) = default;
-
-		//- Default move assignment
-		Threshold& operator=(Threshold&&) = default;
-
+	Threshold& operator=(const Threshold&) = default;
+	Threshold& operator=(Threshold&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_THRESHOLD_H

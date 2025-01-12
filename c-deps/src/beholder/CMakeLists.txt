@@ -1,7 +1,11 @@
 add_library(beholder)
 add_library(beholder::beholder ALIAS beholder)
 
-set_property(TARGET beholder PROPERTY SOVERSION "${PROJECT_VERSION}")
+set_target_properties(beholder
+	PROPERTIES
+		SOVERSION "${PROJECT_VERSION}"
+		COMPILE_OPTIONS $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:-DBEHOLDER_STATIC_DEFINE>
+)
 
 #if (CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
 #	set_target_properties(beholder PROPERTIES ARCHIVE_OUTPUT_NAME "beholder.$<LOWER_CASE:$<CONFIG>>")
@@ -18,6 +22,7 @@ target_sources(beholder
 		BASE_DIRS
 			"${CMAKE_CURRENT_SOURCE_DIR}"
 		FILES
+			BeholderExport.h
 			#libbeholder.h
 )
 target_include_directories(beholder

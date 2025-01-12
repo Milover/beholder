@@ -1,108 +1,47 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	ResizeToHeight.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_RESIZE_TO_HEIGHT_OP_H
-#define BEHOLDER_RESIZE_TO_HEIGHT_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_RESIZE_TO_HEIGHT_H
+#define BEHOLDER_IMAGE_OPS_RESIZE_TO_HEIGHT_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class ResizeToHeight Declaration
-\*---------------------------------------------------------------------------*/
-
-class ResizeToHeight
-:
-	public ProcessingOp
-{
+class ResizeToHeight : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	int height{};  // new image height
 
-	//- Public data
+	// Default constructor.
+	ResizeToHeight() = default;
 
-		//- New image height
-		int height;
+	// Default constructor.
+	explicit ResizeToHeight(int h) : height{h} {}
 
-	//- Constructors
+	ResizeToHeight(const ResizeToHeight&) = default;
+	ResizeToHeight(ResizeToHeight&&) = default;
 
-		//- Default constructor
-		ResizeToHeight() = default;
+	~ResizeToHeight() override = default;
 
-		//- Default constructor
-		ResizeToHeight(int h)
-		:
-			height {h}
-		{}
-
-		//- Default copy constructor
-		ResizeToHeight(const ResizeToHeight&) = default;
-
-		//- Default move constructor
-		ResizeToHeight(ResizeToHeight&&) = default;
-
-	//- Destructor
-	virtual ~ResizeToHeight() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		ResizeToHeight& operator=(const ResizeToHeight&) = default;
-
-		//- Default move assignment
-		ResizeToHeight& operator=(ResizeToHeight&&) = default;
-
+	ResizeToHeight& operator=(const ResizeToHeight&) = default;
+	ResizeToHeight& operator=(ResizeToHeight&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_RESIZE_TO_HEIGHT_H

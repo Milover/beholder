@@ -1,93 +1,42 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// An object detector using the YOLOv8 model.
+// A DNN-based object detector wrapper using the YOLOv8 model.
+// For more info, see: https://github.com/ultralytics/ultralytics
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An object detector using the YOLOv8 model.
-	A DNN-based object detector wrapper using the YOLOv8 model.
-	For more info, see: https://github.com/ultralytics/ultralytics
-
-SourceFiles
-	YOLOv8Detector.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_YOLOv8_DETECTOR_H
-#define BEHOLDER_YOLOv8_DETECTOR_H
+#ifndef BEHOLDER_NEURAL_YOLOV8_DETECTOR_H
+#define BEHOLDER_NEURAL_YOLOV8_DETECTOR_H
 
 #include "neural/ObjDetector.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-/*---------------------------------------------------------------------------*\
-                      Class YOLOv8Detector Declaration
-\*---------------------------------------------------------------------------*/
-
-class YOLOv8Detector
-:
-	public ObjDetector
-{
+class YOLOv8Detector : public ObjDetector {
 public:
-
 	using Base = ObjDetector;
 
 protected:
+	// Extract inference results.
+	void extract() override;
 
-	// Protected member functions
-
-		//- Extract inference results
-		virtual void extract() override;
-
-		//- Filter (NMS) and store results
-		virtual void store() override;
+	// Filter (NMS) and store results.
+	void store() override;
 
 public:
+	// Default constructor.
+	YOLOv8Detector();
 
-	// Constructors
+	YOLOv8Detector(const YOLOv8Detector&) = delete;
+	YOLOv8Detector(YOLOv8Detector&&) = default;
 
-		//- Default constructor
-		YOLOv8Detector()
-		{
-			scale = Base::Vec3<> {1.0/255.0, 1.0/255.0, 1.0/255.0};
-		}
+	~YOLOv8Detector() override = default;
 
-		//- Disable copy constructor
-		YOLOv8Detector(const YOLOv8Detector&) = default;
-
-		//- Disable move constructor
-		YOLOv8Detector(YOLOv8Detector&&) = default;
-
-	//- Destructor
-	virtual ~YOLOv8Detector() = default;
-
-	// Member functions
-
-	// Member operators
-
-		//- Disable copy assignment
-		YOLOv8Detector& operator=(const YOLOv8Detector&) = default;
-
-		//- Disable move assignment
-		YOLOv8Detector& operator=(YOLOv8Detector&&) = default;
-
+	YOLOv8Detector& operator=(const YOLOv8Detector&) = delete;
+	YOLOv8Detector& operator=(YOLOv8Detector&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_NEURAL_YOLOV8_DETECTOR_H

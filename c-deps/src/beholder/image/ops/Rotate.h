@@ -1,109 +1,47 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image rotation operation.
-
-SourceFiles
-	Rotate.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_ROTATE_OP_H
-#define BEHOLDER_ROTATE_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_ROTATE_H
+#define BEHOLDER_IMAGE_OPS_ROTATE_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Rotate Declaration
-\*---------------------------------------------------------------------------*/
-
-class Rotate
-:
-	public ProcessingOp
-{
+class Rotate : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	float angle{};	// angle of rotation
 
-	//- Public data
+	// Default constructor.
+	Rotate() = default;
 
-		//- Angle of rotation
-		float angle;
+	// Default constructor.
+	explicit Rotate(float ang) : angle{ang} {}
 
-	//- Constructors
+	Rotate(const Rotate&) = default;
+	Rotate(Rotate&&) = default;
 
-		//- Default constructor
-		Rotate() = default;
+	~Rotate() override = default;
 
-		//- Default constructor
-		Rotate(float ang)
-		:
-			ProcessingOp(),
-			angle {ang}
-		{}
-
-		//- Default copy constructor
-		Rotate(const Rotate&) = default;
-
-		//- Default move constructor
-		Rotate(Rotate&&) = default;
-
-	//- Destructor
-	virtual ~Rotate() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Rotate& operator=(const Rotate&) = default;
-
-		//- Default move assignment
-		Rotate& operator=(Rotate&&) = default;
-
+	Rotate& operator=(const Rotate&) = default;
+	Rotate& operator=(Rotate&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_ROTATE_H

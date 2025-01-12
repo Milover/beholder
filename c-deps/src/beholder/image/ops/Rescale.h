@@ -1,108 +1,47 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image rescaling operation.
-
-SourceFiles
-	Rescale.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_RESCALE_OP_H
-#define BEHOLDER_RESCALE_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_RESCALE_H
+#define BEHOLDER_IMAGE_OPS_RESCALE_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class Rescale Declaration
-\*---------------------------------------------------------------------------*/
-
-class Rescale
-:
-	public ProcessingOp
-{
+class Rescale : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	double scale{};	 // scale factor
 
-	//- Public data
+	// Default constructor.
+	Rescale() = default;
 
-		//- The scale factor
-		double scale;
+	// Default constructor.
+	explicit Rescale(double s) : scale{s} {}
 
-	//- Constructors
+	Rescale(const Rescale&) = default;
+	Rescale(Rescale&&) = default;
 
-		//- Default constructor
-		Rescale() = default;
+	~Rescale() override = default;
 
-		//- Default constructor
-		Rescale(double s)
-		:
-			scale {s}
-		{}
-
-		//- Default copy constructor
-		Rescale(const Rescale&) = default;
-
-		//- Default move constructor
-		Rescale(Rescale&&) = default;
-
-	//- Destructor
-	virtual ~Rescale() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		Rescale& operator=(const Rescale&) = default;
-
-		//- Default move assignment
-		Rescale& operator=(Rescale&&) = default;
-
+	Rescale& operator=(const Rescale&) = default;
+	Rescale& operator=(Rescale&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_RESCALE_H

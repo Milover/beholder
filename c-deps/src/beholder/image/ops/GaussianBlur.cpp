@@ -1,59 +1,29 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+#include "image/ops/GaussianBlur.h"
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
-
-#include <opencv2/core/types.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
+#include <vector>
 
 #include "capi/Result.h"
 #include "image/ProcessingOp.h"
-#include "image/ops/GaussianBlur.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool GaussianBlur::execute(const cv::Mat& in, cv::Mat& out) const
-{
-	cv::GaussianBlur(in, out, cv::Size(kernelWidth, kernelHeight), sigmaX, sigmaY);
+bool GaussianBlur::execute(const cv::Mat& in, cv::Mat& out) const {
+	cv::GaussianBlur(in, out, cv::Size(kernelWidth, kernelHeight), sigmaX,
+					 sigmaY);
 	return true;
 }
 
-bool GaussianBlur::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool GaussianBlur::execute(
+	const cv::Mat& in, cv::Mat& out,
+	[[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

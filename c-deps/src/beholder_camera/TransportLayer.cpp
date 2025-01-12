@@ -1,19 +1,8 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <algorithm>
-#include <chrono>
-#include <cstring>
-#include <iostream>
-#include <string>
-#include <thread>
+#include "TransportLayer.h"
 
 #include <pylon/Container.h>
 #include <pylon/Device.h>
@@ -24,258 +13,197 @@ License
 #include <pylon/TransportLayer.h>
 #include <pylon/gige/GigETransportLayer.h>
 
-#include "Exception.h"
-#include "TransportLayer.h"
+#include <algorithm>
+#include <chrono>
+#include <cstring>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <thread>
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
+void TransportLayer::Deleter::operator()(Pylon::ITransportLayer* tl) {
+	if (static_cast<bool>(tl)) {
+		Pylon::CTlFactory::GetInstance().ReleaseTl(tl);
+	}
+}
 
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * * //
-
-Pylon::IPylonDevice* TransportLayer::createDeviceImpl
-(
-	const char* designator,
-	DeviceDesignator ddt
-) const noexcept
-{
-	try
-	{
-		Pylon::DeviceInfoList_t devices {};
-		if (auto ptr {dynamic_cast<Pylon::IGigETransportLayer*>(tl_)}; ptr)
-		{
+std::unique_ptr<Pylon::IPylonDevice>
+TransportLayer::createDeviceImpl(const char* designator,
+								 DeviceDesignator ddt) const noexcept {
+	if (!tl_) {
+		std::cerr << "could not create device: "
+				  << "transport layer uninitialized" << std::endl;
+		return nullptr;
+	}
+	try {
+		Pylon::DeviceInfoList_t devices{};
+		if (dc_ == DeviceClass::GigE) {
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+			auto* ptr{static_cast<Pylon::IGigETransportLayer*>(tl_.get())};
 			ptr->EnumerateAllDevices(devices);
-		}
-		else
-		{
+		} else {
 			tl_->EnumerateDevices(devices);
 		}
-		if (devices.empty())
-		{
+		if (devices.empty()) {
 			std::cerr << "could not create device: "
 					  << "no devices available" << std::endl;
 			return nullptr;
 		}
-		auto selector = [ddt, designator](const auto& info) -> bool
-		{
-			switch (ddt)
-			{
-				case DeviceDesignator::MAC:
-				{
-					return std::strcmp(designator, info.GetMacAddress().c_str()) == 0;
+		auto selector = [ddt, designator](const auto& info) -> bool {
+			switch (ddt) {
+				case DeviceDesignator::MAC: {
+					return std::strcmp(designator,
+									   info.GetMacAddress().c_str()) == 0;
 				}
-				case DeviceDesignator::SN:
-				{
-					return std::strcmp(designator, info.GetSerialNumber().c_str()) == 0;
+				case DeviceDesignator::SN: {
+					return std::strcmp(designator,
+									   info.GetSerialNumber().c_str()) == 0;
 				}
-				case DeviceDesignator::Unknown:
-				{
+				case DeviceDesignator::Unknown: {
 					return false;
 				}
 			}
 			return false;
 		};
-		auto found {std::find_if(devices.begin(), devices.end(), selector)};
-		if (found == devices.end())
-		{
+		auto found{std::find_if(devices.begin(), devices.end(), selector)};
+		if (found == devices.end()) {
 			std::cerr << "could not create device: "
 					  << "could not find specified device" << std::endl;
 			return nullptr;
 		}
-		return tl_->CreateDevice(*found);
-	}
-	catch(const Pylon::GenericException& e)
-	{
+		return std::unique_ptr<Pylon::IPylonDevice>{tl_->CreateDevice(*found)};
+	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not create device: " << e.what() << std::endl;
-	}
-	catch(...)
-	{
+	} catch (...) {
 		std::cerr << "could not create device" << std::endl;
 	}
 	return nullptr;
 }
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-TransportLayer::~TransportLayer()
-{
-	if (tl_)
-	{
-		Pylon::CTlFactory::GetInstance().ReleaseTl(tl_);
-		tl_ = nullptr;
+bool TransportLayer::init(DeviceClass dc) noexcept {
+	// a transport layer can only be initialized once
+	if (tl_) {
+		std::cerr << "transport layer already initialized" << std::endl;
+		return false;
 	}
-}
+	try {
+		dc_ = dc;
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-bool TransportLayer::init(DeviceClass dc) noexcept
-{
-	try
-	{
-		Pylon::CTlFactory& factory {Pylon::CTlFactory::GetInstance()};
-		switch (dc)
-		{
-			case DeviceClass::GigE:
-			{
-				tl_ = factory.CreateTl(Pylon::BaslerGigEDeviceClass);
+		Pylon::CTlFactory& factory{Pylon::CTlFactory::GetInstance()};
+		switch (dc) {
+			case DeviceClass::GigE: {
+				tl_.reset(factory.CreateTl(Pylon::BaslerGigEDeviceClass));
 				break;
 			}
-			case DeviceClass::Emulated:
-			{
-				tl_ = factory.CreateTl(Pylon::BaslerCamEmuDeviceClass);
+			case DeviceClass::Emulated: {
+				tl_.reset(factory.CreateTl(Pylon::BaslerCamEmuDeviceClass));
 				break;
 			}
-			case DeviceClass::Unknown:
-			{
-				tl_ = nullptr;
+			case DeviceClass::Unknown: {
+				tl_.reset();
 				break;
 			}
 		}
 		return static_cast<bool>(tl_);
-	}
-	catch(const Pylon::GenericException& e)
-	{
-		std::cerr << "could not initialize transport layer: " << e.what() << std::endl;
-	}
-	catch(...)
-	{
+	} catch (const Pylon::GenericException& e) {
+		std::cerr << "could not initialize transport layer: " << e.what()
+				  << std::endl;
+	} catch (...) {
 		std::cerr << "could not initialize transport layer" << std::endl;
 	}
 	return false;
 }
 
-Pylon::IPylonDevice* TransportLayer::createDevice
-(
-	const std::string& designator,
-	DeviceDesignator ddt,
-	bool reboot
-) const noexcept
-{
-	return createDevice(designator.c_str(), ddt, reboot);
+std::unique_ptr<Pylon::IPylonDevice>
+TransportLayer::createDevice(const std::string& designator,
+							 DeviceDesignator ddt, bool reboot,
+							 std::chrono::milliseconds timeout,
+							 std::size_t retries) const noexcept {
+	return createDevice(designator.c_str(), ddt, reboot, timeout, retries);
 }
 
-
-Pylon::IPylonDevice* TransportLayer::createDevice
-(
-	const char* designator,
-	DeviceDesignator ddt,
-	bool reboot
-) const noexcept
-{
-	auto d {createDeviceImpl(designator, ddt)};
-	if (!reboot || !d)
-	{
+std::unique_ptr<Pylon::IPylonDevice>
+TransportLayer::createDevice(const char* designator, DeviceDesignator ddt,
+							 bool reboot, std::chrono::milliseconds timeout,
+							 std::size_t retries) const noexcept {
+	auto d{createDeviceImpl(designator, ddt)};
+	if (!reboot || !d) {
 		return d;
 	}
 	// reboot the device to clear any errors and purge the buffers
-	try
-	{
-		std::cout << "trying to reset device: "
-				  << formatDeviceDesignator(ddt) << " : "
-				  << designator << std::endl;
+	try {
+		std::cout << "trying to reset device: " << formatDeviceDesignator(ddt)
+				  << " : " << designator << std::endl;
 		// no try-catch here because if we throw, we have actual issues
 		d->Open();
-		bool reset
-		{
-			Pylon::CCommandParameter(d->GetNodeMap(), "DeviceReset").TryExecute()
-		};
+		const bool reset{
+			Pylon::CCommandParameter(d->GetNodeMap(), "DeviceReset")
+				.TryExecute()};
 		// probably unnecessary, but just in case the device is
 		// in an invalid state
-		tl_->DestroyDevice(d);
-		d = nullptr;
-		if (reset)
-		{
-			// FIXME: 'retries' and 'waitTime' should be adjustable
+		tl_->DestroyDevice(d.release());
+		if (reset) {
 			std::cout << "waiting for device on-line" << std::endl;
-			auto waitTime {std::chrono::seconds{3}};
-			auto nRetries {5ul};
-			for (auto i {0ul}; i < nRetries; ++i)
-			{
-				std::this_thread::sleep_for(waitTime);
+			for (auto i{0UL}; i < retries; ++i) {
+				std::this_thread::sleep_for(timeout);
 				// FIXME: mute log output here, we only care about failure
 				// after all attempts have been made
-				if (d = createDeviceImpl(designator, ddt); d)
-				{
+				if (d = createDeviceImpl(designator, ddt); d) {
 					return d;
 				}
 			}
 			std::cerr << "could not create device: "
 					  << "retry limit reached after reset" << std::endl;
-		}
-		else
-		{
+		} else {
 			std::cerr << "could not reset device: "
 					  << formatDeviceDesignator(ddt) << " : " << designator
 					  << "; continuing without reset" << std::endl;
 			return createDeviceImpl(designator, ddt);
 		}
-	}
-	catch(const Pylon::GenericException& e)
-	{
+	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not create device: " << e.what() << std::endl;
-	}
-	catch(...)
-	{
+	} catch (...) {
 		std::cerr << "could not create device" << std::endl;
 	}
 	return nullptr;
 }
 
-std::string TransportLayer::getFirstSN() const noexcept
-{
-	try
-	{
-		Pylon::DeviceInfoList_t devices {};
-		if (auto ptr {dynamic_cast<Pylon::IGigETransportLayer*>(tl_)}; ptr)
-		{
+std::string TransportLayer::getFirstSN() const noexcept {
+	try {
+		Pylon::DeviceInfoList_t devices{};
+		if (dc_ == DeviceClass::GigE) {
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+			auto* ptr{static_cast<Pylon::IGigETransportLayer*>(tl_.get())};
 			ptr->EnumerateAllDevices(devices);
-		}
-		else
-		{
+		} else {
 			tl_->EnumerateDevices(devices);
 		}
-		if (devices.empty())
-		{
+		if (devices.empty()) {
 			std::cerr << "could not find a device: "
 					  << "no devices available" << std::endl;
 			return {};
 		}
 		return devices.front().GetSerialNumber().c_str();
-	}
-	catch(const Pylon::GenericException& e)
-	{
+	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not find a device: " << e.what() << std::endl;
-	}
-	catch(...)
-	{
+	} catch (...) {
 		std::cerr << "could not find a device" << std::endl;
 	}
 	return {};
-
 }
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-std::string formatDeviceDesignator(DeviceDesignator ddt)
-{
-	switch (ddt)
-	{
-		case DeviceDesignator::MAC:		return "MAC";
-		case DeviceDesignator::SN:		return "S/N";
-		case DeviceDesignator::Unknown:	return "unknown";
+std::string formatDeviceDesignator(DeviceDesignator ddt) {
+	switch (ddt) {
+		case DeviceDesignator::MAC:
+			return "MAC";
+		case DeviceDesignator::SN:
+			return "S/N";
+		case DeviceDesignator::Unknown:
+			return "unknown";
 	}
 	return "unknown";
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

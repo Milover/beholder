@@ -1,58 +1,36 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-\*---------------------------------------------------------------------------*/
-
-#include <vector>
+#include "image/ops/AdaptiveThreshold.h"
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
+#include <vector>
 
 #include "capi/Result.h"
 #include "image/ProcessingOp.h"
-#include "image/ops/AdaptiveThreshold.h"
+#include "util/Traits.h"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
+// Static checks which enforce compliance between our thresholding modes and
+// the OpenCV supported types.
+static_assert(enums::to(AdaptiveThreshold::Type::Mean) ==
+			  enums::to(cv::ADAPTIVE_THRESH_MEAN_C));
+static_assert(enums::to(AdaptiveThreshold::Type::Gaussian) ==
+			  enums::to(cv::ADAPTIVE_THRESH_GAUSSIAN_C));
 
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-bool AdaptiveThreshold::execute(const cv::Mat& in, cv::Mat& out) const
-{
-	cv::adaptiveThreshold(in, out, maxValue, type, cv::THRESH_BINARY, size, c);
+bool AdaptiveThreshold::execute(const cv::Mat& in, cv::Mat& out) const {
+	cv::adaptiveThreshold(in, out, maxValue, enums::to(type), cv::THRESH_BINARY,
+						  size, c);
 	return true;
 }
 
-bool AdaptiveThreshold::execute
-(
-	const cv::Mat& in,
-	cv::Mat& out,
-	const std::vector<Result>&
-) const
-{
+bool AdaptiveThreshold::execute(
+	const cv::Mat& in, cv::Mat& out,
+	[[maybe_unused]] const std::vector<Result>& res) const {
 	return execute(in, out);
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors * * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// ************************************************************************* //
+}  // namespace beholder

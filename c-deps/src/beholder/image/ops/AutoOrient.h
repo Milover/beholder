@@ -1,148 +1,74 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An automatic image orientation operation.
-
-SourceFiles
-	AutoOrient.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_AUTO_ORIENT_OP_H
-#define BEHOLDER_AUTO_ORIENT_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_AUTO_ORIENT_H
+#define BEHOLDER_IMAGE_OPS_AUTO_ORIENT_H
 
 #include <array>
 #include <vector>
 
 #include "image/ProcessingOp.h"
+#include "util/Constants.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
+namespace cv {
+class Mat;
+class RotatedRect;
+template<typename T>
+class Point_;  // for Point2f, i.e. Point_<float>
+}  // namespace cv
 
-namespace cv
-{
-	class Mat;
-	class RotatedRect;
-	template<typename T>
-	class Point_;	// for Point2f, i.e. Point_<float>
-}
+namespace beholder {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class AutoOrient Declaration
-\*---------------------------------------------------------------------------*/
-
-class AutoOrient
-:
-	public ProcessingOp
-{
+class AutoOrient : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
-		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		virtual bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
-
-		//- Execute implementation helper
-		bool executeImpl
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			cv::RotatedRect& box,
-			cv::Point_<float>& center
-		) const;
+	// Execute implementation helper.
+	bool executeImpl(const cv::Mat& in, cv::Mat& out, cv::RotatedRect& box,
+					 cv::Point_<float>& center) const;
 
 public:
+	// NOLINTBEGIN(*-magic-numbers)
 
-	//- Public data
+	int kernelSize{50};				// kernel size
+	float textHeight{50};			// minimum recognized text box height
+	float textWidth{50};			// minimum recognized text width height
+	float padding{10.0};			// padding added to the cropped image
+	double padValue{cst::max8bit};	// pixel value used for padding
+	int gradientKernelSize{3};		// gradient kernel size
 
-		//- Kernel size
-		int kernelSize {50};
-		//- Dimensions used for text box detection.
-		//	Potential text boxes with smaller dimensions are discarded.
-		float textHeight {50};
-		float textWidth {50};
-		//- Padding added to the cropped image
-		float padding {10.0};
-		//- The pixel value used for padding
-		double padValue {255.0};
-		//- Gradient kernel size
-		//	XXX: is there a reason why we maed it 'const' originally?
-		int gradientKernelSize {3};
+	// NOLINTEND(*-magic-numbers)
 
-	//- Constructors
+	// Default constructor.
+	AutoOrient() = default;
 
-		//- Default constructor
-		AutoOrient() = default;
+	// Default constructor.
+	// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+	AutoOrient(int kS, float tH, float tW, float pad, double padV)
+		: kernelSize{kS},
+		  textHeight{tH},
+		  textWidth{tW},
+		  padding{pad},
+		  padValue{padV} {}
 
-		//- Default constructor
-		AutoOrient(int kS, float tH, float tW, float pad, double padV)
-		:
-			ProcessingOp(),
-			kernelSize {kS},
-			textHeight {tH},
-			textWidth {tW},
-			padding {pad},
-			padValue {padV}
-		{}
+	AutoOrient(const AutoOrient&) = default;
+	AutoOrient(AutoOrient&&) = default;
 
-		//- Default copy constructor
-		AutoOrient(const AutoOrient&) = default;
+	~AutoOrient() override = default;
 
-		//- Default move constructor
-		AutoOrient(AutoOrient&&) = default;
-
-	//- Destructor
-	virtual ~AutoOrient() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		AutoOrient& operator=(const AutoOrient&) = default;
-
-		//- Default move assignment
-		AutoOrient& operator=(AutoOrient&&) = default;
-
+	AutoOrient& operator=(const AutoOrient&) = default;
+	AutoOrient& operator=(AutoOrient&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+void findTextBox(const cv::Mat& in, int kSize, float txtHeight, float txtWidth,
+				 float padding, int gKSize, cv::RotatedRect& returnValue);
 
-void findTextBox
-(
-	const cv::Mat& in,
-	int kSize,
-	float txtHeight,
-	float txtWidth,
-	float padding,
-	int gKSize,
-	cv::RotatedRect& returnValue
-);
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_AUTO_ORIENT_H

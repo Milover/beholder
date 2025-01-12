@@ -1,124 +1,80 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
+// An image processing operation class definition.
 
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
+#ifndef BEHOLDER_IMAGE_PROCESSING_OP_H
+#define BEHOLDER_IMAGE_PROCESSING_OP_H
 
-Description
-	An image processing operation
-
-SourceFiles
-	ProcessingOp.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_PROCESSING_OP_H
-#define BEHOLDER_PROCESSING_OP_H
-
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-#include <functional>
 
 #include "capi/Result.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                       Class ProcessingOp Declaration
-\*---------------------------------------------------------------------------*/
-
-class ProcessingOp
-{
+class ProcessingOp {
 protected:
+	// Default constructor
+	ProcessingOp() = default;
 
-	// Protected constructors
+	// Execute the (pre-)processing operation.
+	virtual bool execute(const cv::Mat& in, cv::Mat& out) const = 0;
 
-		//- Default constructor
-		ProcessingOp() = default;
-
-	// Protected member functions
-
-		//- Execute the processing operation
-		virtual bool execute(const cv::Mat& in, cv::Mat& out) const = 0;
-
-		//- Execute the processing operation
-		virtual bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>& res
-		) const = 0;
+	// Execute the (post-)processing operation.
+	virtual bool execute(const cv::Mat& in, cv::Mat& out,
+						 const std::vector<Result>& res) const = 0;
 
 public:
-
 	using OpPtr = std::unique_ptr<ProcessingOp>;
 	using Selector = std::function<OpPtr()>;
 	using SelectorEntry = std::pair<std::string, Selector>;
 	using SelectorTable = std::vector<SelectorEntry>;
 
-	//- Public data
+	// A table containing the names and static constructors of
+	// all implemented processing operations
+	static const SelectorTable OpTable;
 
-		//- A table containing the names and static constructors of
-		//	all implemented processing operations
-		static const SelectorTable OpTable;
+	ProcessingOp(const ProcessingOp&) = default;
+	ProcessingOp(ProcessingOp&&) = default;
 
-	// Constructors
-
-		//- Default copy constructor
-		ProcessingOp(const ProcessingOp&) = default;
-
-		//- Default move constructor
-		ProcessingOp(ProcessingOp&&) = default;
-
-	//- Destructor
 	virtual ~ProcessingOp() = default;
 
-	//- Member functions
+	ProcessingOp& operator=(const ProcessingOp&) = default;
+	ProcessingOp& operator=(ProcessingOp&&) = default;
 
-	//- Member operators
+	// Execute a processing operation which does not require pipeline results,
+	// usually a pre-processing operation.
+	//
+	// Operations which don't require results usually implement/use this
+	// version of the call operator.
+	// Operations which require results (eg. rotating an image) usually
+	// fail and return false outright.
+	//
+	// TODO: this should be removed and merged with the call operator below.
+	// Results should get ignored when not necessary, or defaulted when they
+	// are but are not provided.
+	bool operator()(const cv::Mat& in, cv::Mat& out) const;
 
-		//- Call operator
-		bool operator()(const cv::Mat& in, cv::Mat& out) const;
-
-		//- Call operator
-		bool operator()
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>& res
-		) const;
-
-		//- Default copy assignment
-		ProcessingOp& operator=(const ProcessingOp&) = default;
-
-		//- Default move assignment
-		ProcessingOp& operator=(ProcessingOp&&) = default;
-
+	// Execute a processing operation which does requires pipeline results,
+	// usually a post-processing operation.
+	//
+	// Operations which require results (eg. drawing rectangles on an image)
+	// usually only define/use this version of the call operator.
+	// Operations which don't require results typically just ignore the results
+	// and function as usual.
+	bool operator()(const cv::Mat& in, cv::Mat& out,
+					const std::vector<Result>& res) const;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_PROCESSING_OP_H

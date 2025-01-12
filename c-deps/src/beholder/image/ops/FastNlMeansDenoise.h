@@ -1,108 +1,49 @@
-/*---------------------------------------------------------------------------*\
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: MIT
 
-	beholder - Copyright (C) 2024 P. Milovic
-
--------------------------------------------------------------------------------
-License
-	See the LICENSE file for license information.
-
-Description
-	An image brightness and contrast normalization operation.
-
-SourceFiles
-	FastNlMeansDenoise.cpp
-
-\*---------------------------------------------------------------------------*/
-
-#ifndef BEHOLDER_FAST_NL_MEANS_DENOISE_OP_H
-#define BEHOLDER_FAST_NL_MEANS_DENOISE_OP_H
+#ifndef BEHOLDER_IMAGE_OPS_FAST_NL_MEANS_DENOISE_H
+#define BEHOLDER_IMAGE_OPS_FAST_NL_MEANS_DENOISE_H
 
 #include <vector>
 
 #include "image/ProcessingOp.h"
 
-// * * * * * * * * * * * * * Forward Declarations  * * * * * * * * * * * * * //
-
-namespace cv
-{
-	class Mat;
+namespace cv {
+class Mat;
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+namespace beholder {
 
-namespace beholder
-{
-
-/*---------------------------------------------------------------------------*\
-                        Class FastNlMeansDenoise Declaration
-\*---------------------------------------------------------------------------*/
-
-class FastNlMeansDenoise
-:
-	public ProcessingOp
-{
+class FastNlMeansDenoise : public ProcessingOp {
 protected:
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out) const override;
 
-	// Protected member functions
-
-		//- Execute the processing operation
-		bool execute(const cv::Mat& in, cv::Mat& out) const override;
-
-		//- Execute the processing operation
-		bool execute
-		(
-			const cv::Mat& in,
-			cv::Mat& out,
-			const std::vector<Result>&
-		) const override;
+	// Execute the processing operation.
+	bool execute(const cv::Mat& in, cv::Mat& out,
+				 const std::vector<Result>& res) const override;
 
 public:
+	// Weight regulating filtering strength.
+	// Bigger weights remove more noise (and image details).
+	float weight{1};
 
-	//- Public data
+	// Default constructor.
+	FastNlMeansDenoise() = default;
 
-		//- New image dimensions
-		float weight;
+	// Default constructor.
+	explicit FastNlMeansDenoise(float w) : weight{w} {}
 
-	//- Constructors
+	FastNlMeansDenoise(const FastNlMeansDenoise&) = default;
+	FastNlMeansDenoise(FastNlMeansDenoise&&) = default;
 
-		//- Default constructor
-		FastNlMeansDenoise() = default;
+	~FastNlMeansDenoise() override = default;
 
-		//- Default constructor
-		FastNlMeansDenoise(float w)
-		:
-			weight {w}
-		{}
-
-		//- Default copy constructor
-		FastNlMeansDenoise(const FastNlMeansDenoise&) = default;
-
-		//- Default move constructor
-		FastNlMeansDenoise(FastNlMeansDenoise&&) = default;
-
-	//- Destructor
-	virtual ~FastNlMeansDenoise() = default;
-
-	//- Member functions
-
-	//- Member operators
-
-		//- Default copy assignment
-		FastNlMeansDenoise& operator=(const FastNlMeansDenoise&) = default;
-
-		//- Default move assignment
-		FastNlMeansDenoise& operator=(FastNlMeansDenoise&&) = default;
-
+	FastNlMeansDenoise& operator=(const FastNlMeansDenoise&) = default;
+	FastNlMeansDenoise& operator=(FastNlMeansDenoise&&) = default;
 };
 
-// * * * * * * * * * * * * * * Helper Functions  * * * * * * * * * * * * * * //
+}  // namespace beholder
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace beholder
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
-
-// ************************************************************************* //
+#endif	// BEHOLDER_IMAGE_OPS_FAST_NL_MEANS_DENOISE_H

@@ -2,7 +2,10 @@
 add_library(beholder_camera SHARED)
 add_library(beholder::beholder_camera ALIAS beholder_camera)
 
-set_property(TARGET beholder_camera PROPERTY SOVERSION "${PROJECT_VERSION}")
+set_target_properties(beholder_camera
+	PROPERTIES
+		SOVERSION "${PROJECT_VERSION}"
+)
 
 #if (CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
 #	set_target_properties(beholder_camera PROPERTIES ARCHIVE_OUTPUT_NAME "beholder_camera.$<LOWER_CASE:$<CONFIG>>")
@@ -11,22 +14,25 @@ set_property(TARGET beholder_camera PROPERTY SOVERSION "${PROJECT_VERSION}")
 
 find_package(pylon REQUIRED)
 
+add_subdirectory(internal)
+
 target_sources(beholder_camera
 	PRIVATE
 		Camera.cpp
-		DefaultConfigurator.cpp
 		ParamEntry.cpp
+		PylonAPI.cpp
 		TransportLayer.cpp
 	PUBLIC
 		FILE_SET HEADERS
 		BASE_DIRS
 			"${CMAKE_CURRENT_SOURCE_DIR}"
 		FILES
+			BeholderCameraExport.h
 			Camera.h
-			DefaultConfigurator.h
 			Exception.h
 			ParamEntry.h
 			PylonAPI.h
+			TransportLayer.h
 			TransportLayer.h
 			#libbeholder_camera.h
 )
