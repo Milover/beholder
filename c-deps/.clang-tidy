@@ -10,6 +10,8 @@ Checks: >
   performance-*,
   misc-*,
   -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
   -google-readability-todo,
   -google-runtime-references,
   -modernize-concat-nested-namespaces,
