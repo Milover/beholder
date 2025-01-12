@@ -1,0 +1,34 @@
+# beholder.Dockerfile.dockerignore
+
+# macOS files
+.DS_Store
+
+# Temporary files
+*.swp
+*~
+
+# git files
+.git
+.gitignore
+
+# Environment files
+.env
+
+# Protobuf generated files
+*.pb.go
+
+# Go binaries
+bin/
+
+# CMake build directories
+c-deps/build
+c-deps/third_party/build
+
+# CMake local config
+CMakeUserPresets.json
+
+# Internal DNN model files
+internal/neural/model/_internal/*/internal/
+
+# Misc stuff
+vagrant/
