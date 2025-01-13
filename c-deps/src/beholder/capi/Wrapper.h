@@ -28,14 +28,15 @@ struct DfltDtor {
 };
 }  // namespace detail
 
-template<typename T, typename Ctor = detail::DfltCtor<T>,
-		 typename Dtor = detail::DfltDtor<T>,
-		 typename = std::enable_if_t<std::is_trivial_v<T> &&
-									 std::is_standard_layout_v<T>>,
-		 typename = std::enable_if_t<std::is_default_constructible_v<Ctor> &&
-									 std::is_invocable_r_v<T, Ctor>>,
-		 typename = std::enable_if_t<std::is_default_constructible_v<Dtor> &&
-									 std::is_invocable_r_v<void, Dtor, T&>>>
+template<
+	typename T, typename Ctor = detail::DfltCtor<T>,
+	typename Dtor = detail::DfltDtor<T>,
+	std::enable_if_t<std::is_trivial_v<T> && std::is_standard_layout_v<T> &&
+						 std::is_default_constructible_v<Ctor> &&
+						 std::is_invocable_r_v<T, Ctor> &&
+						 std::is_default_constructible_v<Dtor> &&
+						 std::is_invocable_r_v<void, Dtor, T&>,
+					 bool> = true>
 class Wrapper {
 protected:
 	T t_;  // the underlying C struct
