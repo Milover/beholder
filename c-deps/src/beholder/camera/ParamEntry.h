@@ -8,14 +8,15 @@
 #define BEHOLDER_CAMERA_PARAM_ENTRY_H
 
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "beholder/BeholderExport.h"
 
 namespace beholder {
 
-class ParamEntry;
-using ParamList = std::vector<ParamEntry>;
+class ParamEntry;							// forward declaration
+using ParamList = std::vector<ParamEntry>;	// handy-dandy typedef
 
 // Supported GenICam parameter types.
 enum class BH_API ParamType {
@@ -45,16 +46,15 @@ public:
 	ParamType type{ParamType::Unknown};	 // parameter type
 
 	// Construct from parts.
-	ParamEntry(const std::string& n, const std::string& v, const ParamType& t);
-
-	// Construct from parts.
-	ParamEntry(std::string&& n, std::string&& v, ParamType&& t);
-
-	// Construct from name and value.
-	ParamEntry(const std::string& n, const std::string& v);
-
-	// Construct from name and value.
-	ParamEntry(std::string&& n, std::string&& v);
+	template<typename Name, typename Value, typename Type = ParamType,
+			 std::enable_if_t<std::is_constructible_v<std::string, Name> &&
+								  std::is_constructible_v<std::string, Value> &&
+								  std::is_constructible_v<ParamType, Type>,
+							  bool> = true>
+	ParamEntry(Name&& n, Value&& v, Type&& t = Type{ParamType::Unknown})
+		: name{std::forward<Name>(n)},
+		  value{std::forward<Value>(v)},
+		  type{std::forward<Type>(t)} {};
 
 	ParamEntry() = default;
 	ParamEntry(const ParamEntry&) = default;
