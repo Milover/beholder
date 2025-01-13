@@ -31,6 +31,9 @@ Processor::Processor() : img_{new cv::Mat{}}, roi_{new cv::Mat{}} {
 	*roi_ = *img_;
 }
 
+// NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
+Processor::~Processor(){};
+
 bool Processor::decodeImage(void* buffer, std::size_t bufSize, ReadMode mode) {
 	if (bufSize > std::numeric_limits<int>::max()) {
 		std::cerr << "could not decode image: size too large" << std::endl;

@@ -59,6 +59,9 @@ Camera::Camera()
 								Pylon::Cleanup_Delete);
 }
 
+// NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
+Camera::~Camera(){};
+
 bool Camera::acquire(std::chrono::milliseconds timeout) {
 	if (!isAttached()) {
 		throw Exception{"no camera device attached"};
@@ -190,6 +193,10 @@ ParamList Camera::getParams(ParamAccessMode mode) {
 bool Camera::isAcquiring() const noexcept { return cam_->IsGrabbing(); }
 
 bool Camera::init(Pylon::IPylonDevice* d) noexcept {
+	if (!static_cast<bool>(d)) {
+		std::cerr << "could not initialize camera: bad device" << std::endl;
+		return false;
+	}
 	try {
 		cam_->Attach(d, Pylon::Cleanup_Delete);
 		cam_->Open();

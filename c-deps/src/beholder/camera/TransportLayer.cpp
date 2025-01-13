@@ -29,7 +29,7 @@ void TransportLayer::Deleter::operator()(Pylon::ITransportLayer* tl) {
 	}
 }
 
-std::unique_ptr<Pylon::IPylonDevice>
+Pylon::IPylonDevice*
 TransportLayer::createDeviceImpl(const char* designator,
 								 DeviceDesignator ddt) const noexcept {
 	if (!tl_) {
@@ -73,7 +73,7 @@ TransportLayer::createDeviceImpl(const char* designator,
 					  << "could not find specified device" << std::endl;
 			return nullptr;
 		}
-		return std::unique_ptr<Pylon::IPylonDevice>{tl_->CreateDevice(*found)};
+		return tl_->CreateDevice(*found);
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not create device: " << e.what() << std::endl;
 	} catch (...) {
@@ -81,6 +81,9 @@ TransportLayer::createDeviceImpl(const char* designator,
 	}
 	return nullptr;
 }
+
+// NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
+TransportLayer::~TransportLayer(){};
 
 bool TransportLayer::init(DeviceClass dc) noexcept {
 	// a transport layer can only be initialized once
@@ -116,7 +119,7 @@ bool TransportLayer::init(DeviceClass dc) noexcept {
 	return false;
 }
 
-std::unique_ptr<Pylon::IPylonDevice>
+Pylon::IPylonDevice*
 TransportLayer::createDevice(const std::string& designator,
 							 DeviceDesignator ddt, bool reboot,
 							 std::chrono::milliseconds timeout,
@@ -124,7 +127,7 @@ TransportLayer::createDevice(const std::string& designator,
 	return createDevice(designator.c_str(), ddt, reboot, timeout, retries);
 }
 
-std::unique_ptr<Pylon::IPylonDevice>
+Pylon::IPylonDevice*
 TransportLayer::createDevice(const char* designator, DeviceDesignator ddt,
 							 bool reboot, std::chrono::milliseconds timeout,
 							 std::size_t retries) const noexcept {
@@ -143,7 +146,7 @@ TransportLayer::createDevice(const char* designator, DeviceDesignator ddt,
 				.TryExecute()};
 		// probably unnecessary, but just in case the device is
 		// in an invalid state
-		tl_->DestroyDevice(d.release());
+		tl_->DestroyDevice(d);
 		if (reset) {
 			std::cout << "waiting for device on-line" << std::endl;
 			for (auto i{0UL}; i < retries; ++i) {

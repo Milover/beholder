@@ -52,13 +52,13 @@ private:
 	};
 
 	// Underlying transport layer.
-	std::unique_ptr<Pylon::ITransportLayer, Deleter> tl_{};
+	std::unique_ptr<Pylon::ITransportLayer, Deleter> tl_;
 	// Class of device supported by the transport layer.
 	DeviceClass dc_{DeviceClass::Unknown};
 
 protected:
 	// Find and create a device with the provided designator.
-	[[nodiscard]] std::unique_ptr<Pylon::IPylonDevice> createDeviceImpl(
+	[[nodiscard]] Pylon::IPylonDevice* createDeviceImpl(
 		const char* designator,
 		DeviceDesignator ddt = DeviceDesignator::SN) const noexcept;
 
@@ -69,12 +69,15 @@ public:
 	TransportLayer() = default;
 
 	TransportLayer(const TransportLayer&) = delete;
-	TransportLayer(TransportLayer&&) = default;
+	TransportLayer(TransportLayer&&) = delete;
 
-	~TransportLayer() = default;
+	// Default destructor.
+	// Defined in the source because unique_ptr complains about
+	// incomplete types.
+	~TransportLayer();
 
 	TransportLayer& operator=(const TransportLayer&) = delete;
-	TransportLayer& operator=(TransportLayer&&) = default;
+	TransportLayer& operator=(TransportLayer&&) = delete;
 
 	// Initialize the transport layer for a specific class of devices.
 	//
@@ -83,9 +86,15 @@ public:
 	bool init(DeviceClass dc = DeviceClass::GigE) noexcept;
 
 	// Find and establish a connection to a device with the provided designator.
-	//
 	// If reboot is true, the device will be rebooted/reset during creation.
-	[[nodiscard]] std::unique_ptr<Pylon::IPylonDevice>
+	//
+	// NOTE: we specifically use a raw pointer instead of a unique_ptr because
+	// using it would require including pylon headers at the call site,
+	// which we want to avoid.
+	//
+	// TODO: we should find a way of avoiding exposing this pointer, because
+	// it has to be cleaned up with pylon API calls, which will cause problems.
+	[[nodiscard]] Pylon::IPylonDevice*
 	createDevice(const std::string& designator,
 				 DeviceDesignator ddt = DeviceDesignator::SN,
 				 bool reboot = true,
@@ -93,9 +102,15 @@ public:
 				 std::size_t retries = DfltDevNRetries) const noexcept;
 
 	// Find and establish a connection to a device with the provided designator.
-	//
 	// If reboot is true, the device will be rebooted/reset during creation.
-	[[nodiscard]] std::unique_ptr<Pylon::IPylonDevice>
+	//
+	// NOTE: we specifically use a raw pointer instead of a unique_ptr because
+	// using it would require including pylon headers at the call site,
+	// which we want to avoid.
+	//
+	// TODO: we should find a way of avoiding exposing this pointer, because
+	// it has to be cleaned up with pylon API calls, which will cause problems.
+	[[nodiscard]] Pylon::IPylonDevice*
 	createDevice(const char* designator,
 				 DeviceDesignator ddt = DeviceDesignator::SN,
 				 bool reboot = true,

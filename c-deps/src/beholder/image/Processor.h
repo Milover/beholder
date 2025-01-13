@@ -23,6 +23,8 @@ namespace cv {
 class Mat;
 }
 
+namespace beholder {
+
 enum class ReadMode : int {
 	NoChange = -0x1,  // keep alpha channel and ignore EXIF orientation
 	Grayscale = 0x0,  // convert image to single-channel grayscale
@@ -30,7 +32,6 @@ enum class ReadMode : int {
 	NoOrient = 0x80	  // ignore EXIF orientation
 };
 
-namespace beholder {
 // TODO: Processor 'owns' the image entirely at this point, it should instead
 // just handle image processing and release the image to us afterwards.
 // TODO: We should also remove and/or hide the distinction between
@@ -59,7 +60,10 @@ public:
 	Processor(const Processor&) = delete;
 	Processor(Processor&&) = delete;
 
-	~Processor() = default;
+	// Default destructor.
+	// Defined in the source because unique_ptr complains about
+	// incomplete types.
+	~Processor();
 
 	Processor& operator=(const Processor&) = delete;
 	Processor& operator=(Processor&&) = delete;

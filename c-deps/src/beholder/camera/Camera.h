@@ -31,7 +31,7 @@ namespace beholder {
 enum class BH_API TriggerType { Software, Unknown = -1 };
 
 // The default timeout for acquiring an image.
-inline static constexpr std::chrono::milliseconds DfltAcqTimeout{2000};
+inline static constexpr std::chrono::milliseconds DfltAcqTimeout{1000};
 
 // The default trigger timeout.
 inline static constexpr std::chrono::milliseconds DfltTriggerTimeout{100};
@@ -62,7 +62,10 @@ public:
 	Camera(const Camera&) = delete;
 	Camera(Camera&&) = delete;
 
-	~Camera() = default;
+	// Default destructor.
+	// Defined in the source because unique_ptr complains about
+	// incomplete types.
+	~Camera();
 
 	Camera& operator=(const Camera&) = delete;
 	Camera& operator=(Camera&&) = delete;
