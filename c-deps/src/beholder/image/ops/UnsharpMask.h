@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "image/ops/GaussianBlur.h"
+#include "beholder/image/ops/GaussianBlur.h"
 
 namespace cv {
 class Mat;

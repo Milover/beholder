@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/AutoCrop.h"
+#include "beholder/image/ops/AutoCrop.h"
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "capi/Result.h"
-#include "image/ProcessingOp.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace beholder {
 

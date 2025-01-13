@@ -7,9 +7,9 @@
 
 #include <vector>
 
-#include "image/ProcessingOp.h"
-#include "util/Constants.h"
-#include "util/Utility.h"
+#include "beholder/image/ProcessingOp.h"
+#include "beholder/util/Constants.h"
+#include "beholder/util/Enums.h"
 
 namespace cv {
 class Mat;

@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "util/Traits.h"
+#include "beholder/util/Traits.h"
 
 namespace beholder {
 namespace capi {

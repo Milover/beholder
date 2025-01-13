@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ConversionInfo.h"
+#include "beholder/image/ConversionInfo.h"
 
 #include <array>
 #include <opencv2/imgproc.hpp>

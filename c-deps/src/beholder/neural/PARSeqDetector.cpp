@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "neural/PARSeqDetector.h"
+#include "beholder/neural/PARSeqDetector.h"
 
 #include <cmath>
 #include <opencv2/core.hpp>
@@ -12,8 +12,8 @@
 #include <opencv2/dnn/dnn.hpp>
 #include <utility>
 
-#include "neural/internal/ObjDetectorBuffers.h"
-#include "util/Constants.h"
+#include "beholder/neural/internal/ObjDetectorBuffers.h"
+#include "beholder/util/Constants.h"
 
 namespace beholder {
 

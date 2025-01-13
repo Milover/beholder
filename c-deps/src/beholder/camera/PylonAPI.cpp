@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "PylonAPI.h"
+#include "beholder/camera/PylonAPI.h"
 
 #include <pylon/PylonBase.h>
 

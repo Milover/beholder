@@ -8,6 +8,7 @@ target_sources(beholder
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
+			BeholderImage.h
 			ConversionInfo.h
 			ProcessingOp.h
 			Processor.h

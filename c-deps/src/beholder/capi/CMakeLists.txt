@@ -4,6 +4,7 @@ target_sources(beholder
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
+			BeholderCAPI.h
 			Image.h
 			Rectangle.h
 			Result.h

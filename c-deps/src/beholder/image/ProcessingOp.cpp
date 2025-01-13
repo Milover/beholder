@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ProcessingOp.h"
+#include "beholder/image/ProcessingOp.h"
 
 #include <algorithm>
 #include <memory>
@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-#include "capi/Result.h"
+#include "beholder/capi/Result.h"
 
 namespace beholder {
 

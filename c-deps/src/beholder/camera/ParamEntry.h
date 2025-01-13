@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "BeholderCameraExport.h"
+#include "beholder/BeholderExport.h"
 
 namespace beholder {
 
@@ -18,7 +18,7 @@ class ParamEntry;
 using ParamList = std::vector<ParamEntry>;
 
 // Supported GenICam parameter types.
-enum class BH_CAM_API ParamType : int {
+enum class BH_API ParamType {
 	_val,		  // GenAPI value (unused)
 	_base,		  // GenAPI base (unused)
 	Int,		  // GenAPI integer
@@ -35,10 +35,10 @@ enum class BH_CAM_API ParamType : int {
 };
 
 // Supported parameter access modes.
-enum class BH_CAM_API ParamAccessMode { Read, ReadWrite, Unknown = -1 };
+enum class BH_API ParamAccessMode { Read, ReadWrite, Unknown = -1 };
 
 // ParamEntry represents a GenICam parameter.
-class BH_CAM_API ParamEntry {
+class BH_API ParamEntry {
 public:
 	std::string name;					 // parameter name
 	std::string value;					 // parameter value
@@ -66,16 +66,13 @@ public:
 	ParamEntry& operator=(ParamEntry&&) = default;
 };
 
-// Convert a GenAPI EInterfaceType to a ParamType.
-[[nodiscard]] BH_CAM_API ParamType fromGenAPI(unsigned int i);
-
 // Get a parameter named 'pName' from 'list'.
 // Returns an empty ParamEntry if the parameter is not available.
-[[nodiscard]] BH_CAM_API ParamEntry getParameter(const std::string& pName,
-												 const ParamList& list);
+[[nodiscard]] BH_API ParamEntry getParameter(const std::string& pName,
+											 const ParamList& list);
 
 // Check if a parameter named 'pName' is present in 'list'.
-BH_CAM_API bool hasParameter(const std::string& pName, const ParamList& list);
+BH_API bool hasParameter(const std::string& pName, const ParamList& list);
 
 }  // namespace beholder
 

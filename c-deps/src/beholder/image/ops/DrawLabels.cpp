@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/DrawLabels.h"
+#include "beholder/image/ops/DrawLabels.h"
 
 #include <array>
 #include <iomanip>
@@ -13,8 +13,8 @@
 #include <sstream>
 #include <vector>
 
-#include "capi/Result.h"
-#include "image/ProcessingOp.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace beholder {
 

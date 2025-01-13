@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "capi/Result.h"
+#include "beholder/capi/Result.h"
 
 #include <cstddef>
 

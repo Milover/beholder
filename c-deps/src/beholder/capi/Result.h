@@ -13,12 +13,12 @@
 #include <string>
 #include <type_traits>
 
-#include "util/Traits.h"
+#include "beholder/util/Traits.h"
 #else
 #include <stddef.h>
 #endif
 
-#include "capi/Rectangle.h"
+#include "beholder/capi/Rectangle.h"
 
 #ifdef __cplusplus
 namespace beholder {

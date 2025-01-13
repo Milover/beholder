@@ -14,10 +14,10 @@
 #include <utility>
 #include <vector>
 
-#include "capi/Image.h"
-#include "capi/Rectangle.h"
-#include "capi/Result.h"
-#include "image/ProcessingOp.h"
+#include "beholder/capi/Image.h"
+#include "beholder/capi/Rectangle.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace cv {
 class Mat;

@@ -4,10 +4,10 @@
 
 // A wrapper class for the pylon runtime manager.
 
-#ifndef BEHOLDER_CAMERA_PYLON_H
-#define BEHOLDER_CAMERA_PYLON_H
+#ifndef BEHOLDER_CAMERA_PYLON_API_H
+#define BEHOLDER_CAMERA_PYLON_API_H
 
-#include "BeholderCameraExport.h"
+#include "beholder/BeholderExport.h"
 
 namespace beholder {
 
@@ -21,7 +21,7 @@ namespace beholder {
 // from the library is used, however, this will probably complicate things
 // from the Go side --- so we let Go code ensure this gets initialized/freed
 // when necessary.
-class BH_CAM_API PylonAPI {
+class BH_API PylonAPI {
 public:
 	// Default constructor.
 	// Initializes the pylon runtime manager and resources.
@@ -40,4 +40,4 @@ public:
 
 }  // namespace beholder
 
-#endif	// BEHOLDER_CAMERA_PYLON_H
+#endif	// BEHOLDER_CAMERA_PYLON_API_H

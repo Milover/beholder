@@ -8,8 +8,8 @@
 #include <array>
 #include <vector>
 
-#include "image/ProcessingOp.h"
-#include "util/Constants.h"
+#include "beholder/image/ProcessingOp.h"
+#include "beholder/util/Constants.h"
 
 namespace cv {
 class Mat;

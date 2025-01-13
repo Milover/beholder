@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-#include "capi/Result.h"
+#include "beholder/capi/Result.h"
 
 namespace cv {
 class Mat;

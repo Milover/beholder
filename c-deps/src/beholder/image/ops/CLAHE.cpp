@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/CLAHE.h"
+#include "beholder/image/ops/CLAHE.h"
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "image/ProcessingOp.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace beholder {
 

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/Deblur.h"
+#include "beholder/image/ops/Deblur.h"
 
 #include <array>
 #include <opencv2/core.hpp>
@@ -11,9 +11,9 @@
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "capi/Result.h"
-#include "image/ProcessingOp.h"
-#include "util/Constants.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/ProcessingOp.h"
+#include "beholder/util/Constants.h"
 
 namespace beholder {
 

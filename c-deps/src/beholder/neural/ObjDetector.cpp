@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "neural/ObjDetector.h"
+#include "beholder/neural/ObjDetector.h"
 
 #include <filesystem>
 #include <memory>
@@ -12,69 +12,51 @@
 #include <string>
 #include <vector>
 
-#include "capi/Image.h"
-#include "capi/Rectangle.h"
-#include "capi/Result.h"
-#include "image/Processor.h"
-#include "neural/internal/ObjDetectorBuffers.h"
-#include "util/Traits.h"
+#include "beholder/capi/Image.h"
+#include "beholder/capi/Rectangle.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/Processor.h"
+#include "beholder/neural/internal/ObjDetectorBuffers.h"
+#include "beholder/util/Enums.h"
 
 namespace beholder {
 
+namespace {
 // Static checks which enforce compliance between our parameter types and
 // the OpenCV supported backends.
-static_assert(enums::to(NNBackend::BackendDefault) ==
-			  enums::to(cv::dnn::DNN_BACKEND_DEFAULT));
-static_assert(enums::to(NNBackend::BackendHalide) ==
-			  enums::to(cv::dnn::DNN_BACKEND_HALIDE));
-static_assert(enums::to(NNBackend::BackendOpenVINO) ==
-			  enums::to(cv::dnn::DNN_BACKEND_INFERENCE_ENGINE));
-static_assert(enums::to(NNBackend::BackendOpenCV) ==
-			  enums::to(cv::dnn::DNN_BACKEND_OPENCV));
-static_assert(enums::to(NNBackend::BackendVulkan) ==
-			  enums::to(cv::dnn::DNN_BACKEND_VKCOM));
-static_assert(enums::to(NNBackend::BackendCUDA) ==
-			  enums::to(cv::dnn::DNN_BACKEND_CUDA));
-static_assert(enums::to(NNBackend::BackendWebNN) ==
-			  enums::to(cv::dnn::DNN_BACKEND_WEBNN));
-static_assert(enums::to(NNBackend::BackendTIMVX) ==
-			  enums::to(cv::dnn::DNN_BACKEND_TIMVX));
-static_assert(enums::to(NNBackend::BackendCANN) ==
-			  enums::to(cv::dnn::DNN_BACKEND_CANN));
+using Bnd = NNBackend;
+static_assert(Bnd::BackendDefault == cv::dnn::DNN_BACKEND_DEFAULT);
+static_assert(Bnd::BackendHalide == cv::dnn::DNN_BACKEND_HALIDE);
+static_assert(Bnd::BackendOpenVINO == cv::dnn::DNN_BACKEND_INFERENCE_ENGINE);
+static_assert(Bnd::BackendOpenCV == cv::dnn::DNN_BACKEND_OPENCV);
+static_assert(Bnd::BackendVulkan == cv::dnn::DNN_BACKEND_VKCOM);
+static_assert(Bnd::BackendCUDA == cv::dnn::DNN_BACKEND_CUDA);
+static_assert(Bnd::BackendWebNN == cv::dnn::DNN_BACKEND_WEBNN);
+static_assert(Bnd::BackendTIMVX == cv::dnn::DNN_BACKEND_TIMVX);
+static_assert(Bnd::BackendCANN == cv::dnn::DNN_BACKEND_CANN);
 
 // Static checks which enforce compliance between our parameter types and
 // the OpenCV supported targets.
-static_assert(enums::to(NNTarget::TargetCPU) ==
-			  enums::to(cv::dnn::DNN_TARGET_CPU));
-static_assert(enums::to(NNTarget::TargetOpenCL) ==
-			  enums::to(cv::dnn::DNN_TARGET_OPENCL));
-static_assert(enums::to(NNTarget::TargetOpenCLfp16) ==
-			  enums::to(cv::dnn::DNN_TARGET_OPENCL_FP16));
-static_assert(enums::to(NNTarget::TargetMyriad) ==
-			  enums::to(cv::dnn::DNN_TARGET_MYRIAD));
-static_assert(enums::to(NNTarget::TargetVulkan) ==
-			  enums::to(cv::dnn::DNN_TARGET_VULKAN));
-static_assert(enums::to(NNTarget::TargetFPGA) ==
-			  enums::to(cv::dnn::DNN_TARGET_FPGA));
-static_assert(enums::to(NNTarget::TargetCUDA) ==
-			  enums::to(cv::dnn::DNN_TARGET_CUDA));
-static_assert(enums::to(NNTarget::TargetCUDAfp16) ==
-			  enums::to(cv::dnn::DNN_TARGET_CUDA_FP16));
-static_assert(enums::to(NNTarget::TargetHDDL) ==
-			  enums::to(cv::dnn::DNN_TARGET_HDDL));
-static_assert(enums::to(NNTarget::TargetNPU) ==
-			  enums::to(cv::dnn::DNN_TARGET_NPU));
-static_assert(enums::to(NNTarget::TargetCPUfp16) ==
-			  enums::to(cv::dnn::DNN_TARGET_CPU_FP16));
+using Tgt = NNTarget;
+static_assert(Tgt::TargetCPU == cv::dnn::DNN_TARGET_CPU);
+static_assert(Tgt::TargetOpenCL == cv::dnn::DNN_TARGET_OPENCL);
+static_assert(Tgt::TargetOpenCLfp16 == cv::dnn::DNN_TARGET_OPENCL_FP16);
+static_assert(Tgt::TargetMyriad == cv::dnn::DNN_TARGET_MYRIAD);
+static_assert(Tgt::TargetVulkan == cv::dnn::DNN_TARGET_VULKAN);
+static_assert(Tgt::TargetFPGA == cv::dnn::DNN_TARGET_FPGA);
+static_assert(Tgt::TargetCUDA == cv::dnn::DNN_TARGET_CUDA);
+static_assert(Tgt::TargetCUDAfp16 == cv::dnn::DNN_TARGET_CUDA_FP16);
+static_assert(Tgt::TargetHDDL == cv::dnn::DNN_TARGET_HDDL);
+static_assert(Tgt::TargetNPU == cv::dnn::DNN_TARGET_NPU);
+static_assert(Tgt::TargetCPUfp16 == cv::dnn::DNN_TARGET_CPU_FP16);
 
 // Static checks which enforce compliance between our parameter types and
 // the OpenCV DNN module (blob) padding modes.
-static_assert(enums::to(ObjDetector::ResizeMode::ResizeRaw) ==
-			  enums::to(cv::dnn::DNN_PMODE_NULL));
-static_assert(enums::to(ObjDetector::ResizeMode::ResizeCrop) ==
-			  enums::to(cv::dnn::DNN_PMODE_CROP_CENTER));
-static_assert(enums::to(ObjDetector::ResizeMode::ResizeLetterbox) ==
-			  enums::to(cv::dnn::DNN_PMODE_LETTERBOX));
+using Mod = ObjDetector::ResizeMode;
+static_assert(Mod::ResizeRaw == cv::dnn::DNN_PMODE_NULL);
+static_assert(Mod::ResizeCrop == cv::dnn::DNN_PMODE_CROP_CENTER);
+static_assert(Mod::ResizeLetterbox == cv::dnn::DNN_PMODE_LETTERBOX);
+}  // namespace
 
 void ObjDetector::clear() {
 	if (buf_) {

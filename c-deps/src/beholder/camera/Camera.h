@@ -14,10 +14,10 @@
 #include <optional>
 #include <ratio>
 
-#include "BeholderCameraExport.h"
-#include "Exception.h"
-#include "ParamEntry.h"
-#include "capi/Image.h"
+#include "beholder/BeholderExport.h"
+#include "beholder/camera/Exception.h"
+#include "beholder/camera/ParamEntry.h"
+#include "beholder/capi/Image.h"
 
 namespace Pylon {
 class CGrabResultPtr;
@@ -28,7 +28,7 @@ class IPylonDevice;
 namespace beholder {
 
 // Supported camera acquisition trigger types.
-enum class BH_CAM_API TriggerType { Software, Unknown = -1 };
+enum class BH_API TriggerType { Software, Unknown = -1 };
 
 // The default timeout for acquiring an image.
 inline static constexpr std::chrono::milliseconds DfltAcqTimeout{2000};
@@ -37,7 +37,7 @@ inline static constexpr std::chrono::milliseconds DfltAcqTimeout{2000};
 inline static constexpr std::chrono::milliseconds DfltTriggerTimeout{100};
 
 // Camera represents a physical camera device.
-class BH_CAM_API Camera {
+class BH_API Camera {
 private:
 	// Deleter is a helper class for releasing the underlying camera device
 	// resources.

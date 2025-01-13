@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/UnsharpMask.h"
+#include "beholder/image/ops/UnsharpMask.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "capi/Result.h"
+#include "beholder/capi/Result.h"
 
 namespace beholder {
 

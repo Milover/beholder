@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/NormalizeBrightnessContrast.h"
+#include "beholder/image/ops/NormalizeBrightnessContrast.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "image/ProcessingOp.h"
-#include "util/Constants.h"
+#include "beholder/image/ProcessingOp.h"
+#include "beholder/util/Constants.h"
 
 namespace beholder {
 

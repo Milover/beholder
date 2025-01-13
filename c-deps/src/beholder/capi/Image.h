@@ -10,7 +10,7 @@
 #ifdef __cplusplus
 #include <cstdint>
 
-#include "capi/Wrapper.h"
+#include "beholder/capi/Wrapper.h"
 
 namespace beholder {
 namespace capi {

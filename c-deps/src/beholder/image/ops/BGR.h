@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "image/ProcessingOp.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace cv {
 class Mat;

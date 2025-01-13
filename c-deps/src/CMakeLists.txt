@@ -1,2 +1,1 @@
 add_subdirectory(beholder)
-add_subdirectory(beholder_camera)

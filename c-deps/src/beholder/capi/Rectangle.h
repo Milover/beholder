@@ -8,7 +8,7 @@
 #define BEHOLDER_CAPI_RECTANGLE_H
 
 #ifdef __cplusplus
-#include "capi/Wrapper.h"
+#include "beholder/capi/Wrapper.h"
 #endif
 
 #ifdef __cplusplus

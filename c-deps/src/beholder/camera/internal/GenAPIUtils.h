@@ -12,22 +12,23 @@
 #include <utility>
 #include <vector>
 
-#include "util/Traits.h"
+#include "beholder/util/Packs.h"
 
 namespace beholder {
 namespace internal {
 
-template<typename NodeList, typename Node, typename... NodeMaps,
-		 typename = std::enable_if_t<
-			 pack::is_uniform_v<NodeMaps...> &&
-			 std::is_void_v<
-				 decltype(std::declval<pack::head_t<pack::pack<NodeMaps...>>>()
-							  .GetNodes(std::declval<NodeList&>()))> &&
-			 std::is_unsigned_v<
-				 decltype(std::declval<pack::head_t<pack::pack<NodeMaps...>>>()
-							  .GetNumNodes())>>>
+template<
+	typename NodeList, typename Node, typename... NodeMaps,
+	typename = std::enable_if_t<
+		packs::all_same_v<NodeMaps...> &&
+		std::is_void_v<
+			decltype(std::declval<packs::head_t<packs::pack<NodeMaps...>>>()
+						 .GetNodes(std::declval<NodeList&>()))> &&
+		std::is_unsigned_v<
+			decltype(std::declval<packs::head_t<packs::pack<NodeMaps...>>>()
+						 .GetNumNodes())>>>
 std::vector<Node> convert(NodeMaps&... nodemaps) {
-	using NMap = pack::head_t<pack::pack<NodeMaps...>>;
+	using NMap = packs::head_t<packs::pack<NodeMaps...>>;
 
 	std::vector<Node> nodes;
 	nodes.reserve((nodemaps.GetNumNodes() + ...));
@@ -44,19 +45,19 @@ std::vector<Node> convert(NodeMaps&... nodemaps) {
 	return nodes;
 }
 
-template<typename NodeList, typename Node, typename Condition,
-		 typename... NodeMaps,
-		 typename = std::enable_if_t<
-			 pack::is_uniform_v<NodeMaps...> &&
-			 std::is_void_v<
-				 decltype(std::declval<pack::head_t<pack::pack<NodeMaps...>>>()
-							  .GetNodes(std::declval<NodeList&>()))> &&
-			 std::is_unsigned_v<
-				 decltype(std::declval<pack::head_t<pack::pack<NodeMaps...>>>()
-							  .GetNumNodes())> &&
-			 std::is_same_v<std::invoke_result_t<Condition, Node>, bool>>>
+template<
+	typename NodeList, typename Node, typename Condition, typename... NodeMaps,
+	typename = std::enable_if_t<
+		packs::all_same_v<NodeMaps...> &&
+		std::is_void_v<
+			decltype(std::declval<packs::head_t<packs::pack<NodeMaps...>>>()
+						 .GetNodes(std::declval<NodeList&>()))> &&
+		std::is_unsigned_v<
+			decltype(std::declval<packs::head_t<packs::pack<NodeMaps...>>>()
+						 .GetNumNodes())> &&
+		std::is_same_v<std::invoke_result_t<Condition, Node>, bool>>>
 std::vector<Node> convert(Condition c, NodeMaps&... nodemaps) {
-	using NMap = pack::head_t<pack::pack<NodeMaps...>>;
+	using NMap = packs::head_t<packs::pack<NodeMaps...>>;
 
 	std::vector<Node> nodes;
 	nodes.reserve((nodemaps.GetNumNodes() + ...));

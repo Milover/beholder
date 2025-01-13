@@ -7,8 +7,8 @@
 
 #include <vector>
 
-#include "image/ops/GaussianBlur.h"
-#include "util/Constants.h"
+#include "beholder/image/ops/GaussianBlur.h"
+#include "beholder/util/Constants.h"
 
 namespace cv {
 class Mat;

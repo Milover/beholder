@@ -9,7 +9,7 @@
 #ifndef BEHOLDER_NEURAL_YOLOV8_DETECTOR_H
 #define BEHOLDER_NEURAL_YOLOV8_DETECTOR_H
 
-#include "neural/ObjDetector.h"
+#include "beholder/neural/ObjDetector.h"
 
 namespace beholder {
 

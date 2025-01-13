@@ -4,7 +4,10 @@ target_sources(beholder
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
+			BeholderUtil.h
 			Constants.h
+			Enums.h
+			Packs.h
 			Traits.h
 			Utility.h
 )

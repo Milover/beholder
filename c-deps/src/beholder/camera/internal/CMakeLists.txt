@@ -6,4 +6,5 @@ target_sources(beholder_camera
 		TYPE HEADERS
 		FILES
 			DefaultConfigurator.h
+			GenAPIUtils.h
 )

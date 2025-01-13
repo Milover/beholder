@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "DefaultConfigurator.h"
+#include "beholder/camera/internal/DefaultConfigurator.h"
 
 #include <GenApi/INodeMap.h>
 #include <pylon/ConfigurationHelper.h>
@@ -13,7 +13,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "Exception.h"
+#include "beholder/camera/Exception.h"
 
 namespace beholder {
 namespace internal {

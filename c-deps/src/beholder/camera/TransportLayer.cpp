@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "TransportLayer.h"
+#include "beholder/camera/TransportLayer.h"
 
 #include <pylon/Container.h>
 #include <pylon/Device.h>

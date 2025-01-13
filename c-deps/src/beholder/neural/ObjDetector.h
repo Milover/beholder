@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-#include "capi/Image.h"
-#include "capi/Result.h"
+#include "beholder/capi/Image.h"
+#include "beholder/capi/Result.h"
 
 namespace cv {
 class Mat;

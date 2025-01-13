@@ -35,6 +35,7 @@ target_sources(beholder
 			AddPadding.h
 			AutoCrop.h
 			AutoOrient.h
+			BeholderOps.h
 			BGR.h
 			CLAHE.h
 			CorrectGamma.h
@@ -52,7 +53,6 @@ target_sources(beholder
 			MedianBlur.h
 			Morphology.h
 			NormalizeBrightnessContrast.h
-			Ops.h
 			Rescale.h
 			Resize.h
 			ResizeToHeight.h

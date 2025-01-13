@@ -2,14 +2,14 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/Landscape.h"
+#include "beholder/image/ops/Landscape.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <vector>
 
-#include "capi/Result.h"
-#include "image/ProcessingOp.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace beholder {
 

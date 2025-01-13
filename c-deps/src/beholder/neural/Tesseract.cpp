@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "neural/Tesseract.h"
+#include "beholder/neural/Tesseract.h"
 
 #include <tesseract/baseapi.h>
 
@@ -14,11 +14,11 @@
 #include <utility>
 #include <vector>
 
-#include "capi/Image.h"
-#include "capi/Rectangle.h"
-#include "capi/Result.h"
-#include "util/Constants.h"
-#include "util/Utility.h"
+#include "beholder/capi/Image.h"
+#include "beholder/capi/Rectangle.h"
+#include "beholder/capi/Result.h"
+#include "beholder/util/Constants.h"
+#include "beholder/util/Utility.h"
 
 namespace beholder {
 

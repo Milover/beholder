@@ -16,14 +16,16 @@ find_package(Iconv REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Tesseract REQUIRED)
 
+cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH bh_base_dir)
+
 target_sources(beholder
 	PUBLIC
 		FILE_SET HEADERS
 		BASE_DIRS
-			"${CMAKE_CURRENT_SOURCE_DIR}"
+			"${bh_base_dir}"
 		FILES
+			Beholder.h
 			BeholderExport.h
-			#libbeholder.h
 )
 target_include_directories(beholder
 	PRIVATE
@@ -41,6 +43,8 @@ add_subdirectory(util)
 add_subdirectory(capi)
 add_subdirectory(image)
 add_subdirectory(neural)
+
+add_subdirectory(camera)
 
 ## generate main library global header
 #set(INCLUDE_BEHOLDER_HDR "")

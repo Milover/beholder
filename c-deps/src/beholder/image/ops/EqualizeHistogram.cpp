@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/EqualizeHistogram.h"
+#include "beholder/image/ops/EqualizeHistogram.h"
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "image/ProcessingOp.h"
+#include "beholder/image/ProcessingOp.h"
 
 namespace beholder {
 

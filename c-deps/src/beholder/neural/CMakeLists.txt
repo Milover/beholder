@@ -16,6 +16,7 @@ target_sources(beholder
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
+			BeholderNeural.h
 			CRAFTDetector.h
 			EASTDetector.h
 			ObjDetector.h

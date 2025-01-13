@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "Camera.h"
+#include "beholder/camera/Camera.h"
 
 #include <GenApi/INode.h>
 #include <pylon/Device.h>
@@ -20,11 +20,12 @@
 #include <optional>
 #include <utility>
 
-#include "Exception.h"
-#include "ParamEntry.h"
-#include "capi/Image.h"
-#include "internal/DefaultConfigurator.h"
-#include "internal/GenAPIUtils.h"
+#include "beholder/camera/Exception.h"
+#include "beholder/camera/ParamEntry.h"
+#include "beholder/camera/internal/DefaultConfigurator.h"
+#include "beholder/camera/internal/GenAPIUtils.h"
+#include "beholder/capi/Image.h"
+#include "beholder/util/Enums.h"
 
 namespace beholder {
 
@@ -169,7 +170,7 @@ ParamList Camera::getParams(ParamAccessMode mode) {
 
 	params.reserve(nodes.size());
 	for (auto&& n : nodes) {
-		const ParamType typ{fromGenAPI(n->GetPrincipalInterfaceType())};
+		const auto typ{enums::from<ParamType>(n->GetPrincipalInterfaceType())};
 		if (typ == ParamType::Unknown) {
 			continue;
 		}

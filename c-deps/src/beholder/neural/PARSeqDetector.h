@@ -10,7 +10,7 @@
 
 #include <cstddef>
 
-#include "neural/ObjDetector.h"
+#include "beholder/neural/ObjDetector.h"
 
 namespace beholder {
 

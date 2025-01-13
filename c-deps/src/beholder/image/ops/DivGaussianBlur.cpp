@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "image/ops/DivGaussianBlur.h"
+#include "beholder/image/ops/DivGaussianBlur.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
-#include "capi/Result.h"
-#include "image/ops/GaussianBlur.h"
+#include "beholder/capi/Result.h"
+#include "beholder/image/ops/GaussianBlur.h"
 
 namespace beholder {
 

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "neural/EASTDetector.h"
+#include "beholder/neural/EASTDetector.h"
 
 #include <array>
 #include <cmath>
@@ -12,7 +12,7 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
 
-#include "neural/internal/ObjDetectorBuffers.h"
+#include "beholder/neural/internal/ObjDetectorBuffers.h"
 
 namespace beholder {
 

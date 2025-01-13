@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "neural/YOLOv8Detector.h"
+#include "beholder/neural/YOLOv8Detector.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/fast_math.hpp>
@@ -11,8 +11,8 @@
 #include <opencv2/dnn/dnn.hpp>
 #include <utility>
 
-#include "neural/internal/ObjDetectorBuffers.h"
-#include "util/Constants.h"
+#include "beholder/neural/internal/ObjDetectorBuffers.h"
+#include "beholder/util/Constants.h"
 
 namespace beholder {
 

@@ -16,11 +16,11 @@
 #include <type_traits>
 #include <utility>
 
-#include "BeholderCameraExport.h"
+#include "beholder/BeholderExport.h"
 
 namespace beholder {
 
-class BH_CAM_API Exception : public std::runtime_error {
+class BH_API Exception : public std::runtime_error {
 public:
 	using Base = std::runtime_error;
 

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-#include "neural/CRAFTDetector.h"
+#include "beholder/neural/CRAFTDetector.h"
 
 #include <cmath>
 #include <opencv2/core.hpp>
@@ -15,8 +15,8 @@
 #include <string>
 #include <vector>
 
-#include "neural/internal/ObjDetectorBuffers.h"
-#include "util/Constants.h"
+#include "beholder/neural/internal/ObjDetectorBuffers.h"
+#include "beholder/util/Constants.h"
 
 namespace beholder {
 

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 // A wrapper class for a GenICam transport layer.
-//
+
 #ifndef BEHOLDER_CAMERA_TRANSPORT_LAYER_H
 #define BEHOLDER_CAMERA_TRANSPORT_LAYER_H
 
@@ -11,7 +11,7 @@
 #include <memory>
 #include <string>
 
-#include "BeholderCameraExport.h"
+#include "beholder/BeholderExport.h"
 
 namespace Pylon {
 class ITransportLayer;
@@ -21,7 +21,7 @@ class IPylonDevice;
 namespace beholder {
 
 // Supported Transport layer types (device classes).
-enum class BH_CAM_API DeviceClass : int {
+enum class BH_API DeviceClass {
 	GigE,
 	Emulated,
 	//USB,
@@ -29,7 +29,7 @@ enum class BH_CAM_API DeviceClass : int {
 };
 
 // Supported device designator types, used to select a specific device.
-enum class BH_CAM_API DeviceDesignator : int {
+enum class BH_API DeviceDesignator {
 	MAC,  // device MAC address
 	SN,	  // device serial number
 	//IP,			// device IP address
@@ -43,7 +43,7 @@ inline static constexpr std::chrono::milliseconds DfltDevConnTimeout{3000};
 inline static constexpr std::size_t DfltDevNRetries{5UL};
 
 // TransportLayer handles communication with physical (camera) devices.
-class BH_CAM_API TransportLayer {
+class BH_API TransportLayer {
 private:
 	// Deleter is a helper class for releasing the underlying transport layer
 	// resources.
@@ -115,8 +115,7 @@ public:
 };
 
 // Return a formatted string of the device designator
-[[nodiscard]] BH_CAM_API std::string
-formatDeviceDesignator(DeviceDesignator ddt);
+[[nodiscard]] BH_API std::string formatDeviceDesignator(DeviceDesignator ddt);
 
 }  // namespace beholder
 

@@ -25,16 +25,14 @@ target_sources(beholder_camera
 	PUBLIC
 		FILE_SET HEADERS
 		BASE_DIRS
-			"${CMAKE_CURRENT_SOURCE_DIR}"
+			"${bh_base_dir}"
 		FILES
-			BeholderCameraExport.h
+			BeholderCamera.h
 			Camera.h
 			Exception.h
 			ParamEntry.h
 			PylonAPI.h
 			TransportLayer.h
-			TransportLayer.h
-			#libbeholder_camera.h
 )
 target_link_libraries(beholder_camera
 	PRIVATE
@@ -50,11 +48,11 @@ target_compile_features(beholder_camera PUBLIC cxx_std_17)
 #	set(INCLUDE_BEHOLDER_HDR "${INCLUDE_BEHOLDER_HDR}#include \"${HDR}\"\n")
 #endforeach()
 #configure_file(
-#	${CMAKE_SOURCE_DIR}/src/libbeholder.h.in
-#	${CMAKE_BINARY_DIR}/libbeholder.h
+#	${CMAKE_SOURCE_DIR}/src/BeholderCamera.h.in
+#	${CMAKE_BINARY_DIR}/BeholderCamera.h
 #	@ONLY
 #)
-#list(APPEND BEHOLDER_HDR "${CMAKE_BINARY_DIR}/libbeholder.h")
+#list(APPEND BEHOLDER_HDR "${CMAKE_BINARY_DIR}/BeholderCamera.h")
 
 install(
 	TARGETS

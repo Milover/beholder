@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "image/ops/AutoOrient.h"
+#include "beholder/image/ops/AutoOrient.h"
 
 namespace cv {
 class Mat;
