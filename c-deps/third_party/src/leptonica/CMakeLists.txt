@@ -41,3 +41,15 @@ ExternalProject_Add(
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 		-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 )
+
+ExternalProject_Add_Step(
+	bh-leptonica update-pkgconfig
+	COMMENT "Updating bh-leptonica pkg-config file"
+	COMMAND
+		${CMAKE_COMMAND}
+			-Dbh_staging_prefix=${bh_staging_prefix}
+			-Dbh_pkgcfg_path=${bh_staging_prefix}/lib/pkgconfig/lept.pc
+			-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+			-P ${CMAKE_SOURCE_DIR}/cmake/bhUpdatePkgCfg.cmake
+	DEPENDEES install
+)

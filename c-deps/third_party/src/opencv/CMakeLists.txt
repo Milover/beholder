@@ -39,3 +39,15 @@ ExternalProject_Add(
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 		-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
 )
+
+ExternalProject_Add_Step(
+	bh-opencv update-pkgconfig
+	COMMENT "Updating bh-opencv pkg-config file"
+	COMMAND
+		${CMAKE_COMMAND}
+			-Dbh_staging_prefix=${bh_staging_prefix}
+			-Dbh_pkgcfg_path=${bh_staging_prefix}/lib/pkgconfig/opencv4.pc
+			-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+			-P ${CMAKE_SOURCE_DIR}/cmake/bhUpdatePkgCfg.cmake
+	DEPENDEES install
+)

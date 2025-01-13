@@ -25,7 +25,6 @@ ExternalProject_Add(
 	BUILD_COMMAND ""
 	INSTALL_COMMAND
 		${CMAKE_COMMAND}
-			-Dbh_pylon_projdir=${CMAKE_CURRENT_LIST_DIR}
 			-Dbh_pylon_bindir=<BINARY_DIR>
 			-Dbh_pylon_prefix=${bh_staging_prefix}
 			-P "${CMAKE_CURRENT_LIST_DIR}/cmake/bhPylonInstall.cmake"

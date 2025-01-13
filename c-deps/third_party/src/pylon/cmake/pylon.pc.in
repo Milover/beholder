@@ -1,7 +1,7 @@
 prefix=@CMAKE_INSTALL_PREFIX@
-exec_prefix=${prefix}
+exec_prefix=@CMAKE_INSTALL_PREFIX@
 libdir=@CMAKE_INSTALL_FULL_LIBDIR@
-includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@/pylon
 
 Name: pylon
 Description: Fast and easy image acquisition
