@@ -30,7 +30,7 @@ else()
 endif()
 
 add_subdirectory(src)
-#add_subdirectory(test)
+add_subdirectory(test)
 
 file(CREATE_LINK
 	"${CMAKE_BINARY_DIR}/compile_commands.json"

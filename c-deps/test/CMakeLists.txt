@@ -5,7 +5,9 @@ FetchContent_Declare(
 	GIT_SHALLOW TRUE
 	FIND_PACKAGE_ARGS NAMES GTest
 )
+
+set(INSTALL_GTEST FALSE)
+
 FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(beholder)
-add_subdirectory(beholder_camera)
