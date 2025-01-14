@@ -106,7 +106,7 @@ public:
 
 #ifndef NDEBUG
 	// Get reference to the underlying pylon camera.
-	Pylon::CInstantCamera* getPtr() noexcept const { return cam_.get(); }
+	Pylon::CInstantCamera* getPtr() const noexcept { return cam_.get(); }
 
 	// Get reference to the acquired result.
 	Pylon::CGrabResultPtr* getResultPtr() const noexcept { return res_.get(); }
