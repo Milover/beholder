@@ -10,6 +10,6 @@ Version: @PROJECT_VERSION@
 Description: A library for operating machine vision systems
 URL: https://github.com/milover/beholder
 
-Requires.private: opencv leptonica tesseract
+Requires.private: opencv4 lept tesseract
 Cflags: -I${includedir}
 Libs: -L${libdir} -lbeholder
