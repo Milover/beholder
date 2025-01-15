@@ -62,26 +62,44 @@ template<typename E, enable_if_enum<E> = true>
 constexpr underlying<E> to(E e) noexcept {
 	return static_cast<underlying<E>>(e);
 }
-template<typename E, typename T, enable_if_convertible<T, E> = true>
+template<typename T, typename E, enable_if_convertible<T, E> = true>
 constexpr T to(E e) noexcept {
 	return static_cast<T>(e);
 }
 
 // Cast a value to an enum, if the value type is implicitly convertible
 // to the enum's underlying type.
-template<typename E, typename T, enable_if_convertible<T, E> = true>
+template<
+	typename E, typename T,
+	std::enable_if_t<!std::is_enum_v<T> && is_convertible_v<T, E>, bool> = true>
 constexpr E from(T t) noexcept {
 	return static_cast<E>(t);
 }
 
+// Cast an enum From to another enum To, if the two are compatible, that is
+// if the underlying type of From is implicitly convertible to
+// the underlying type of To.
+template<typename To, typename From, enable_if_compatible<To, From> = true>
+constexpr To from(From e) noexcept {
+	return from<To>(to(e));
+}
+
 }  // namespace enums
 
-// Global addition operator for enum types.
+// Global addition (+) operator for enum types.
 //
 // WARNING: no over/underflow checks, yolo.
 template<typename E, enums::enable_if_enum<E> = true>
 constexpr E operator+(const E& lhs, const E& rhs) noexcept {
 	return enums::from<E>(enums::to(lhs) + enums::to(rhs));
+}
+
+// Global bitwise OR (|) operator for enum types.
+//
+// WARNING: no checks whatsoever, yolo.
+template<typename E, enums::enable_if_enum<E> = true>
+constexpr E operator|(const E& lhs, const E& rhs) noexcept {
+	return enums::from<E>(enums::to(lhs) | enums::to(rhs));
 }
 
 // Global equality operator for enum types.
@@ -91,7 +109,7 @@ constexpr E operator+(const E& lhs, const E& rhs) noexcept {
 template<typename E1, typename E2, enums::enable_if_compatible<E1, E2> = true>
 constexpr bool operator==(const E1& lhs, const E2& rhs) noexcept {
 	using T = std::common_type_t<enums::underlying<E1>, enums::underlying<E2>>;
-	return enums::to<E1, T>(lhs) == enums::to<E2, T>(rhs);
+	return enums::to<T, E1>(lhs) == enums::to<T, E2>(rhs);
 };
 
 }  // namespace beholder
