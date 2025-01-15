@@ -7,8 +7,8 @@
 #ifndef BEHOLDER_UTIL_H
 #define BEHOLDER_UTIL_H
 
-#include "util/Constants.h"
-#include "util/Traits.h"
-#include "util/Utility.h"
+#include "beholder/util/Constants.h"
+#include "beholder/util/Traits.h"
+#include "beholder/util/Utility.h"
 
 #endif	// BEHOLDER_UTIL_H
