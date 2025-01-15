@@ -54,7 +54,7 @@ public:
 	ParamEntry(Name&& n, Value&& v, Type&& t = Type{ParamType::Unknown})
 		: name{std::forward<Name>(n)},
 		  value{std::forward<Value>(v)},
-		  type{std::forward<Type>(t)} {};
+		  type{std::forward<Type>(t)} {}
 
 	ParamEntry() = default;
 	ParamEntry(const ParamEntry&) = default;

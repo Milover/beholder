@@ -15,8 +15,8 @@ namespace beholder {
 void chPtrFromLiteral(char*& ch, const char* lit) {
 	delete[] (ch);
 
-	auto len{std::strlen(lit)};
-	ch = new char[len + 1];
+	auto len{std::strlen(lit) + 1};
+	ch = new char[len];
 	std::strncpy(ch, lit, len);
 }
 
@@ -25,8 +25,8 @@ std::unique_ptr<char*[]> vecStr2ChPtrArr(const std::vector<std::string>& v) {
 	std::unique_ptr<char*[]> result{new char*[v.size() + 1]};
 
 	for (auto i{0UL}; i < v.size(); ++i) {
-		auto len{v[i].length()};
-		result[i] = new char[len + 1];
+		auto len{v[i].size() + 1};
+		result[i] = new char[len];
 		std::strncpy(result[i], v[i].c_str(), len);
 	}
 	result[v.size()] = nullptr;

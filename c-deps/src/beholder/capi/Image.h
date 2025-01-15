@@ -8,6 +8,7 @@
 #define BEHOLDER_CAPI_IMAGE_H
 
 #ifdef __cplusplus
+#include <cstddef>
 #include <cstdint>
 
 #include "beholder/capi/Wrapper.h"
@@ -16,6 +17,7 @@ namespace beholder {
 namespace capi {
 extern "C" {
 #else
+#include <stddef.h>
 #include <stdint.h>
 #endif	// __cplusplus
 
