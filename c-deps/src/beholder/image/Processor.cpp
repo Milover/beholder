@@ -27,6 +27,17 @@
 
 namespace beholder {
 
+namespace {
+// Static checks which enforce compliance between our read modes and
+// the OpenCV supported ones.
+using Mod = ReadMode;
+static_assert(Mod::NoChange == cv::IMREAD_UNCHANGED);
+static_assert(Mod::Grayscale == cv::IMREAD_GRAYSCALE);
+static_assert(Mod::Color == cv::IMREAD_COLOR);
+static_assert(Mod::AnyColor == cv::IMREAD_ANYCOLOR);
+static_assert(Mod::NoOrient == cv::IMREAD_IGNORE_ORIENTATION);
+}  // namespace
+
 Processor::Processor() : img_{new cv::Mat{}}, roi_{new cv::Mat{}} {
 	*roi_ = *img_;
 }
@@ -117,8 +128,8 @@ bool Processor::receiveRawImage(const Image& raw) {
 	return true;
 }
 
-bool Processor::readImage(const std::string& path, int flags) {
-	*img_ = cv::imread(path, flags);
+bool Processor::readImage(const std::string& path, ReadMode mode) {
+	*img_ = cv::imread(path, enums::to(mode));
 	*roi_ = *img_;
 	return img_->data != nullptr;  // XXX: this should be ok
 }

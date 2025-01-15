@@ -25,11 +25,15 @@ class Mat;
 
 namespace beholder {
 
-enum class ReadMode : int {
-	NoChange = -0x1,  // keep alpha channel and ignore EXIF orientation
-	Grayscale = 0x0,  // convert image to single-channel grayscale
-	Color = 0x4,	  // convert image to BGR
-	NoOrient = 0x80	  // ignore EXIF orientation
+// Image read modes.
+// Can be combined using bitwise OR (|), although all combinations are not
+// necessarily valid.
+enum class ReadMode {
+	NoChange = -0x01,  // keep alpha channel and ignore EXIF orientation
+	Grayscale = 0x00,  // convert image to single-channel grayscale
+	Color = 0x01,	   // convert image to BGR
+	AnyColor = 0x04,   // use any possible color format
+	NoOrient = 0x80	   // ignore EXIF orientation
 };
 
 // TODO: Processor 'owns' the image entirely at this point, it should instead
@@ -108,7 +112,7 @@ public:
 	bool receiveRawImage(const Image& raw);
 
 	// Read an image from disc
-	bool readImage(const std::string& path, int flags);
+	bool readImage(const std::string& path, ReadMode mode);
 
 	// Reset the region of interest, i.e. set the ROI to the whole image
 	void resetROI() const;
