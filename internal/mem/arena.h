@@ -28,7 +28,7 @@ void Mem_DeleteCharPtr(Ptr ptr);
 void Mem_DeleteCharPtrArr(Ptr ptr);
 
 #ifdef __cplusplus
-} // end extern "C"
+}  // extern "C"
 #endif
 
-#endif // _BEHOLDER_MEM_H
+#endif	// _BEHOLDER_MEM_H

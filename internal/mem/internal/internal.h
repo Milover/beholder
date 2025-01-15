@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-struct Counter;	// forward declaration
+struct Counter;	 // forward declaration
 
 typedef Counter* Count;
 #else
@@ -26,7 +26,7 @@ Count Count_NewArray(size_t count);
 Count* Count_NewPtrArray(size_t count);
 
 #ifdef __cplusplus
-} // end extern "C"
+}  // extern "C"
 #endif
 
-#endif // _BEHOLDER_MEM_INTERNAL_H
+#endif	// _BEHOLDER_MEM_INTERNAL_H

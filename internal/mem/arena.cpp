@@ -21,6 +21,7 @@ void Mem_DeleteCharPtr(Ptr ptr) {
 void Mem_DeleteCharPtrArr(Ptr ptr) {
 	if (ptr) {
 		// a pointer to an array-pointer of char*
+		// FIXME: wtf bro
 		char*** p {static_cast<char***>(ptr)};
 		if (*p) {
 			delete[] *p;
