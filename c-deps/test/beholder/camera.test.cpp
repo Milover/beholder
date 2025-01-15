@@ -2,10 +2,14 @@
 //
 // SPDX-License-Identifier: MIT
 
-// Image processing unit tests.
+// Camera API tests.
 
-#include "beholder/camera/Camera.h"
-
+#include <beholder/camera/Camera.h>
+#include <beholder/camera/ParamEntry.h>
+#include <beholder/camera/PylonAPI.h>
+#include <beholder/camera/TransportLayer.h>
+#include <beholder/capi/Image.h>
+#include <beholder/image/Processor.h>
 #include <gtest/gtest.h>
 #include <stdlib.h>	 // NOLINT(modernize-*): needed for setenv
 
@@ -17,17 +21,7 @@
 #include <source_location>
 #include <string>
 
-#include "beholder/camera/ParamEntry.h"
-#include "beholder/camera/PylonAPI.h"
-#include "beholder/camera/TransportLayer.h"
-#include "beholder/capi/Image.h"
-#include "beholder/image/Processor.h"
-
-// Report sanitizer errors.
-extern "C" void __ubsan_on_report() { FAIL() << "Got UBSan error"; }  // NOLINT
-extern "C" void __asan_on_report() { FAIL() << "Got ASan error"; }	  // NOLINT
-extern "C" void __msan_on_report() { FAIL() << "Got MSan error"; }	  // NOLINT
-extern "C" void __tsan_on_report() { FAIL() << "Got TSan error"; }	  // NOLINT
+#include "Testing.h"
 
 namespace beholder {
 namespace test {
@@ -42,7 +36,6 @@ namespace test {
 TEST(Camera, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 	const auto testimage{
 		std::filesystem::absolute(std::source_location::current().file_name())
-			.parent_path()
 			.parent_path() /
 		"testdata/red_100x100.png"};
 	const ParamList camParams{
