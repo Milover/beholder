@@ -30,12 +30,21 @@
 				"CMAKE_BUILD_TYPE": "Release",
 				"CMAKE_CXX_VISIBILITY_PRESET": "hidden",
 				"CMAKE_VISIBILITY_INLINES_HIDDEN": true,
-				"CMAKE_INTERPROCEDURAL_OPTIMIZATION": true,
+				"CMAKE_INTERPROCEDURAL_OPTIMIZATION": false,
 				"CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -march=native"
 			}
 		},
 		{
 			"name": "debug",
+			"inherits": "default",
+			"displayName": "Default Debug config",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror"
+			}
+		},
+		{
+			"name": "sanitize",
 			"inherits": "default",
 			"displayName": "Default Debug config",
 			"cacheVariables": {

@@ -7,6 +7,11 @@
 #ifndef BEHOLDER_NEURAL_OBJ_DETECTOR_H
 #define BEHOLDER_NEURAL_OBJ_DETECTOR_H
 
+#ifndef CV__DNN_INLINE_NS
+#define CV__DNN_INLINE_NS_BEGIN	 // NOLINT(bugprone-reserved-identifier
+#define CV__DNN_INLINE_NS_END	 // NOLINT(bugprone-reserved-identifier
+#endif
+
 #include <array>
 #include <memory>
 #include <string>
@@ -15,22 +20,26 @@
 #include "beholder/capi/Image.h"
 #include "beholder/capi/Result.h"
 
+// Forward declarations.
 namespace cv {
 class Mat;
 
 namespace dnn {
+CV__DNN_INLINE_NS_BEGIN
+
 class Net;
 class Image2BlobParams;
+
+CV__DNN_INLINE_NS_END
 }  // namespace dnn
+
 }  // namespace cv
 
 namespace beholder {
-namespace internal {
-class ObjDetectorBuffers;
-}
-}  // namespace beholder
 
-namespace beholder {
+namespace internal {
+class ObjDetectorBuffers;  // forward declaration
+}  // namespace internal
 
 // WARNING: these are OpenCV supported backends, so they will get changed in the
 // future.
@@ -92,16 +101,13 @@ public:
 
 protected:
 	// A pointer to an OpenCV DNN
-	// NOTE: a unique_ptr would be nicer, but cgo keeps complaining
-	std::unique_ptr<cv::dnn::Net> net_{nullptr};
+	std::unique_ptr<cv::dnn::Net> net_;
 
 	// Processing parameters of image to blob.
-	// NOTE: a unique_ptr would be nicer, but cgo keeps complaining
-	std::unique_ptr<cv::dnn::Image2BlobParams> params_{nullptr};
+	std::unique_ptr<cv::dnn::Image2BlobParams> params_;
 
 	// Buffers for temporary values used during detection
-	// WARNING: Go might complain because of the unique_ptr
-	std::unique_ptr<internal::ObjDetectorBuffers> buf_{nullptr};
+	std::unique_ptr<internal::ObjDetectorBuffers> buf_;
 
 	// detection results
 	std::vector<Result> res_;
@@ -132,7 +138,7 @@ public:
 	// https://docs.opencv.org/4.10.0/d6/d0f/group__dnn.html#ga186f7d9bfacac8b0ff2e26e2eab02625
 	//
 	// NOTE: OpenCV needs to be compiled with additional backend support,
-	// eg. CUDA/CUDNN, OpenVINO...
+	// eg. CUDA/CUDNN, OpenVINO, etc.
 	NNBackend backend{NNBackend::BackendDefault};
 	// The network target device for computations.
 	// For more info, see:
@@ -168,12 +174,17 @@ public:
 	// NOLINTEND(*-magic-numbers)
 
 	// Default constructor
-	ObjDetector() = default;
+	// Defined in the source because unique_ptr complains about
+	// incomplete types.
+	ObjDetector() noexcept;
 
 	ObjDetector(const ObjDetector&) = delete;
 	ObjDetector(ObjDetector&&) = default;
 
-	virtual ~ObjDetector() = default;
+	// Default destructor.
+	// Defined in the source because unique_ptr complains about
+	// incomplete types.
+	virtual ~ObjDetector();
 
 	ObjDetector& operator=(const ObjDetector&) = delete;
 	ObjDetector& operator=(ObjDetector&&) = default;

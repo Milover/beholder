@@ -27,7 +27,7 @@
 			"displayName": "Default Release config",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Release",
-				"CMAKE_INTERPROCEDURAL_OPTIMIZATION": true,
+				"CMAKE_INTERPROCEDURAL_OPTIMIZATION": false,
 				"CMAKE_CXX_FLAGS": "-march=native"
 			}
 		},

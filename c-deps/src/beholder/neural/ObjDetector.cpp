@@ -58,6 +58,12 @@ static_assert(Mod::ResizeCrop == cv::dnn::DNN_PMODE_CROP_CENTER);
 static_assert(Mod::ResizeLetterbox == cv::dnn::DNN_PMODE_LETTERBOX);
 }  // namespace
 
+// NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
+ObjDetector::ObjDetector() noexcept {};
+
+// NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
+ObjDetector::~ObjDetector(){};
+
 void ObjDetector::clear() {
 	if (buf_) {
 		buf_->clear();
