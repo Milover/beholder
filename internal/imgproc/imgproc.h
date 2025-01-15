@@ -1,26 +1,26 @@
-#ifndef _BEHOLDER_IMGPROC_H
-#define _BEHOLDER_IMGPROC_H
+#ifndef _BEHOLDER_IMAGE_SHIM_H
+#define _BEHOLDER_IMAGE_SHIM_H
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 #ifdef __cplusplus
-#include "libbeholder.h"
+#include <beholder/Beholder.h>
 extern "C" {
 #else
-#include "RawImage.h"
-#include "Rectangle.h"
-#include "Result.h"
+#include <beholder/capi/Image.h>
+#include <beholder/capi/Rectangle.h>
+#include <beholder/capi/Result.h>
 #endif
 
 #ifdef __cplusplus
 typedef beholder::Processor* Proc;
-typedef beholder::capi::RawImage Img;
+typedef beholder::capi::Image Img;
 typedef beholder::capi::Rectangle Rect;
 typedef beholder::capi::Result Res;
 #else
 typedef void* Proc;
-typedef RawImage Img;
+typedef Image Img;
 typedef Rectangle Rect;
 typedef Result Res;
 #endif
@@ -44,7 +44,7 @@ void Proc_ToGrayscale(Proc p);
 bool Proc_WriteImage(Proc p, const char* filename);
 
 #ifdef __cplusplus
-} // end extern "C"
+}  // extern "C"
 #endif
 
-#endif // _BEHOLDER_IMGPROC_H
+#endif	// _BEHOLDER_IMAGE_SHIM_H

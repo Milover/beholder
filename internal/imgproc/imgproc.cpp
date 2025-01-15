@@ -1,8 +1,10 @@
-#include <cstring>
-#include <vector>
-#include <string>
-
 #include "imgproc.h"
+
+#include <cstring>
+#include <string>
+#include <vector>
+
+namespace bh = beholder;
 
 bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags) {
 	if (!p) {
@@ -11,28 +13,23 @@ bool Proc_DecodeImage(Proc p, void* buf, int bufSize, int flags) {
 	if (!buf && bufSize > 0) {
 		return false;
 	}
-	return p->decodeImage(buf, bufSize, flags);
+	return p->decodeImage(buf, bufSize, bh::enums::from<bh::ReadMode>(flags));
 }
 
-void Proc_Delete(Proc p) {
-	if (p) {
-		delete p;
-		p = nullptr;
-	}
-}
+void Proc_Delete(Proc p) { delete p; }
 
 const unsigned char* Proc_EncodeImage(Proc p, const char* ext, int* encSize) {
 	if (!p) {
 		return nullptr;
 	}
-	const auto& enc {p->encodeImage(ext)};
-	*encSize = static_cast<int>(enc.size());	// yolo
+	const auto& enc{p->encodeImage(ext)};
+	*encSize = static_cast<int>(enc.size());  // yolo
 	return enc.data();
 }
 
 Img Proc_GetRawImage(Proc p) {
 	if (!p) {
-		return Img {};
+		return Img{};
 	}
 	return p->getRawImage().moveToC();
 }
@@ -44,16 +41,11 @@ bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 	if ((!post && nPost > 0) || (!pre && nPre > 0)) {
 		return false;
 	}
-	auto helper = []
-	(
-		beholder::Processor::OpList& list,
-		void** ptrs,
-		std::size_t nPtrs
-	) -> void
-	{
+	auto helper = [](bh::Processor::OpList& list, void** ptrs,
+					 std::size_t nPtrs) -> void {
 		list.reserve(nPtrs);
-		for (auto i {0ul}; i < nPtrs; ++i) {
-			list.emplace_back(static_cast<beholder::ProcessingOp*>(ptrs[i]));
+		for (auto i{0ul}; i < nPtrs; ++i) {
+			list.emplace_back(static_cast<bh::ProcessingOp*>(ptrs[i]));
 		}
 	};
 	helper(p->postprocessing, post, nPost);
@@ -61,17 +53,15 @@ bool Proc_Init(Proc p, void** post, size_t nPost, void** pre, size_t nPre) {
 	return true;
 }
 
-Proc Proc_New() {
-	return new beholder::Processor {};
-}
+Proc Proc_New() { return new bh::Processor{}; }
 
 bool Proc_Postprocess(Proc p, Res* res, size_t nRes) {
 	if (!p || !res) {
 		return false;
 	}
-	std::vector<beholder::Result> results;
+	std::vector<bh::Result> results;
 	results.reserve(nRes);
-	for (auto i {0ul}; i < nRes; ++i) {
+	for (auto i{0ul}; i < nRes; ++i) {
 		results.emplace_back(res[i]);
 	}
 	return p->postprocess(results);
@@ -88,15 +78,15 @@ bool Proc_ReadImage(Proc p, const char* filename, int flags) {
 	if (!p) {
 		return false;
 	}
-	std::string s {filename};
-	return p->readImage(s, flags);
+	std::string s{filename};
+	return p->readImage(s, bh::enums::from<bh::ReadMode>(flags));
 }
 
 bool Proc_ReceiveRawImage(Proc p, const Img* img) {
 	if (!p || !img) {
 		return false;
 	}
-	return p->receiveRawImage(beholder::RawImage {*img});
+	return p->receiveRawImage(bh::Image{*img});
 }
 
 void Proc_ResetROI(Proc p) {
@@ -110,21 +100,23 @@ void Proc_SetROI(Proc p, const Rect* roi) {
 	if (!p) {
 		return;
 	}
-	p->setROI(*roi);
+	const bh::Rectangle r{*roi};
+	p->setROI(r);
 }
 
 void Proc_SetRotatedROI(Proc p, const Rect* roi, double ang) {
 	if (!p) {
 		return;
 	}
-	p->setRotatedROI(*roi, ang);
+	const bh::Rectangle r{*roi};
+	p->setRotatedROI(r, ang);
 }
 
 void Proc_ShowImage(Proc p, const char* title) {
 	if (!p) {
 		return;
 	}
-	std::string s {title};
+	std::string s{title};
 	p->showImage(s);
 }
 
@@ -146,6 +138,6 @@ bool Proc_WriteImage(Proc p, const char* filename) {
 	if (!p) {
 		return false;
 	}
-	std::string s {filename};
+	std::string s{filename};
 	return p->writeImage(s);
 }

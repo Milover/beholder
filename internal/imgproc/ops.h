@@ -1,10 +1,10 @@
-#ifndef _BEHOLDER_IMGPROC_OPS_H
-#define _BEHOLDER_IMGPROC_OPS_H
+#ifndef _BEHOLDER_IMAGE_OPS_SHIM_H
+#define _BEHOLDER_IMAGE_OPS_SHIM_H
 
-#include "stdbool.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
-#include "libbeholder.h"
+#include <beholder/Beholder.h>
 extern "C" {
 #endif
 
@@ -68,8 +68,10 @@ typedef void* UnshMsk;
 
 AdPad AdPad_New(int pad, double padV);
 AdThresh AdThresh_New(double max, int sz, double cnst, int typ);
-AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding, double padV);
-AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding, double padV);
+AuCrp AuCrp_New(int kSize, float txtHeight, float txtWidth, float padding,
+				double padV);
+AuOrien AuOrien_New(int kSize, float txtHeight, float txtWidth, float padding,
+					double padV);
 BGR BGR_New();
 CLH CLH_New(float lim, int tRows, int tCols);
 CorrGamma CorrGamma_New(double gamma);
@@ -95,7 +97,7 @@ Thresh Thresh_New(float val, float maxVal, int typ);
 UnshMsk UnshMsk_New(double sig, double thresh, double amount);
 
 #ifdef __cplusplus
-} // end extern "C"
+}  // extern "C"
 #endif
 
-#endif // _BEHOLDER_IMGPROC_OPS_H
+#endif	// _BEHOLDER_IMAGE_OPS_SHIM_H
