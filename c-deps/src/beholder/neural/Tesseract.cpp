@@ -29,6 +29,9 @@ void Tesseract::Deleter::operator()(tesseract::TessBaseAPI* t) {
 	}
 }
 
+// NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
+Tesseract::~Tesseract(){};
+
 Tesseract::Tesseract() : p_{new tesseract::TessBaseAPI{}, Deleter{}} {}
 
 void Tesseract::clear() {

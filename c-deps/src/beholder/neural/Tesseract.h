@@ -54,6 +54,9 @@ public:
 	Tesseract(const Tesseract&) = delete;
 	Tesseract(Tesseract&&) = delete;
 
+	// Default destructor.
+	// Defined in the source because unique_ptr complains about
+	// incomplete types.
 	~Tesseract();
 
 	Tesseract& operator=(const Tesseract&) = delete;
