@@ -12,7 +12,7 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
 
-#include "beholder/neural/internal/ObjDetectorBuffers.h"
+#include "beholder/neural/internal/ObjDetectorImpl.h"
 
 namespace beholder {
 

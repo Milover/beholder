@@ -7,11 +7,6 @@
 #ifndef BEHOLDER_NEURAL_OBJ_DETECTOR_H
 #define BEHOLDER_NEURAL_OBJ_DETECTOR_H
 
-#ifndef CV__DNN_INLINE_NS
-#define CV__DNN_INLINE_NS_BEGIN	 // NOLINT(bugprone-reserved-identifier
-#define CV__DNN_INLINE_NS_END	 // NOLINT(bugprone-reserved-identifier
-#endif
-
 #include <array>
 #include <memory>
 #include <string>
@@ -20,25 +15,11 @@
 #include "beholder/capi/Image.h"
 #include "beholder/capi/Result.h"
 
-// Forward declarations.
-namespace cv {
-class Mat;
-
-namespace dnn {
-CV__DNN_INLINE_NS_BEGIN
-
-class Net;
-class Image2BlobParams;
-
-CV__DNN_INLINE_NS_END
-}  // namespace dnn
-
-}  // namespace cv
-
 namespace beholder {
 
 namespace internal {
 class ObjDetectorBuffers;  // forward declaration
+class ObjDetectorImpl;	   // forward declaration
 }  // namespace internal
 
 // WARNING: these are OpenCV supported backends, so they will get changed in the
@@ -100,11 +81,8 @@ public:
 	};
 
 protected:
-	// A pointer to an OpenCV DNN
-	std::unique_ptr<cv::dnn::Net> net_;
-
-	// Processing parameters of image to blob.
-	std::unique_ptr<cv::dnn::Image2BlobParams> params_;
+	// Neural network implementation.
+	std::unique_ptr<internal::ObjDetectorImpl> impl_;
 
 	// Buffers for temporary values used during detection
 	std::unique_ptr<internal::ObjDetectorBuffers> buf_;
@@ -174,9 +152,7 @@ public:
 	// NOLINTEND(*-magic-numbers)
 
 	// Default constructor
-	// Defined in the source because unique_ptr complains about
-	// incomplete types.
-	ObjDetector() noexcept;
+	ObjDetector() = default;
 
 	ObjDetector(const ObjDetector&) = delete;
 	ObjDetector(ObjDetector&&) = default;
