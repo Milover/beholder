@@ -90,8 +90,9 @@ public:
 
 	// Return a capi::Result copy
 	[[nodiscard]] capi::Result toC() const {
-		char* ch{new char[text.size() + 1]};
-		std::strncpy(ch, text.c_str(), text.size());
+		auto len{text.size() + 1};
+		char* ch{new char[len]};
+		std::strncpy(ch, text.c_str(), len);
 		return capi::Result{ch, box.cRef(), boxRotAngle, confidence};
 	}
 };
