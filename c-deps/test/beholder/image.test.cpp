@@ -7,13 +7,6 @@
 #include <beholder/image/Processor.h>
 #include <gtest/gtest.h>
 
-#include <array>
-#include <bit>
-#include <limits>
-#include <ostream>
-#include <string>
-#include <utility>
-
 #include "Testing.h"
 
 namespace beholder {
@@ -25,8 +18,9 @@ namespace test {
 // Tests
 // -----
 
-// Run tests defined in params using eqFinal as the comparison function.
-TEST(Processor, ReadImage) {
+// Construct an image processor.
+// TODO: figure out what we want to test here
+TEST(Processor, Construct) {
 	const beholder::Processor proc{};
 
 	EXPECT_TRUE(true);

@@ -8,34 +8,52 @@ import (
 	"io"
 	"math"
 	"os"
+	"path"
 	"slices"
 	"testing"
 
 	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
+	"github.com/Milover/beholder/internal/neural/model"
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	// assetsDir is the relative path (w.r.s. to this file) to the directory
+	// containing testing assets (models, images, etc.)
+	assetsDir = "../../test/assets"
+)
+
+// modelPath appends a model file name to the test assets directory.
+func modelPath(name string) model.Model {
+	return model.Model(path.Join(assetsDir, "models", name))
+}
+
+// imagePath appends an image file name to the test assets directory.
+func imagePath(name string) string {
+	return path.Join(assetsDir, "images", name)
+}
+
 func dfltTesseract() Network {
 	n := NewTesseract()
-	n.Model = "model/_internal/tesseract/dflt/eng.traineddata"
+	n.Model = modelPath("tesseract-eng-fast.traineddata")
 	return n
 }
 func dfltCRAFT() Network {
 	n := NewCRAFT()
-	n.Model = "model/_internal/craft/craft-320px.onnx"
+	n.Model = modelPath("craft-320px.onnx")
 	n.Config.Size = [2]int{320, 320}
 	return n
 }
 func dfltEAST() Network {
 	n := NewEAST()
-	n.Model = "model/_internal/east/east.pb"
+	n.Model = modelPath("east.pb")
 	n.Config.Size = [2]int{320, 320}
 	return n
 }
 func dfltPARSeq() Network {
 	n := NewPARSeq()
-	n.Model = "model/_internal/parseq/parseq-128x32px.onnx"
+	n.Model = modelPath("parseq-128x32px.onnx")
 	n.Config.Size = [2]int{128, 32}
 	return n
 }
@@ -43,7 +61,7 @@ func dfltYOLOv8() Network {
 	n := NewYOLOv8()
 	n.Backend = BackendCUDA
 	n.Target = TargetCUDA
-	n.Model = "model/_internal/yolo/yolov8n.onnx"
+	n.Model = modelPath("yolov8n.onnx")
 	n.Config.Size = [2]int{640, 640}
 	return n
 }
@@ -63,7 +81,7 @@ var networkTests = []networkTest{
 		Error:   nil,
 		Factory: dfltTesseract,
 		Config:  "",
-		Image:   "testdata/test_30px_640x640.png",
+		Image:   imagePath("test_30px_640x640.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
 				models.Rectangle{Left: 270, Top: 300, Right: 375, Bottom: 340},
@@ -77,7 +95,7 @@ var networkTests = []networkTest{
 		Error:   nil,
 		Factory: dfltCRAFT,
 		Config:  "",
-		Image:   "testdata/test_30px_640x640.png",
+		Image:   imagePath("test_30px_640x640.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
 				models.Rectangle{Left: 270, Top: 300, Right: 375, Bottom: 340},
@@ -91,7 +109,7 @@ var networkTests = []networkTest{
 		Error:   nil,
 		Factory: dfltEAST,
 		Config:  "",
-		Image:   "testdata/test_30px_640x640.png",
+		Image:   imagePath("test_30px_640x640.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
 				models.Rectangle{Left: 270, Top: 300, Right: 375, Bottom: 340},
@@ -105,7 +123,7 @@ var networkTests = []networkTest{
 		Error:   nil,
 		Factory: dfltPARSeq,
 		Config:  "",
-		Image:   "testdata/test_30px_128x32.png",
+		Image:   imagePath("test_30px_128x32.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{ // FIXME: dummy value, shouldn't be necessary
 				models.Rectangle{Left: -1, Top: -1, Right: 1, Bottom: 1},
@@ -119,7 +137,7 @@ var networkTests = []networkTest{
 		Error:   nil,
 		Factory: dfltYOLOv8,
 		Config:  "",
-		Image:   "testdata/ultralytics_zidane.jpg",
+		Image:   imagePath("ultralytics_zidane.jpg"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
 				models.Rectangle{Left: 90, Top: 170, Right: 1140, Bottom: 735},
@@ -142,7 +160,7 @@ const netInfRepeat = 3 // No. inferencing re-runs during tests
 // Before sorting and comparing, the boxes are rotated by 90°/270°,
 // if necessary (the result contains an angle), because some [Networks] yield
 // rotated/transposed results, e.g. [neural.CRAFT].
-func boxesInExpected(expected, actual *models.Result, t *testing.T) bool {
+func boxesInExpected(expected, actual *models.Result, _ *testing.T) bool {
 	if len(expected.Boxes) != len(actual.Boxes) {
 		return false
 	}
@@ -216,7 +234,7 @@ func TestNetworkInference(t *testing.T) {
 			assert.Nil(net.Init(), "unexpected Network.Init error")
 
 			// test
-			for _ = range netInfRepeat {
+			for range netInfRepeat {
 				// create a fresh result
 				res := models.NewResult()
 				assert.NotNil(res, "unexpected models.NewResult error")

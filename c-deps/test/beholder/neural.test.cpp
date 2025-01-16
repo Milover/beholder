@@ -13,7 +13,6 @@
 
 #include <exception>
 #include <filesystem>
-#include <source_location>
 
 #include "Testing.h"
 
@@ -27,21 +26,11 @@ namespace test {
 // -----
 
 TEST(Neural, EAST) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{
-		std::filesystem::absolute(std::source_location::current().file_name())
-			.parent_path() /
-		"testdata/test_30px_640x640.png"};
-	const auto neuralDir{
-		std::filesystem::absolute(std::source_location::current().file_name())
-			.parent_path()
-			.parent_path()
-			.parent_path()
-			.parent_path() /
-		"internal/neural"};
+	const auto testimage{assetsDir / "images/test_30px_640x640.png"};
 	try {
 		// set up detector
 		beholder::EASTDetector det{};
-		det.modelPath = neuralDir / "model/_internal/east";
+		det.modelPath = assetsDir / "models";
 		det.model = "east.pb";
 		det.size = beholder::EASTDetector::Vec2<>{320, 320};  // NOLINT
 		ASSERT_TRUE(det.init());
@@ -72,21 +61,11 @@ TEST(Neural, EAST) {  // NOLINT(*-function-cognitive-complexity)
 }
 
 TEST(Neural, CRAFT) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{
-		std::filesystem::absolute(std::source_location::current().file_name())
-			.parent_path() /
-		"testdata/test_30px_640x640.png"};
-	const auto neuralDir{
-		std::filesystem::absolute(std::source_location::current().file_name())
-			.parent_path()
-			.parent_path()
-			.parent_path()
-			.parent_path() /
-		"internal/neural"};
+	const auto testimage{assetsDir / "images/test_30px_640x640.png"};
 	try {
 		// set up detector
 		CRAFTDetector det{};
-		det.modelPath = neuralDir / "model/_internal/craft";
+		det.modelPath = assetsDir / "models";
 		det.model = "craft-320px.onnx";
 		det.size = beholder::CRAFTDetector::Vec2<>{320, 320};  // NOLINT
 		ASSERT_TRUE(det.init());

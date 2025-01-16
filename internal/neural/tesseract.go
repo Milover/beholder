@@ -120,11 +120,11 @@ func (t Tesseract) Init() error {
 	if err := t.IsValid(); err != nil {
 		return err
 	}
-	if patternsFile, err := t.setPatterns(); err != nil {
+	patternsFile, err := t.setPatterns()
+	if err != nil {
 		return err
-	} else {
-		defer os.Remove(patternsFile) // this could fail, but we don't care
 	}
+	defer os.Remove(patternsFile) // this could fail, but we don't care
 	// handle the model
 	mfn, cleanup, err := t.Model.File()
 	if err != nil {

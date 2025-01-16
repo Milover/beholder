@@ -18,7 +18,6 @@
 #include <filesystem>
 #include <limits>
 #include <ostream>
-#include <source_location>
 #include <string>
 
 #include "Testing.h"
@@ -32,12 +31,9 @@ namespace test {
 // Tests
 // -----
 
-// Run tests defined in params using eqFinal as the comparison function.
-TEST(Camera, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{
-		std::filesystem::absolute(std::source_location::current().file_name())
-			.parent_path() /
-		"testdata/red_100x100.png"};
+// Connect to an emulated camera device and acquire an image.
+TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
+	const auto testimage{assetsDir / "images/red_100x100.png"};
 	const ParamList camParams{
 		ParamEntry{"AcquisitionMode", "Continuous"},
 

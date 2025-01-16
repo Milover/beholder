@@ -41,11 +41,11 @@ test-integration:
 
 .PHONY: test-full
 test-full:
-	go test -v -race -count=1 -tags=integration,embedtess ./...
+	go test -v -race -count=1 -tags=integration ./...
 
 .PHONY: vet
 vet:
-	go vet -tags=integration,embedtess ./...
+	go vet -tags=integration ./...
 
 .PHONY: lint
 lint:
