@@ -1,3 +1,7 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package cmd
 
 // Unfortunately this is necessary to ensure correct linkage, even though

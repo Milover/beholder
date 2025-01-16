@@ -1,6 +1,6 @@
 // beholder - Copyright © 2024 Philipp Milovic
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // A text recognition model using the PARSeq model.
 // For more info, see: https://github.com/baudm/parseq

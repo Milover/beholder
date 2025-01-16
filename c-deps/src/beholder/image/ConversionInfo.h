@@ -1,6 +1,6 @@
 // beholder - Copyright © 2024 Philipp Milovic
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // A helper class for holding information needed for receiving/converting
 // camera acquisition results.

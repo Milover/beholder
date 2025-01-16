@@ -1,5 +1,5 @@
 // Copyright © 2024 P. Milovic
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Compile and basic operation test for the pylon library.
 

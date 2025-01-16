@@ -1,6 +1,6 @@
 // beholder - Copyright © 2024 Philipp Milovic
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 #ifndef BEHOLDER_CAMERA_INTERNAL_DEFAULT_CONFIGURATOR_H
 #define BEHOLDER_CAMERA_INTERNAL_DEFAULT_CONFIGURATOR_H

@@ -1,6 +1,6 @@
 // beholder - Copyright © 2024 Philipp Milovic
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // A DNN-based text detector wrapper using the EAST model.
 // For more info, see: https://github.com/argman/EAST

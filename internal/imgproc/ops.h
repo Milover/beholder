@@ -1,3 +1,7 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #ifndef _BEHOLDER_IMAGE_OPS_SHIM_H
 #define _BEHOLDER_IMAGE_OPS_SHIM_H
 

@@ -1,3 +1,7 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 // Package veryprecise defines utilities for very precise™ floating-point
 // comparison operations.
 package veryprecise

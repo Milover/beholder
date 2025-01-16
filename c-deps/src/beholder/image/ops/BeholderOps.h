@@ -1,6 +1,6 @@
 // beholder - Copyright © 2024 Philipp Milovic
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Headers for image processing operations, collected for ease of use.
 

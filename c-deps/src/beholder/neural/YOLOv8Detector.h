@@ -1,6 +1,6 @@
 // beholder - Copyright © 2024 Philipp Milovic
 //
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // An object detector using the YOLOv8 model.
 // A DNN-based object detector wrapper using the YOLOv8 model.

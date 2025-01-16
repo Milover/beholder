@@ -1,3 +1,7 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package server
 
 //go:generate protoc -I=proto/ --go_out=proto/ --go_opt=paths=source_relative proto/server.proto

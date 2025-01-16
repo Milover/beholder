@@ -1,3 +1,7 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 // Package set implements an unordered group of unique items.
 //
 // A Set[T] is a simple wrapper for a map[T]struct{}, so it can be used like

@@ -1,3 +1,7 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 import * as proto from "/proto.js";
 import * as service from "/service.js";
 import * as message from "/message.js";
