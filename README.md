@@ -1,87 +1,78 @@
-# Industrial OCR project
+# beholder
 
-OCR testing with [tesseract][tesseract] and [OpenCV][opencv].
-The goal is to build a dot matrix printout reader for industrial quality
-control purposes.
+> [!Warning]
+> Repo under construction.
 
-Exploratory phase currently, we're interested in the processing speed,
-OCR accuracy, OCR retraining possibilities and the like.
+beholder is a program for building industrial machine vision solutions.
 
-The end product should be able to process an image in under 30ms with
-an accuracy of ~99%.
+The following features are currently implemented:
+- configuration and control of [GenICam][genicam] compliant cameras, with
+  support for various transport protocols (GigE, USB) through integration
+  with [pylon][pylon]
+- loading and running DNN inferencing (object detection/classification,
+  text detection, text recognition) models as part of the image processing
+  pipeline through integration with [OpenCV's DNN module][opencv-dnn] and
+  [Tesseract][tesseract]
+- defining traditional image processing pipelines through integration
+  with [OpenCV][opencv]
+- a _very_ basic web front-end for streaming acquired images and controlling
+  cameras
 
-## Research stuff
+More stuff on the way.
 
-This is our general idea of how the basic algo should look like at this point:
-1. do initialization stuff
-2. read image
-3. find text boxes
-    - these should be either lines or words
-    - exact process to be determined (OpenCV EAST model?)
-4. for each text box:
-    1. pre-process the image
-        - exact process to be determined
-    2. run OCR
+### Usage
 
+Run `beholder -h` to see a list of available commands. At this point the
+commands presuppose a processing pipeline in the form of:
 
-Tesseract notes:
-- deep learning-based OCR
-- uses a [long short-term memory (LSTM) network][lstm], which is a kind of
-[recurrent neural network (RNN)][rnn]
-- lexicons and [patterns][tesseract-patterns] are handy for improving accuracy,
-but might be an issue from the user side
+    image pre-processing->obj. detection->OCR->image post-processing
 
-Notes on improving Tesseract OCR results:
-- black text and white background
-- DPI >= 300 (x-height should be between 20-30px), there also seems
-to be an optimal capital letter size of about 30px
-- should try and secure a small border (~10px)
-- the following pre-processing steps should be handled by OpenCV:
-    - alpha channel removal
-    - binarization
-    - noise removal
-    - rotation/deskewing
-    - dilation/erosion (morphological transformations)
+however, this will change in the future.
 
-We should also determine the optimal order of preprocessing steps
+See the [configuration files](cmd/testdata) for examples of configuring cameras
+and defining processing pipelines.
 
-Text detection notes:
-- ResNet-50 (HxW: 736x1280)
-- ResNet-18 (HxW: 736x1280)
-- [EAST][east-td]
+**TODO**
+- [ ] describe usage in more detail
+- [ ] describe web front-end usage
 
-Helpful links:
-- [How to use OpenCV With Tesseract for Real-Time Text Detection][encord]
-    - this one is not that useful, since they use OpenCV just for the video feed
-- [OCR Unlocked: A Guide to Tesseract in Python with Pytesseract and OpenCV][nanonets]
-    - mention the following pre-processing techniques:
-        - gray scaling
-        - noise removal
-        - thresholding
-        - dilation
-        - erosion
-        - opening (erosion followed by dilation)
-        - canny edge detection (this one seems bad)
-        - deskewing
-        - template matching
-- [OpenCR OCR and text recognition with Tesseract][pyimg-ocr]
-- [OpenCV Text Detection (EAST text detector)][pyimg-east]
-- [Adaptive Vision OCR][av-ocr]
-- [Synthetic OCR data generator][git-ocr-gen]
-- [How to prepare training files for Tesseract OCR and improve character recognition][pretius]
+### Building
+
+To build the project into a local staging directory run the
+[`build_local.sh`](scripts/build_local.sh) script.
+
+Note that when building locally, to run the final binary, `LD_LIBRARY_PATH` needs
+to be updated so that the shared libraries become available:
+
+```sh
+LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging bin/beholder
+```
+or
+
+```sh
+export LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging bin/beholder
+bin/beholder
+```
+
+To build a Docker image run the [`beholder_image.sh`](scripts/beholder_image.sh)
+script.
+
+**TODO**
+- [ ] describe manual building
+
+### Licensing
+
+The project is published under [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0),
+however the repository also contains DNN model weights from other projects
+which are used for testing, and may be published under different licences.
+If you intend on using some of them, check [their licensing terms](test/assets/models/licenses).
+
+**TODO**
+- [ ] add licences for third-party C++/Go dependencies.
 
 
-
-[tesseract]: https://github.com/tesseract-ocr/tesseract
-[tesseract-patterns]: https://tesseract-ocr.github.io/tessdoc/APIExample-user_patterns.html
+[genicam]: https://www.emva.org/standards-technology/genicam/
+[pylon]: https://www.baslerweb.com/en/software/pylon/
+[tesseract]: https://tesseract-ocr.github.io/
 [opencv]: https://opencv.org
-[encord]: https://encord.com/blog/realtime-text-recognition-with-tesseract-using-opencv/
-[nanonets]: https://nanonets.com/blog/ocr-with-tesseract/
-[pyimg-ocr]: https://pyimagesearch.com/2018/09/17/opencv-ocr-and-text-recognition-with-tesseract/
-[pyimg-east]: https://pyimagesearch.com/2018/08/20/opencv-text-detection-east-text-detector/
-[lstm]: https://en.wikipedia.org/wiki/Long_short-term_memory
-[rnn]: https://en.wikipedia.org/wiki/Recurrent_neural_network
-[av-ocr]: https://docs.adaptive-vision.com/current/studio/machine_vision_guide/OpticalCharacterRecognition.html
-[git-ocr-gen]: https://github.com/Belval/TextRecognitionDataGenerator?tab=readme-ov-file
-[pretius]: https://pretius.com/blog/ocr-tesseract-training-data/
-[east-td]: https://github.com/argman/EAST
+[opencv-dnn]: https://docs.opencv.org/4.10.0/d2/d58/tutorial_table_of_content_dnn.html
