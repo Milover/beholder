@@ -1,0 +1,15 @@
+# Package information for pkg-config
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: beholder
+Version: @PROJECT_VERSION@
+Description: A library for operating machine vision systems
+URL: https://github.com/milover/beholder
+
+Requires.private: opencv4 lept tesseract
+Cflags: -I${includedir}
+Libs: -L${libdir} -lbeholder

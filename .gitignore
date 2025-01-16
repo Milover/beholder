@@ -27,25 +27,11 @@ vendor/
 # Project binaries
 bin/
 
+# Misc stuff
+vagrant/
+
+# NOTE: move this into 'internal/neural'
 # Raw OCR test images
 internal/neural/testdata/images
-
 # DNN model files (weights)
 internal/neural/model/_internal
-
-# libbeholder stuff
-internal/_libbeholder/bin/
-internal/_libbeholder/build/
-internal/_libbeholder/doc/
-internal/_libbeholder/include/
-internal/_libbeholder/lib/
-internal/_libbeholder/share/
-internal/_libbeholder/vagrant/
-internal/_libbeholder/test/bin/
-internal/_libbeholder/third_party/archive
-internal/_libbeholder/third_party/opencv
-internal/_libbeholder/third_party/opencv_contrib
-internal/_libbeholder/third_party/leptonica
-internal/_libbeholder/third_party/tesseract
-internal/_libbeholder/third_party/pylon
-internal/_libbeholder/third_party/install_manifest.txt

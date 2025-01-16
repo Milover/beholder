@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Iconv)
+find_dependency(OpenCV)
+find_dependency(Leptonica)
+find_dependency(Tesseract)
+
+include("${CMAKE_CURRENT_LIST_DIR}/beholderTargets.cmake")

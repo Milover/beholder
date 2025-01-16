@@ -1,33 +1,33 @@
-#ifndef _BEHOLDER_NEURAL_H
-#define _BEHOLDER_NEURAL_H
+#ifndef _BEHOLDER_NEURAL_SHIM_H
+#define _BEHOLDER_NEURAL_SHIM_H
 
 #include <stdbool.h>
 #include <stdlib.h>
 
 #ifdef __cplusplus
-#include "libbeholder.h"
+#include <beholder/Beholder.h>
 extern "C" {
 #else
-#include "RawImage.h"
-#include "Result.h"
+#include <beholder/capi/Image.h>
+#include <beholder/capi/Result.h>
 #endif
 
 #ifdef __cplusplus
 typedef beholder::ObjDetector* Det;
 typedef beholder::Tesseract* Tess;
-typedef beholder::capi::RawImage Img;
+typedef beholder::capi::Image Img;
 typedef beholder::capi::Result Res;
 #else
 typedef void* Det;
 typedef void* Tess;
-typedef RawImage Img;
+typedef Image Img;
 typedef Result Res;
 #endif
 
 typedef struct {
 	Res* array;
 	size_t count;
-} ResArr;	// deallocation helper
+} ResArr;  // deallocation helper
 
 void ResArr_Delete(void* r);
 
@@ -71,7 +71,7 @@ typedef struct {
 	const char* modelPath;
 	const char* model;
 	int psMode;
-	KeyVal* vars;	// runtime settable Tesseract variables
+	KeyVal* vars;  // runtime settable Tesseract variables
 	size_t nVars;
 } TInit;
 
@@ -83,7 +83,7 @@ Tess Tess_New();
 bool Tess_SetImage(Tess t, const Img* img);
 
 #ifdef __cplusplus
-} // end extern "C"
+}  // extern "C"
 #endif
 
-#endif // _BEHOLDER_NEURAL_H
+#endif	// _BEHOLDER_NEURAL_SHIM_H

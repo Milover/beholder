@@ -13,45 +13,56 @@ ifeq ($(PLATFORM), Darwin)
  export CGO_LDFLAGS="-Wl,-no_warn_duplicate_libraries"
 endif
 
+.PHONY: build
 build:
 	@echo $(MODULE)
 	go generate ./...
 	go build -tags=$(BUILD_TAGS) -o bin/$(TARGET) main.go
 
+.PHONY: generate
 generate:
 	go generate ./...
 
+.PHONY: run
 run:
 	go run ./...
 
+.PHONY: test
 test:
 	go test ./...
 
+.PHONY: testv
 testv:
 	go test -v -race ./...
 
+.PHONY: test-integration
 test-integration:
 	go test -v -race -tags=integration ./...
 
+.PHONY: test-full
 test-full:
-	go test -v -race -count=1 -tags=integration,embedtess ./...
+	go test -v -race -count=1 -tags=integration ./...
 
+.PHONY: vet
 vet:
-	go vet -tags=integration,embedtess ./...
+	go vet -tags=integration ./...
 
+.PHONY: lint
 lint:
 	$(shell go env GOPATH)/bin/golangci-lint run ./...
 
+.PHONY: update-deps
 update-deps:
 	go get -u ./...
 	go mod tidy
 
+.PHONY: update-go
 update-go:
 	go mod edit -go=$(shell go version | awk '{print $$3}' | sed -e 's/go//g')
 	go mod tidy
 
+.PHONY: clean
 clean:
+	# TODO: should clean generated files here
 	go clean
 	rm -rf bin
-
-.PHONY: run test testv test-integration vet lint clean update-deps update-go

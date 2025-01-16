@@ -1,13 +1,27 @@
-//go:build embedtess
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
 
 package model
 
 import (
 	"os"
+	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+const (
+	// assetsDir is the relative path (w.r.s. to this file) to the directory
+	// containing testing assets (models, images, etc.)
+	assetsDir = "../../../test/assets"
+)
+
+// modelPath appends a model file name to the test assets directory.
+func modelPath(name string) Model {
+	return Model(path.Join(assetsDir, "models", name))
+}
 
 type modelTest struct {
 	Name  string
@@ -35,13 +49,15 @@ var modelTests = []modelTest{
 	{
 		Name:  "good-file",
 		Error: nil,
-		Mod:   "_internal/tesseract/dflt/eng.traineddata",
+		Mod:   modelPath("tesseract-eng-fast.traineddata"),
 	},
-	{
-		Name:  "good-embed",
-		Error: nil,
-		Mod:   "default",
-	},
+	// NOTE: we no longer ship models, so this is disabled until we decide
+	// how we want to support embedding.
+	//	{
+	//		Name:  "good-embed",
+	//		Error: nil,
+	//		Mod:   "default",
+	//	},
 }
 
 // TestModelFile checks handling of model keywords and files.

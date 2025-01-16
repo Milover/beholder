@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(pylon)
+find_dependency(beholder)
+
+include("${CMAKE_CURRENT_LIST_DIR}/beholder_cameraTargets.cmake")

@@ -1,0 +1,59 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 58c70f46..4d8c9120 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -145,10 +145,6 @@ if(NOT SW_BUILD)
+     find_package(WebP ${MINIMUM_WEBPMUX_VERSION} CONFIG)
+     set(pkgs_private "${pkgs_private} libwebp libwebpmux")
+     if(NOT TARGET WebP::webp)
+-      find_path(WebP_INCLUDE_DIR  NAMES webp/decode.h)
+-      find_path(WebP_MUX_INCLUDE_DIR NAMES webp/mux.h)
+-      find_library(WebP_LIBRARY NAMES webp)
+-      find_library(WebP_MUX_LIBRARY NAMES webpmux)
+       if(WebP_INCLUDE_DIR
+          AND WebP_MUX_INCLUDE_DIR
+          AND WebP_LIBRARY)
+@@ -358,7 +354,7 @@ configure_file(lept.pc.cmake ${CMAKE_CURRENT_BINARY_DIR}/lept.pc.in @ONLY)
+ # to resolve generator expression in OUTPUT_NAME
+ file(
+   GENERATE
+-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lept_$<CONFIG>.pc
++  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/lept.pc
+   INPUT ${CMAKE_CURRENT_BINARY_DIR}/lept.pc.in)
+ 
+ configure_file(
+@@ -368,7 +364,7 @@ configure_file(
+   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/templates/LeptonicaConfig.cmake.in
+   ${CMAKE_CURRENT_BINARY_DIR}/LeptonicaConfig.cmake @ONLY)
+ 
+-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lept_$<CONFIG>.pc
++install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lept.pc
+         DESTINATION lib/pkgconfig)
+ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LeptonicaConfig.cmake
+               ${CMAKE_CURRENT_BINARY_DIR}/LeptonicaConfig-version.cmake
+diff --git a/lept.pc.cmake b/lept.pc.cmake
+index 3e193072..a6c73d56 100644
+--- a/lept.pc.cmake
++++ b/lept.pc.cmake
+@@ -6,7 +6,7 @@ includedir=${prefix}/include
+ Name: @leptonica_NAME@
+ Description: An open source C library for efficient image processing and image analysis operations
+ Version: @leptonica_VERSION@
+-Requires.private: @pkgs_private@
++#Requires.private: @pkgs_private@
+ Libs: -L${libdir} -l@leptonica_OUTPUT_NAME@
+ Libs.private: @libs_private@
+ Cflags: -I${includedir} -I${includedir}/leptonica
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index e8bf771e..ae1f0a46 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -33,7 +33,7 @@ endif()
+ if (OPENJPEG_LIBRARIES)
+     # openjp2 < 2.5.0 does not sets the INTERFACE_INCLUDE_DIRECTORIES property
+     target_include_directories  (leptonica PRIVATE ${OPENJPEG_INCLUDE_DIRS})
+-    target_link_libraries       (leptonica PRIVATE openjp2)
++    target_link_libraries       (leptonica PRIVATE ${OPENJPEG_LIBRARIES})
+ endif()
+ if (PNG_LIBRARIES)
+     target_include_directories  (leptonica PRIVATE ${PNG_INCLUDE_DIRS})

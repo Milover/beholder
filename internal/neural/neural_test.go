@@ -1,37 +1,59 @@
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package neural
 
 import (
 	"io"
 	"math"
 	"os"
+	"path"
 	"slices"
 	"testing"
 
 	"github.com/Milover/beholder/internal/imgproc"
 	"github.com/Milover/beholder/internal/models"
+	"github.com/Milover/beholder/internal/neural/model"
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	// assetsDir is the relative path (w.r.s. to this file) to the directory
+	// containing testing assets (models, images, etc.)
+	assetsDir = "../../test/assets"
+)
+
+// modelPath appends a model file name to the test assets directory.
+func modelPath(name string) model.Model {
+	return model.Model(path.Join(assetsDir, "models", name))
+}
+
+// imagePath appends an image file name to the test assets directory.
+func imagePath(name string) string {
+	return path.Join(assetsDir, "images", name)
+}
+
 func dfltTesseract() Network {
 	n := NewTesseract()
-	n.Model = "model/_internal/tesseract/dflt/eng.traineddata"
+	n.Model = modelPath("tesseract-eng-fast.traineddata")
 	return n
 }
 func dfltCRAFT() Network {
 	n := NewCRAFT()
-	n.Model = "model/_internal/craft/craft-320px.onnx"
+	n.Model = modelPath("craft-320px.onnx")
 	n.Config.Size = [2]int{320, 320}
 	return n
 }
 func dfltEAST() Network {
 	n := NewEAST()
-	n.Model = "model/_internal/east/east.pb"
-	n.Config.Size = [2]int{160, 160}
+	n.Model = modelPath("east.pb")
+	n.Config.Size = [2]int{320, 320}
 	return n
 }
 func dfltPARSeq() Network {
 	n := NewPARSeq()
-	n.Model = "model/_internal/parseq/parseq-128x32px.onnx"
+	n.Model = modelPath("parseq-128x32px.onnx")
 	n.Config.Size = [2]int{128, 32}
 	return n
 }
@@ -39,7 +61,7 @@ func dfltYOLOv8() Network {
 	n := NewYOLOv8()
 	n.Backend = BackendCUDA
 	n.Target = TargetCUDA
-	n.Model = "model/_internal/yolo/yolov8n.onnx"
+	n.Model = modelPath("yolov8n.onnx")
 	n.Config.Size = [2]int{640, 640}
 	return n
 }
@@ -54,213 +76,68 @@ type networkTest struct {
 }
 
 var networkTests = []networkTest{
-	// test tesseract
 	{
-		Name:    "tesseract-text-1-line-1-word",
+		Name:    "tesseract-test-30px-640x640",
 		Error:   nil,
 		Factory: dfltTesseract,
 		Config:  "",
-		Image:   "testdata/images/text_1_line_1_word.png",
+		Image:   imagePath("test_30px_640x640.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
+				models.Rectangle{Left: 270, Top: 300, Right: 375, Bottom: 340},
 			},
-			Text:        []string{"TEXT"},
+			Text:        []string{"TEST"},
 			Confidences: make([]float64, 1),
 		},
 	},
 	{
-		Name:    "tesseract-text-1-line-2-word",
-		Error:   nil,
-		Factory: dfltTesseract,
-		Config:  "",
-		Image:   "testdata/images/text_1_line_2_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 10, Top: 20, Right: 230, Bottom: 65},
-			},
-			Text:        []string{"TEXT TEXT"},
-			Confidences: make([]float64, 1),
-		},
-	},
-	{
-		Name:    "tesseract-text-2-line-1-word",
-		Error:   nil,
-		Factory: dfltTesseract,
-		Config:  "",
-		Image:   "testdata/images/text_2_line_1_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
-				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
-			},
-			Text:        []string{"TEXT", "TEXT"},
-			Confidences: make([]float64, 2),
-		},
-	},
-	{
-		Name:    "tesseract-text-2-line-2-word",
-		Error:   nil,
-		Factory: dfltTesseract,
-		Config:  "",
-		Image:   "testdata/images/text_2_line_2_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 30, Top: 20, Right: 250, Bottom: 60},
-				models.Rectangle{Left: 30, Top: 65, Right: 250, Bottom: 105},
-			},
-			Text:        []string{"TEXT TEXT", "TEXT TEXT"},
-			Confidences: make([]float64, 2),
-		},
-	},
-	// test craft
-	{
-		Name:    "craft-text-1-line-1-word",
+		Name:    "craft-test-30px-640x640",
 		Error:   nil,
 		Factory: dfltCRAFT,
 		Config:  "",
-		Image:   "testdata/images/text_1_line_1_word.png",
+		Image:   imagePath("test_30px_640x640.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
+				models.Rectangle{Left: 270, Top: 300, Right: 375, Bottom: 340},
 			},
 			Text:        make([]string, 1), // FIXME: shouldn't be necessary
 			Confidences: make([]float64, 1),
 		},
 	},
 	{
-		Name:    "craft-text-1-line-2-word",
-		Error:   nil,
-		Factory: dfltCRAFT,
-		Config:  "",
-		Image:   "testdata/images/text_1_line_2_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 10, Top: 20, Right: 120, Bottom: 65},
-				models.Rectangle{Left: 120, Top: 20, Right: 230, Bottom: 65},
-			},
-			Text:        make([]string, 2), // FIXME: shouldn't be necessary
-			Confidences: make([]float64, 2),
-		},
-	},
-	{
-		Name:    "craft-text-2-line-1-word",
-		Error:   nil,
-		Factory: dfltCRAFT,
-		Config:  "",
-		Image:   "testdata/images/text_2_line_1_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
-				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
-			},
-			Text:        make([]string, 2), // FIXME: shouldn't be necessary
-			Confidences: make([]float64, 2),
-		},
-	},
-	{
-		Name:    "craft-text-2-line-2-word",
-		Error:   nil,
-		Factory: dfltCRAFT,
-		Config:  "",
-		Image:   "testdata/images/text_2_line_2_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 30, Top: 20, Right: 140, Bottom: 60},
-				models.Rectangle{Left: 140, Top: 20, Right: 250, Bottom: 60},
-				models.Rectangle{Left: 30, Top: 65, Right: 140, Bottom: 105},
-				models.Rectangle{Left: 140, Top: 65, Right: 250, Bottom: 105},
-			},
-			Text:        make([]string, 4), // FIXME: shouldn't be necessary
-			Confidences: make([]float64, 4),
-		},
-	},
-	// test east
-	{
-		Name:    "east-text-1-line-1-word",
+		Name:    "east-test-30px-640x640",
 		Error:   nil,
 		Factory: dfltEAST,
 		Config:  "",
-		Image:   "testdata/images/text_1_line_1_word.png",
+		Image:   imagePath("test_30px_640x640.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 25, Top: 20, Right: 140, Bottom: 65},
+				models.Rectangle{Left: 270, Top: 300, Right: 375, Bottom: 340},
 			},
 			Text:        make([]string, 1),
 			Confidences: make([]float64, 1),
 		},
 	},
-	/* FIXME: disabled until we fix blob-to-image bounding box mapping
 	{
-		Name:    "east-text-1-line-2-word",
-		Error:   nil,
-		Factory: dfltEAST,
-		Config:  "",
-		Image:   "testdata/images/text_1_line_2_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 10, Top: 20, Right: 120, Bottom: 65},
-				models.Rectangle{Left: 120, Top: 20, Right: 230, Bottom: 65},
-			},
-			Text:        make([]string, 2),
-			Confidences: make([]float64, 2),
-		},
-	},
-	{
-		Name:    "east-text-2-line-1-word",
-		Error:   nil,
-		Factory: dfltEAST,
-		Config:  "",
-		Image:   "testdata/images/text_2_line_1_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 25, Top: 25, Right: 135, Bottom: 70},
-				models.Rectangle{Left: 25, Top: 70, Right: 135, Bottom: 115},
-			},
-			Text:        make([]string, 2),
-			Confidences: make([]float64, 2),
-		},
-	},
-	{
-		Name:    "east-text-2-line-2-word",
-		Error:   nil,
-		Factory: dfltEAST,
-		Config:  "",
-		Image:   "testdata/images/text_2_line_2_word.png",
-		Expected: models.Result{
-			Boxes: []models.Rectangle{
-				models.Rectangle{Left: 30, Top: 20, Right: 140, Bottom: 60},
-				models.Rectangle{Left: 140, Top: 20, Right: 250, Bottom: 60},
-				models.Rectangle{Left: 30, Top: 65, Right: 140, Bottom: 105},
-				models.Rectangle{Left: 140, Top: 65, Right: 250, Bottom: 105},
-			},
-			Text:        make([]string, 4),
-			Confidences: make([]float64, 4),
-		},
-	},
-	*/
-	// test parseq
-	{
-		Name:    "parseq-text-1-line-1-word",
+		Name:    "parseq-test-30px-128x32",
 		Error:   nil,
 		Factory: dfltPARSeq,
 		Config:  "",
-		Image:   "testdata/images/text_1_line_1_word.png",
+		Image:   imagePath("test_30px_128x32.png"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{ // FIXME: dummy value, shouldn't be necessary
 				models.Rectangle{Left: -1, Top: -1, Right: 1, Bottom: 1},
 			},
-			Text:        []string{"TEXT"},
+			Text:        []string{"TEST"},
 			Confidences: make([]float64, 1),
 		},
 	},
-	// test yolov8
 	{
 		Name:    "yolov8-zidane",
 		Error:   nil,
 		Factory: dfltYOLOv8,
 		Config:  "",
-		Image:   "testdata/images/ultralytics_zidane.jpg",
+		Image:   imagePath("ultralytics_zidane.jpg"),
 		Expected: models.Result{
 			Boxes: []models.Rectangle{
 				models.Rectangle{Left: 90, Top: 170, Right: 1140, Bottom: 735},
@@ -283,7 +160,7 @@ const netInfRepeat = 3 // No. inferencing re-runs during tests
 // Before sorting and comparing, the boxes are rotated by 90°/270°,
 // if necessary (the result contains an angle), because some [Networks] yield
 // rotated/transposed results, e.g. [neural.CRAFT].
-func boxesInExpected(expected, actual *models.Result, t *testing.T) bool {
+func boxesInExpected(expected, actual *models.Result, _ *testing.T) bool {
 	if len(expected.Boxes) != len(actual.Boxes) {
 		return false
 	}
@@ -321,7 +198,8 @@ func boxesInExpected(expected, actual *models.Result, t *testing.T) bool {
 
 	ok := true
 	for i := range expected.Boxes {
-		//t.Logf("expected: %v\tactual: %v", expected[i], actual[i])
+		//t.Logf("expected: %v\tactual: %v", expected.Boxes[i], actual.Boxes[i])
+		//t.Logf("expected: %v\tactual: %v", expected.Text[i], actual.Text[i])
 		ok = ok && actual.Boxes[i].In(expected.Boxes[i])
 	}
 	return ok
@@ -356,7 +234,7 @@ func TestNetworkInference(t *testing.T) {
 			assert.Nil(net.Init(), "unexpected Network.Init error")
 
 			// test
-			for _ = range netInfRepeat {
+			for range netInfRepeat {
 				// create a fresh result
 				res := models.NewResult()
 				assert.NotNil(res, "unexpected models.NewResult error")
@@ -380,66 +258,3 @@ func TestNetworkInference(t *testing.T) {
 		})
 	}
 }
-
-/* TODO: fold this into the JSON unmarshalling test
-type patternTest struct {
-	Name     string
-	Expected []string
-	Error    error
-	Config   string
-}
-
-var patternTests = []patternTest{
-	{
-		Name: "basic-good",
-		Expected: []string{
-			`\A\d\d`,
-			`\A\d\d`,
-		},
-		Error: nil,
-		Config: `
-{
-	"tesseract": {
-		"model": "model/_internal/tesseract/dotmatrix/dotOCRDData1.traineddata",
-		"variables": {
-			"load_system_dawg": "0",
-			"load_freq_dawg": "0"
-		},
-		"patterns": [
-			"\\A\\d\\d",
-			"\\A\\d\\d"
-		]
-	}
-}
-`,
-	},
-}
-
-// TestTesseractPatternLoad checks if the pattern(s) from the config are
-// properly loaded when Tesseract is initialized.
-// FIXME: this is a stupid test, it doesn't test shit.
-func TestTesseractPatternLoad(t *testing.T) {
-	for _, tt := range patternTests {
-		t.Run(tt.Name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			o := NewOCR()
-			err := json.Unmarshal([]byte(tt.Config), &o)
-			assert.Nil(err, "could not unmarshall JSON")
-
-			// We're not sure the JSON will be unmarshalled, and
-			// since we have no good way of checking the temporary file
-			// contents (we don't want to store the file name) or what
-			// Tesseract actually reads, we check what was unmarshalled here
-			// since that's what will be the contents of the temporary file.
-			assert.ElementsMatch(tt.Expected, o.T.Patterns, "bad OCR pattern(s)")
-
-			// test
-			err = o.Init()
-
-			// check if patterns were properly loaded
-			assert.Equal(tt.Error, err, "OCR init failure")
-		})
-	}
-}
-*/

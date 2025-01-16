@@ -1,27 +1,32 @@
-#include <array>
-#include <cstring>
-#include <vector>
-#include <string>
+// beholder - Copyright © 2024 Philipp Milovic
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "neural.h"
+
+#include <array>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
 
 // vecAsgn assigns values from C-array to a std::array.
 template<typename T, int Sz>
 void arAsgn(std::array<T, Sz>& ar, const T (&a)[Sz]) {
-	for (auto i {0}; i < Sz; ++i) {
+	for (auto i{0}; i < Sz; ++i) {
 		ar[i] = a[i];
 	}
 }
 
 void ResArr_Delete(void* r) {
 	if (r) {
-		ResArr** ptr {static_cast<ResArr**>(r)};
-		if (ResArr* p {*ptr}; p) {
+		ResArr** ptr{static_cast<ResArr**>(r)};
+		if (ResArr * p{*ptr}; p) {
 			if (p->array)
-			// delete text of each result
-			for (auto i {0ul}; i < p->count; ++i) {
-				delete[] p->array[i].text;
-			}
+				// delete text of each result
+				for (auto i{0ul}; i < p->count; ++i) {
+					delete[] p->array[i].text;
+				}
 			// delete the underlying array
 			delete[] p->array;
 			p->array = nullptr;
@@ -49,26 +54,30 @@ ResArr* Det_Detect(Det d, const Img* img) {
 	if (!d || !img) {
 		return nullptr;
 	}
-	if (!d->detect(beholder::RawImage {*img})) {
+	if (!d->detect(beholder::Image{*img})) {
 		return nullptr;
 	}
-	const std::vector<beholder::Result>& results {d->getResults()};
-	Res* res {new Res[results.size()]};
-	for (auto i {0ul}; i < results.size(); ++i) {
+	const std::vector<beholder::Result>& results{d->getResults()};
+	Res* res{new Res[results.size()]};
+	for (auto i{0ul}; i < results.size(); ++i) {
 		res[i] = results[i].toC();
 	}
 	return new ResArr{res, static_cast<size_t>(results.size())};
 }
 
 bool Det_Init(Det d, const DetInit* in) {
+	namespace be = beholder::enums;
+	using Bnd = beholder::NNBackend;
+	using Tgt = beholder::NNTarget;
+
 	if (!d || !in) {
 		return false;
 	}
 	try {
-		d->modelPath = std::string {in->modelPath};
-		d->model = std::string {in->model};
-		d->backend = in->backend;
-		d->target = in->target;
+		d->modelPath = std::string{in->modelPath};
+		d->model = std::string{in->model};
+		d->backend = be::from<Bnd>(in->backend);
+		d->target = be::from<Tgt>(in->target);
 		d->confidenceThreshold = in->conf;
 		d->nmsThreshold = in->nms;
 		d->swapRB = in->swapRB;
@@ -79,31 +88,23 @@ bool Det_Init(Det d, const DetInit* in) {
 		arAsgn<int, 2>(d->size, in->size);
 
 		return d->init();
-	} catch(...) {
+	} catch (...) {
 		// cleanup ?
 	}
 	return false;
 }
 
-Det Det_NewCRAFT() {
-	return static_cast<Det>(new beholder::CRAFTDetector {});
-}
+Det Det_NewCRAFT() { return static_cast<Det>(new beholder::CRAFTDetector{}); }
 
-Det Det_NewEAST() {
-	return static_cast<Det>(new beholder::EASTDetector {});
-}
+Det Det_NewEAST() { return static_cast<Det>(new beholder::EASTDetector{}); }
 
-Det Det_NewPARSeq() {
-	return static_cast<Det>(new beholder::PARSeqDetector {});
-}
+Det Det_NewPARSeq() { return static_cast<Det>(new beholder::PARSeqDetector{}); }
 
-Det Det_NewYOLOv8() {
-	return static_cast<Det>(new beholder::YOLOv8Detector {});
-}
+Det Det_NewYOLOv8() { return static_cast<Det>(new beholder::YOLOv8Detector{}); }
 
 bool Det_ConfigureCRAFT(Det d, float txtThresh, float lnThresh, float lowTxt) {
 	using CRAFT = beholder::CRAFTDetector;
-	CRAFT* ptr {dynamic_cast<CRAFT*>(d)};	// futureproofing
+	CRAFT* ptr{dynamic_cast<CRAFT*>(d)};  // futureproofing
 	if (!ptr) {
 		return false;
 	}
@@ -116,7 +117,7 @@ bool Det_ConfigureCRAFT(Det d, float txtThresh, float lnThresh, float lowTxt) {
 
 bool Det_ConfigurePARSeq(Det d, const char* charset) {
 	using PARSeq = beholder::PARSeqDetector;
-	PARSeq* ptr {dynamic_cast<PARSeq*>(d)};
+	PARSeq* ptr{dynamic_cast<PARSeq*>(d)};
 	if (!ptr) {
 		return false;
 	}
@@ -130,17 +131,17 @@ bool Det_ConfigurePARSeq(Det d, const char* charset) {
 
 bool Det_ConfigureYOLOv8(Det d, const char** classes, size_t nClasses) {
 	using YOLOv8 = beholder::YOLOv8Detector;
-	YOLOv8* ptr {dynamic_cast<YOLOv8*>(d)};	// futureproofing
+	YOLOv8* ptr{dynamic_cast<YOLOv8*>(d)};	// futureproofing
 	if (!ptr) {
 		return false;
 	}
-	if (!classes || nClasses == 0) {	// valid; nothing to do
+	if (!classes || nClasses == 0) {  // valid; nothing to do
 		return true;
 	}
 	// handle classes
 	ptr->classes.clear();
 	ptr->classes.reserve(nClasses);
-	for (auto i {0ul}; i < nClasses; ++i) {
+	for (auto i{0ul}; i < nClasses; ++i) {
 		ptr->classes.emplace_back(classes[i]);
 	}
 	return true;
@@ -166,9 +167,9 @@ ResArr* Tess_Recognize(Tess t) {
 	if (!t->recognizeText()) {
 		return nullptr;
 	}
-	const std::vector<beholder::Result>& results {t->getResults()};
-	Res* res {new Res[results.size()]};
-	for (auto i {0ul}; i < results.size(); ++i) {
+	const std::vector<beholder::Result>& results{t->getResults()};
+	Res* res{new Res[results.size()]};
+	for (auto i{0ul}; i < results.size(); ++i) {
 		res[i] = results[i].toC();
 	}
 	return new ResArr{res, static_cast<size_t>(results.size())};
@@ -187,25 +188,23 @@ bool Tess_Init(Tess t, const TInit* in) {
 	// handle configs
 	t->configPaths.clear();
 	t->configPaths.reserve(in->nCfgs);
-	for (auto i {0ul}; i < in->nCfgs; ++i) {
+	for (auto i{0ul}; i < in->nCfgs; ++i) {
 		t->configPaths.emplace_back(in->cfgs[i]);
 	}
 	// handle variables
 	t->variables.clear();
 	t->variables.reserve(in->nVars);
-	for (auto i {0ul}; i < in->nVars; ++i) {
+	for (auto i{0ul}; i < in->nVars; ++i) {
 		t->variables.emplace_back(in->vars[i].key, in->vars[i].value);
 	}
 	return t->init();
 }
 
-Tess Tess_New() {
-	return new beholder::Tesseract {};
-}
+Tess Tess_New() { return new beholder::Tesseract{}; }
 
 bool Tess_SetImage(Tess t, const Img* img) {
 	if (!t || !img) {
 		return false;
 	}
-	return t->setImage(beholder::RawImage {*img});
+	return t->setImage(beholder::Image{*img});
 }
