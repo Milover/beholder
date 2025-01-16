@@ -22,9 +22,12 @@ if (DEFINED bh_third_party_pkg AND DEFINED bh_third_party_md5)
 		URL_MD5 "${bh_third_party_md5}"
 	)
 	FetchContent_MakeAvailable(bh-third-party)
-	list(APPEND CMAKE_PREFIX_PATH "${bh-third-party_SOURCE_DIR}/lib/cmake")
+	list(APPEND CMAKE_PREFIX_PATH "${bh-third-party_SOURCE_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake")
 	# because deps are installed locally and not system-wide
-	include_directories("${bh-third-party_SOURCE_DIR}/include")
+	# TODO: should probably also add these to interface link/include directories
+	# for all our targets
+	include_directories("${bh-third-party_SOURCE_DIR}/${CMAKE_INSTALL_INCLUDEDIR}")
+	link_directories("${bh-third-party_SOURCE_DIR}/${CMAKE_INSTALL_LIBDIR}")
 else()
 	message(STATUS "Using system libraries for dependencies.")
 endif()
