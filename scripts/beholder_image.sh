@@ -7,7 +7,8 @@
 set -euo pipefail
 
 function usage() {
-	echo "This script builds a Docker image containing the beholder binary and runtime libraries."
+	echo "This script builds a Docker image containing the beholder binary and"
+	echo "runtime libraries."
 	echo ""
 	echo "Usage: $0 <CMake preset> [CMake args]"
 	exit 1
