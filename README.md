@@ -50,7 +50,7 @@ LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging bin/beholder
 or
 
 ```sh
-export LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging bin/beholder
+export LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging
 bin/beholder
 ```
 
