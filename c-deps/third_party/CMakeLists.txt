@@ -76,9 +76,9 @@ install(
 	DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/beholder_third_party"
 )
 #install(DIRECTORY "${bh_staging_prefix}/bin/" TYPE BIN)
-install(DIRECTORY "${bh_staging_prefix}/lib/" TYPE LIB)
-install(DIRECTORY "${bh_staging_prefix}/include/" TYPE INCLUDE)
-install(DIRECTORY "${bh_staging_prefix}/share/" TYPE DATA)
+install(DIRECTORY "${bh_staging_prefix}/${CMAKE_INSTALL_LIBDIR}/" TYPE LIB)
+install(DIRECTORY "${bh_staging_prefix}/${CMAKE_INSTALL_INCLUDEDIR}/" TYPE INCLUDE)
+install(DIRECTORY "${bh_staging_prefix}/${CMAKE_INSTALL_DATAROOTDIR}/" TYPE DATA)
 
 include(cmake/Packaging.cmake)
 #include(cmake/Docker.cmake)

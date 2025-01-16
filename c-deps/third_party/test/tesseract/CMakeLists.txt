@@ -9,8 +9,10 @@ target_sources(tesseract.test PRIVATE
 target_include_directories(tesseract.test PRIVATE
 	${Leptonica_INCLUDE_DIRS}
 )
+target_link_directories(tesseract.test PRIVATE
+	${CMAKE_INSTALL_FULL_LIBDIR}
+)
 target_link_libraries(tesseract.test PRIVATE
-	${Leptonica_LIBRARIES}
 	Tesseract::libtesseract
 	GTest::gtest_main
 )

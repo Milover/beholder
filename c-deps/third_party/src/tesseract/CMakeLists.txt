@@ -5,6 +5,8 @@ ExternalProject_Get_Property(bh-opencv SOURCE_DIR)
 set(ocv_SOURCE_DIR "${SOURCE_DIR}")
 ExternalProject_Get_Property(bh-opencv BINARY_DIR)
 set(ocv_BINARY_DIR "${BINARY_DIR}")
+ExternalProject_Get_Property(bh-opencv INSTALL_DIR)
+set(ocv_INSTALL_DIR "${INSTALL_DIR}")
 
 set(CMAKE_ARGS ${bh_cmake_args})
 list(APPEND CMAKE_ARGS
@@ -18,7 +20,8 @@ list(APPEND CMAKE_ARGS
 	"-DGRAPHICS_DISABLED=TRUE"
 	"-DOPENMP_BUILD=FALSE"
 	"-DTIFF_INCLUDE_DIR=${ocv_SOURCE_DIR}/3rdparty/libtiff,${ocv_BINARY_DIR}/3rdparty/libtiff"
-	"-DTIFF_LIBRARY=${ocv_BINARY_DIR}/3rdparty/lib/liblibtiff.a"
+	"-DTIFF_LIBRARY=liblibtiff.a"
+	"-DCMAKE_CXX_FLAGS=-L${ocv_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR}"
 	#"-DLeptonica_DIR=${lpt_INSTALL_DIR}"
 )
 
