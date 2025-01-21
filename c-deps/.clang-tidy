@@ -20,8 +20,8 @@ Checks: >
   -readbility-uppercase-literal-suffix,
   -readability-avoid-const-params-in-decls,
   -misc-non-private-member-variables-in-classes,
-WarningsAsErrors: ""
-HeaderFilterRegex: ""
+WarningsAsErrors: '*'
+HeaderFilterRegex: ''
 FormatStyle: none
 
 CheckOptions:
