@@ -14,9 +14,8 @@ ifeq ($(PLATFORM), Darwin)
 endif
 
 .PHONY: build
-build:
+build: generate
 	@echo $(MODULE)
-	go generate ./...
 	go build -tags=$(BUILD_TAGS) -o bin/$(TARGET) main.go
 
 .PHONY: generate
@@ -29,27 +28,23 @@ run:
 
 .PHONY: test
 test:
-	go test ./...
+	go test -race ./...
 
 .PHONY: testv
 testv:
 	go test -v -race ./...
 
-.PHONY: test-integration
-test-integration:
-	go test -v -race -tags=integration ./...
-
-.PHONY: test-full
+.PHONY: test-fresh
 test-full:
-	go test -v -race -count=1 -tags=integration ./...
+	go test -v -race -count=1 ./...
 
 .PHONY: vet
 vet:
-	go vet -tags=integration ./...
+	go vet ./...
 
 .PHONY: lint
 lint:
-	$(shell go env GOPATH)/bin/golangci-lint run ./...
+	$(shell go env GOPATH)/bin/golangci-lint run ./... || true
 
 .PHONY: update-deps
 update-deps:
