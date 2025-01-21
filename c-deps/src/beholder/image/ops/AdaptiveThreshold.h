@@ -31,8 +31,8 @@ public:
 
 	// NOLINTBEGIN(*-magic-numbers)
 
-	double maxValue{cst::max8bit};  // max value
-	int size{11};			   // kernel size
+	double maxValue{cst::max8bit};	// max value
+	int size{11};					// kernel size
 	double c{2};   // constant subtracted from the mean or weighted mean
 	Type type{1};  // thresholding mode
 

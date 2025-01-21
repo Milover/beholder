@@ -35,8 +35,7 @@ struct RectangleCtor {
 }  // namespace capi
 
 // The actual class we use throughout the library.
-using Rectangle =
-	capi::Wrapper<capi::Rectangle, capi::detail::RectangleCtor>;
+using Rectangle = capi::Wrapper<capi::Rectangle, capi::detail::RectangleCtor>;
 
 }  // namespace beholder
 
