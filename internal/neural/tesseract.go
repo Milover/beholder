@@ -130,7 +130,7 @@ func (t Tesseract) Init() error {
 	if err != nil {
 		return err
 	}
-	defer cleanup() // this could fail, but we don't care
+	defer cleanup() //nolint:errcheck // this could fail, but we don't care
 
 	ar := &mem.Arena{}
 	defer ar.Free()

@@ -40,7 +40,7 @@ func (a Array) Acquire() error {
 // Delete releases the C-allocated memory of each camera in the array,
 // see [Camera.Delete] for more details.
 func (a Array) Delete() {
-	a.Apply(func(c *Camera) error {
+	_ = a.Apply(func(c *Camera) error {
 		c.Delete()
 		return nil
 	})
@@ -76,7 +76,7 @@ func (a Array) StartAcquisition() error {
 // StopAcquisition stops image acquisition for each camera in the array,
 // see [Camera.StopAcquisition] for more details.
 func (a Array) StopAcquisition() {
-	a.Apply(func(c *Camera) error {
+	_ = a.Apply(func(c *Camera) error {
 		c.StopAcquisition()
 		return nil
 	})

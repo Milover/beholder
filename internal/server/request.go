@@ -23,8 +23,8 @@ var (
 
 	errUUIDVersion = errors.New("UUID not v7")
 
-	errMsgHeader = errors.New("bad message header")
-	errMsgType   = errors.New("bad message type")
+	//errMsgHeader = errors.New("bad message header")
+	errMsgType = errors.New("bad message type")
 
 	errMsgOp     = errors.New("bad op message")
 	errOpHeader  = errors.New("bad op header")

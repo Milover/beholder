@@ -28,7 +28,7 @@ import (
 //	go test -v -race -count=N
 
 // errMockAcq is the acquisition error used by mockAcq.
-var errMockAcq = errors.New("acquisition error")
+var errMockAcq = errors.New("acquisition error") //nolint:unused // see acquireErr
 
 // mockAcq implements the [AcquisitionStartStopper] interface.
 type mockAcq struct {
@@ -53,7 +53,7 @@ func (acq *mockAcq) acquire() *Blob {
 // acquireErr simulates an (irrecoverable) acquisition error.
 // If acq.acquiring == ture, it sends an [errMockAcq] on acq.errs and
 // stops acquisition.
-func (acq *mockAcq) acquireErr() {
+func (acq *mockAcq) acquireErr() { //nolint:unused // TODO: use or remove
 	if acq.acquiring {
 		acq.errs <- errMockAcq
 		acq.StopAcquisition()
@@ -348,7 +348,7 @@ func TestStartStopAcquisition(t *testing.T) {
 			assert.Nil(err, fmt.Sprintf("client[%v] close error: %v", i, err))
 		}()
 		wg.Add(nRequests)
-		for _ = range nRequests {
+		for range nRequests {
 			select {
 			case ch <- true:
 				<-ch
@@ -755,7 +755,7 @@ func TestMessageOpBasic(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					for _ = range tv.msgs {
+					for range tv.msgs {
 						err := client.c.Write(ctx, websocket.MessageBinary, reqBuf)
 						assert.Nil(err, err)
 					}
@@ -764,7 +764,7 @@ func TestMessageOpBasic(t *testing.T) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					for _ = range tv.msgs {
+					for range tv.msgs {
 						// read and check the server response message
 						resp, err := client.nextMessage(ctx)
 						assert.Nil(err, err)
@@ -871,7 +871,7 @@ func TestMessageOpPermissions(t *testing.T) {
 						// their own response, and the 'controller' response,
 						// but we don't know in which order
 						gotCtrlResp, gotObsResp := false, false
-						for _ = range 2 {
+						for range 2 {
 							resp, err := client.nextMessage(ctx)
 							assert.Nil(err, err)
 							gotCtrlResp = gotCtrlResp || proto.Equal(ctrlResp, resp)

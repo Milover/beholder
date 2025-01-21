@@ -59,7 +59,7 @@ func NewTrigger() *Trigger {
 func (t *Trigger) Execute(c Camera) error {
 	// wait for the period to expire
 	triggerAt := t.lastExecute.Add(t.Period.Duration)
-	time.Sleep(triggerAt.Sub(time.Now()))
+	time.Sleep(time.Until(triggerAt))
 
 	t.lastExecute = time.Now()
 	if t.Timeout.Milliseconds() == 0 {

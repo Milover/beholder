@@ -289,7 +289,7 @@ func (s *AcquisitionServer) Close() error {
 
 	var err error
 	for c := range s.conns {
-		errors.Join(err, c.drop(websocket.StatusGoingAway, nil))
+		err = errors.Join(err, c.drop(websocket.StatusGoingAway, nil))
 	}
 	return err
 }
@@ -483,7 +483,7 @@ func (s *AcquisitionServer) stream(w http.ResponseWriter, r *http.Request) error
 	}
 	conn.c = c
 	conn.mu.Unlock()
-	defer conn.dropNow()
+	defer conn.dropNow() //nolint:errcheck // FIXME: ignoring error
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -532,7 +532,7 @@ func (s *AcquisitionServer) distribute(msg []byte) {
 		select {
 		case c.msgs <- msg:
 		default:
-			go c.drop(websocket.StatusPolicyViolation, errConnSlow) // FIXME: ignoring error
+			go c.drop(websocket.StatusPolicyViolation, errConnSlow) //nolint:errcheck // FIXME: ignoring error
 		}
 	}
 }
@@ -548,7 +548,7 @@ func (s *AcquisitionServer) sendTo(msg []byte, c *connection) {
 		select {
 		case c.msgs <- msg:
 		default:
-			go c.drop(websocket.StatusPolicyViolation, errConnSlow) // FIXME: ignoring error
+			go c.drop(websocket.StatusPolicyViolation, errConnSlow) //nolint:errcheck // FIXME: ignoring error
 		}
 	}
 }

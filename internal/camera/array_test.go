@@ -136,8 +136,7 @@ func TestArray(t *testing.T) {
 				t.Log("acquiring...")
 				err = errors.Join(err, p.Cs.Acquire())
 				for _, cam := range p.Cs {
-					if cam.Result.Buffer != nil {
-						// wat do?
+					if cam.Result.Buffer != nil { //nolint:staticcheck // wat do?
 					}
 				}
 				assert.ErrorIs(err, tt.Error, "unexpected error")

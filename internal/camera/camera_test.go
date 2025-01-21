@@ -236,8 +236,7 @@ func TestCamera(t *testing.T) {
 				err = errors.Join(err, p.C.Acquire())
 
 				// TODO: should be in a separate test probably
-				if p.C.Result.Buffer != nil {
-					// wat do?
+				if p.C.Result.Buffer != nil { //nolint:staticcheck // wat do?
 					/*
 						t.Log("writing...")
 						filename := fmt.Sprintf("img_%v_%v.png",
