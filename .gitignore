@@ -28,7 +28,7 @@ vendor/
 bin/
 
 # Misc stuff
-vagrant/
+_vagrant/
 
 # NOTE: move this into 'internal/neural'
 # Raw OCR test images

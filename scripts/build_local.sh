@@ -41,16 +41,16 @@ elif [ "$#" -ge 2 ]; then
 fi
 
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
-BH_BUILD="$BH_ROOT/c-deps/build/$CMAKE_PRESET"
-BH_3P_BUILD="$BH_ROOT/c-deps/third_party/build/$CMAKE_PRESET"
-BH_STAGING="$BH_ROOT/c-deps/build/staging"
+BH_BUILD="$BH_ROOT/_c-api/build/$CMAKE_PRESET"
+BH_3P_BUILD="$BH_ROOT/_c-api/third_party/build/$CMAKE_PRESET"
+BH_STAGING="$BH_ROOT/_c-api/build/staging"
 
 
 # build beholder C-library third-party dependencies
 function build_third_party() {
 	local cwd="$(pwd)"
 
-	cd "$BH_ROOT/c-deps/third_party"
+	cd "$BH_ROOT/_c-api/third_party"
 	rm -rf "$BH_3P_BUILD"
 
 	cmake --preset="$CMAKE_PRESET" \
@@ -64,7 +64,7 @@ function build_third_party() {
 function build_libs() {
 	local cwd="$(pwd)"
 
-	cd "$BH_ROOT/c-deps"
+	cd "$BH_ROOT/_c-api"
 	rm -rf "$BH_BUILD" "$BH_STAGING"
 	mkdir -p "$BH_STAGING"
 
