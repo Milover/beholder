@@ -37,19 +37,10 @@
 		{
 			"name": "debug",
 			"inherits": "default",
-			"displayName": "Default Debug config",
+			"displayName": "Default Debug config (w/o sanitizers)",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug",
 				"CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror"
-			}
-		},
-		{
-			"name": "sanitize",
-			"inherits": "default",
-			"displayName": "Default Debug config",
-			"cacheVariables": {
-				"CMAKE_BUILD_TYPE": "Debug",
-				"CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined"
 			}
 		},
 		{
@@ -77,12 +68,12 @@
 		{ "name": "gnu-debug",     "inherits": ["gnu-default",   "debug"] }
 	],
 	"buildPresets": [
-		{ "name": "release",       "configurePreset": "release",       "verbose": true },
-		{ "name": "debug",         "configurePreset": "debug",         "verbose": true },
-		{ "name": "clang-release", "configurePreset": "clang-release", "verbose": true },
-		{ "name": "gnu-release",   "configurePreset": "gnu-release",   "verbose": true },
-		{ "name": "clang-debug",   "configurePreset": "clang-debug",   "verbose": true },
-		{ "name": "gnu-debug",     "configurePreset": "gnu-debug",     "verbose": true }
+		{ "name": "release",            "configurePreset": "release",           "verbose": true },
+		{ "name": "debug",              "configurePreset": "debug",             "verbose": true },
+		{ "name": "clang-release",      "configurePreset": "clang-release",     "verbose": true },
+		{ "name": "gnu-release",        "configurePreset": "gnu-release",       "verbose": true },
+		{ "name": "clang-debug",        "configurePreset": "clang-debug",       "verbose": true },
+		{ "name": "gnu-debug",          "configurePreset": "gnu-debug",         "verbose": true }
 	],
 	"testPresets": [
 		{
@@ -97,11 +88,11 @@
 				"stopOnFailure": false
 			}
 		},
-		{ "name": "debug",         "inherits": "release", "configurePreset": "debug" },
-		{ "name": "clang-release", "inherits": "release", "configurePreset": "clang-release" },
-		{ "name": "gnu-release",   "inherits": "release", "configurePreset": "gnu-release" },
-		{ "name": "clang-debug",   "inherits": "debug",   "configurePreset": "clang-debug" },
-		{ "name": "gnu-debug",     "inherits": "debug",   "configurePreset": "gnu-debug" }
+		{ "name": "debug",              "inherits": "release", "configurePreset": "debug" },
+		{ "name": "clang-release",      "inherits": "release", "configurePreset": "clang-release" },
+		{ "name": "gnu-release",        "inherits": "release", "configurePreset": "gnu-release" },
+		{ "name": "clang-debug",        "inherits": "debug",   "configurePreset": "clang-debug" },
+		{ "name": "gnu-debug",          "inherits": "debug",   "configurePreset": "gnu-debug" }
 	],
 	"packagePresets": [
 		{
