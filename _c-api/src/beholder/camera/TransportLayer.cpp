@@ -131,8 +131,8 @@ Pylon::IPylonDevice*
 TransportLayer::createDevice(const char* designator, DeviceDesignator ddt,
 							 bool reboot, std::chrono::milliseconds timeout,
 							 std::size_t retries) const noexcept {
-	auto d{createDeviceImpl(designator, ddt)};
-	if (!reboot || !d) {
+	auto* d{createDeviceImpl(designator, ddt)};
+	if (!reboot || !static_cast<bool>(d)) {
 		return d;
 	}
 	// reboot the device to clear any errors and purge the buffers
@@ -153,7 +153,8 @@ TransportLayer::createDevice(const char* designator, DeviceDesignator ddt,
 				std::this_thread::sleep_for(timeout);
 				// FIXME: mute log output here, we only care about failure
 				// after all attempts have been made
-				if (d = createDeviceImpl(designator, ddt); d) {
+				d = createDeviceImpl(designator, ddt);
+				if (static_cast<bool>(d)) {
 					return d;
 				}
 			}
