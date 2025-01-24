@@ -37,43 +37,16 @@
 		{
 			"name": "debug",
 			"inherits": "default",
-			"displayName": "Default Debug config (w/o sanitizers)",
+			"displayName": "Default Debug config w/ sanitizers",
 			"cacheVariables": {
 				"CMAKE_BUILD_TYPE": "Debug",
-				"CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror"
+				"CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined"
 			}
-		},
-		{
-			"name": "clang-default",
-			"hidden": true,
-			"inherits": "default",
-			"displayName": "Default Clang config",
-			"cacheVariables": {
-				"CMAKE_C_COMPILER": "clang",
-				"CMAKE_CXX_COMPILER": "clang++"
-			}
-		},
-		{
-			"name": "gnu-default",
-			"hidden": true,
-			"inherits": "default",
-			"cacheVariables": {
-				"CMAKE_C_COMPILER": "gcc",
-				"CMAKE_CXX_COMPILER": "g++"
-			}
-		},
-		{ "name": "clang-release", "inherits": ["clang-default", "release"] },
-		{ "name": "gnu-release",   "inherits": ["gnu-default",   "release"] },
-		{ "name": "clang-debug",   "inherits": ["clang-default", "debug"] },
-		{ "name": "gnu-debug",     "inherits": ["gnu-default",   "debug"] }
+		}
 	],
 	"buildPresets": [
-		{ "name": "release",            "configurePreset": "release",           "verbose": true },
-		{ "name": "debug",              "configurePreset": "debug",             "verbose": true },
-		{ "name": "clang-release",      "configurePreset": "clang-release",     "verbose": true },
-		{ "name": "gnu-release",        "configurePreset": "gnu-release",       "verbose": true },
-		{ "name": "clang-debug",        "configurePreset": "clang-debug",       "verbose": true },
-		{ "name": "gnu-debug",          "configurePreset": "gnu-debug",         "verbose": true }
+		{ "name": "release", "configurePreset": "release", "verbose": true },
+		{ "name": "debug",   "configurePreset": "debug",   "verbose": true }
 	],
 	"testPresets": [
 		{
@@ -88,11 +61,7 @@
 				"stopOnFailure": false
 			}
 		},
-		{ "name": "debug",              "inherits": "release", "configurePreset": "debug" },
-		{ "name": "clang-release",      "inherits": "release", "configurePreset": "clang-release" },
-		{ "name": "gnu-release",        "inherits": "release", "configurePreset": "gnu-release" },
-		{ "name": "clang-debug",        "inherits": "debug",   "configurePreset": "clang-debug" },
-		{ "name": "gnu-debug",          "inherits": "debug",   "configurePreset": "gnu-debug" }
+		{ "name": "debug", "inherits": "release", "configurePreset": "debug" }
 	],
 	"packagePresets": [
 		{
@@ -104,11 +73,7 @@
 			"name": "debug",
 			"configurePreset": "debug",
 			"generators": [ "TGZ" ]
-		},
-		{ "name": "clang-release", "inherits": "release", "configurePreset": "clang-release" },
-		{ "name": "gnu-release",   "inherits": "release", "configurePreset": "gnu-release" },
-		{ "name": "clang-debug",   "inherits": "debug",   "configurePreset": "clang-debug" },
-		{ "name": "gnu-debug",     "inherits": "debug",   "configurePreset": "gnu-debug" }
+		}
 	],
 	"workflowPresets": [
 		{
@@ -127,42 +92,6 @@
 				{ "type": "build",     "name": "debug" },
 				{ "type": "test",      "name": "debug" },
 				{ "type": "package",   "name": "debug" }
-			]
-		},
-		{
-			"name": "clang-release",
-			"steps": [
-				{ "type": "configure", "name": "clang-release" },
-				{ "type": "build",     "name": "clang-release" },
-				{ "type": "test",      "name": "clang-release" },
-				{ "type": "package",   "name": "clang-release" }
-			]
-		},
-		{
-			"name": "gnu-release",
-			"steps": [
-				{ "type": "configure", "name": "gnu-release" },
-				{ "type": "build",     "name": "gnu-release" },
-				{ "type": "test",      "name": "gnu-release" },
-				{ "type": "package",   "name": "gnu-release" }
-			]
-		},
-		{
-			"name": "clang-debug",
-			"steps": [
-				{ "type": "configure", "name": "clang-debug" },
-				{ "type": "build",     "name": "clang-debug" },
-				{ "type": "test",      "name": "clang-debug" },
-				{ "type": "package",   "name": "clang-debug" }
-			]
-		},
-		{
-			"name": "gnu-debug",
-			"steps": [
-				{ "type": "configure", "name": "gnu-debug" },
-				{ "type": "build",     "name": "gnu-debug" },
-				{ "type": "test",      "name": "gnu-debug" },
-				{ "type": "package",   "name": "gnu-debug" }
 			]
 		}
 	]
