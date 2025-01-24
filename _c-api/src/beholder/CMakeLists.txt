@@ -3,7 +3,8 @@ add_library(beholder::beholder ALIAS beholder)
 
 set_target_properties(beholder
 	PROPERTIES
-		SOVERSION "${PROJECT_VERSION}"
+		VERSION "${PROJECT_VERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+		SOVERSION ${PROJECT_VERSION_MAJOR}
 		COMPILE_OPTIONS $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:-DBEHOLDER_STATIC_DEFINE>
 )
 
@@ -16,6 +17,7 @@ find_package(Iconv REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Tesseract REQUIRED)
 
+# convenience variable, so that we can propagate it to sub-directories easily
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH bh_base_dir)
 
 target_sources(beholder
@@ -27,15 +29,29 @@ target_sources(beholder
 			Beholder.h
 			BeholderExport.h
 )
+# Tesseract's include dirs are necessary when Tesseract is installed to a
+# non-default location
 target_include_directories(beholder
 	PRIVATE
-	#${Tesseract_INCLUDE_DIRS}	# FIXME: this shouldn't be necessary
 		${OpenCV_INCLUDE_DIRS}
+		${Tesseract_INCLUDE_DIRS}
 )
 target_link_libraries(beholder
 	PRIVATE
 		Tesseract::libtesseract
 		${OpenCV_LIBS}
+)
+# This is necessary so that OpenCV's 3rd-party dependencies get
+# properly propagated to other components
+#
+# FIXME: we should handle those dependencies ourselves, so we don't have to
+# fuck around with trying to collect all these stupid paths.
+# Also no idea what happens if someone else is trying to use us --- would they
+# also have to set all these paths or what?
+target_link_directories(beholder BEFORE
+	PUBLIC
+		$<BUILD_INTERFACE:${OpenCV_INSTALL_PATH}/${CMAKE_INSTALL_LIBDIR}>
+		$<BUILD_INTERFACE:${OpenCV_INSTALL_PATH}/${CMAKE_INSTALL_LIBDIR}/opencv4/3rdparty>
 )
 target_compile_features(beholder PUBLIC cxx_std_17)
 

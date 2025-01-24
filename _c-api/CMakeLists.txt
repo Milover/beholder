@@ -9,6 +9,10 @@ include(FetchContent)
 include(CTest)
 
 # set up dependencies
+#
+# NOTE: the third-party dependencies can also manually be unpacked/installed
+# into the staging directory, provided CMAKE_INSTALL_PREFIX is properly set,
+# CMake should correctly find/include/link all dependencies.
 if (DEFINED bh_third_party_pkg AND DEFINED bh_third_party_md5)
 	message(STATUS "Using local archive for library dependencies.")
 	list(APPEND CMAKE_MESSAGE_INDENT "    ")
@@ -23,11 +27,6 @@ if (DEFINED bh_third_party_pkg AND DEFINED bh_third_party_md5)
 	)
 	FetchContent_MakeAvailable(bh-third-party)
 	list(APPEND CMAKE_PREFIX_PATH "${bh-third-party_SOURCE_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake")
-	# because deps are installed locally and not system-wide
-	# TODO: should probably also add these to interface link/include directories
-	# for all our targets
-	include_directories("${bh-third-party_SOURCE_DIR}/${CMAKE_INSTALL_INCLUDEDIR}")
-	link_directories("${bh-third-party_SOURCE_DIR}/${CMAKE_INSTALL_LIBDIR}")
 else()
 	message(STATUS "Using system libraries for dependencies.")
 endif()
@@ -52,7 +51,6 @@ if (bh_missing_linters)
 else()
 	message(CHECK_PASS "all linters found")
 endif()
-
 
 add_subdirectory(src)
 add_subdirectory(test)
