@@ -1,31 +1,51 @@
 # Makefile
 
-MODULE		:= $(shell go list -m)
-MODULE_URL	:= $(shell go list -m | tr [:upper:] [:lower:])
-TARGET		:= $(shell basename $(MODULE))
-PLATFORM	:= $(shell uname)
+MODULE			:= $(shell go list -m)
+MODULE_URL		:= $(shell go list -m | tr [:upper:] [:lower:])
+TARGET			:= $(shell basename $(MODULE))
+PLATFORM		:= $(shell uname)
 
-BUILD_TAGS ?=
+CMAKE_PREFIX	?= /usr/local
+CMAKE_PRESET	?= release
+TAGS			?=
 
 ifeq ($(PLATFORM), Darwin)
  # TODO: remove when no longer necessary, for more info see:
  # https://stackoverflow.com/questions/77164140/ld-warning-ignoring-duplicate-libraries-lgcc-after-the-recent-update-of-xc
- export CGO_LDFLAGS="-Wl,-no_warn_duplicate_libraries"
+ export CGO_LDFLAGS="jWl,-no_warn_duplicate_libraries"
 endif
 
+# build stuff
+# -----------
 .PHONY: build
-build: generate
+build:
 	@echo $(MODULE)
-	go build -tags=$(BUILD_TAGS) -o bin/$(TARGET) main.go
+	scripts/build_go_project.sh $(TAGS)
 
-.PHONY: generate
-generate:
-	go generate ./...
+.PHONY: c-capi
+c-api:
+	scripts/build_cmake_project.sh _c-api $(CMAKE_PRESET) $(CMAKE_PREFIX)
 
-.PHONY: run
-run:
-	go run ./...
+.PHONY: third-party
+third-party:
+	scripts/build_cmake_project.sh _c-api/third_party release $(CMAKE_PREFIX)
 
+# clean stuff
+# -----------
+.PHONY: clean
+clean:
+	scripts/clean_go_project.sh $(TAGS)
+
+.PHONY: clean-c-api
+clean-c-api:
+	scripts/clean_cmake_project.sh _c-api $(CMAKE_PRESET)
+
+.PHONY: clean-third-party
+clean-third-party:
+	scripts/clean_cmake_project.sh _c-api/third_party release
+
+# test stuff
+# ----------
 .PHONY: test
 test:
 	go test -race ./...
@@ -34,17 +54,11 @@ test:
 testv:
 	go test -v -race ./...
 
-.PHONY: test-fresh
-test-full:
-	go test -v -race -count=1 ./...
-
-.PHONY: vet
-vet:
-	go vet ./...
-
+# Go specific stuff
+# -----------------
 .PHONY: lint
 lint:
-	$(shell go env GOPATH)/bin/golangci-lint run ./... || true
+	$(shell go env GOPATH)/bin/golangci-lint run ./...
 
 .PHONY: update-deps
 update-deps:
@@ -55,9 +69,3 @@ update-deps:
 update-go:
 	go mod edit -go=$(shell go version | awk '{print $$3}' | sed -e 's/go//g')
 	go mod tidy
-
-.PHONY: clean
-clean:
-	# TODO: should clean generated files here
-	go clean
-	rm -rf bin
