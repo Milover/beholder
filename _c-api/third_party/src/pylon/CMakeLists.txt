@@ -16,6 +16,8 @@ ExternalProject_Add(
 	bh-pylon
 	URL "${pylon_url}"
 	URL_MD5 "${pylon_md5}"
+	# 10 minute timeout
+	TIMEOUT 600
 	UPDATE_DISCONNECTED TRUE
 	PATCH_COMMAND
 		${CMAKE_COMMAND}
