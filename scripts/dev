@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# beholder - Copyright © 2024 Philipp Milovic
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# This script exports variables needed by various go tools when beholder C-API
+# is built/installed into a local staging directory.
+#
+# Usage:
+#
+# 	dev go test ./...
+#
+# To override the default staging directory path, define (or export) the
+# 'CMAKE_PREFIX' variable before calling 'dev':
+#
+# 	CMAKE_PREFIX=/path/to/staging/dir dev go test ./...
+
+BH_ROOT="$(dirname $(dirname $(realpath $0)))"
+
+if [ -z "$CMAKE_PREFIX" ]; then
+	CMAKE_PREFIX="$BH_ROOT/_c-api/build/staging"
+fi
+
+export CMAKE_PREFIX="$CMAKE_PREFIX"
+export PKG_CONFIG_PATH="$CMAKE_PREFIX/lib/pkgconfig"
+export LD_LIBRARY_PATH="$CMAKE_PREFIX/lib"
+export LIBRARY_PATH="$CMAKE_PREFIX/lib"
+
+exec "$@"

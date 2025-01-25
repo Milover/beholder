@@ -60,8 +60,8 @@ func TestEqualULPFloat64(t *testing.T) {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			assert := assert.New(t)
 
-			assert.Equal(tt.Exp, EqualULP(tt.X, tt.Y, tt.ULP),
-				fmt.Sprintf("x: %.13x (%.17e)\ny: %.13x (%.17e)", tt.X, tt.X, tt.Y, tt.Y))
+			assert.Equalf(tt.Exp, EqualULP(tt.X, tt.Y, tt.ULP),
+				"x: %.13x (%.17e)\ny: %.13x (%.17e)", tt.X, tt.X, tt.Y, tt.Y)
 		})
 	}
 }
@@ -107,8 +107,8 @@ func TestEqualULPFloat32(t *testing.T) {
 		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			assert := assert.New(t)
 
-			assert.Equal(tt.Exp, EqualULP32(tt.X, tt.Y, tt.ULP),
-				fmt.Sprintf("x: %.6x (%.9e)\ny: %.6x (%.9e)", tt.X, tt.X, tt.Y, tt.Y))
+			assert.Equalf(tt.Exp, EqualULP32(tt.X, tt.Y, tt.ULP),
+				"x: %.6x (%.9e)\ny: %.6x (%.9e)", tt.X, tt.X, tt.Y, tt.Y)
 		})
 	}
 }

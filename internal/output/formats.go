@@ -57,15 +57,11 @@ var outputerFactoryMap = map[OutFmtType]outputerFactory{
 }
 
 func newOutputer(o OutFmtType, wc io.WriteCloser) (Outputer, error) {
-	switch o {
-	case OFTNone:
-		return newOutNone(wc)
-	case OFTCSV:
-		return newOutCSV(wc)
-	case OFTJSON:
-		return newOutJSON(wc)
+	factory, ok := outputerFactoryMap[o]
+	if !ok {
+		return nil, ErrBadOutputFormat
 	}
-	return nil, ErrBadOutputFormat
+	return factory(wc)
 }
 
 // outNone is a dummy Outputer.

@@ -79,3 +79,9 @@ Count* Count_NewPtrArray(size_t count) {
 	}
 	return arr;
 }
+
+void Count_Reset() {
+	Counter::alive = 0;
+	Counter::constructed = 0;
+	Counter::destructed = 0;
+}

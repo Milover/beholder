@@ -23,8 +23,8 @@ var (
 
 	errUUIDVersion = errors.New("UUID not v7")
 
-	errMsgHeader = errors.New("bad message header")
-	errMsgType   = errors.New("bad message type")
+	//errMsgHeader = errors.New("bad message header")
+	errMsgType = errors.New("bad message type")
 
 	errMsgOp     = errors.New("bad op message")
 	errOpHeader  = errors.New("bad op header")
@@ -45,7 +45,7 @@ type request struct {
 
 // processRequest processes a request message.
 // It returns a request response, the response's UUIDv7 and any errors
-// which occured.
+// which occurred.
 //
 // processRequest always returns a valid response and UUID, even if there is
 // an error.

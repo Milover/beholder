@@ -18,7 +18,7 @@ package cmd
 /*
 #cgo CXXFLAGS: -std=c++20
 #cgo pkg-config: beholder_camera
-#cgo CPPFLAGS: -I${SRCDIR}/../../c-deps/build/staging/include
-#cgo linux LDFLAGS: -L${SRCDIR}/../../c-deps/build/staging/include/lib -lbeholder -ltesseract -lleptonica -lopencv_highgui -lopencv_videoio -lopencv_video -lopencv_imgcodecs -lopencv_dnn -lopencv_photo -lopencv_imgproc -lopencv_core -littnotify -lIlmImf -lippiw -lippicv -lade -llibjpeg-turbo -llibopenjp2 -llibpng -llibprotobuf -llibtiff -llibwebp -lzlib
+#cgo CPPFLAGS: -I${SRCDIR}/../../_c-api/build/staging/include
+#cgo linux LDFLAGS: -L${SRCDIR}/../../_c-api/build/staging/include/lib -lbeholder -ltesseract -lleptonica -lopencv_highgui -lopencv_videoio -lopencv_video -lopencv_imgcodecs -lopencv_dnn -lopencv_photo -lopencv_imgproc -lopencv_core -littnotify -lIlmImf -lippiw -lippicv -lade -llibjpeg-turbo -llibopenjp2 -llibpng -llibprotobuf -llibtiff -llibwebp -lzlib
 */
 import "C"

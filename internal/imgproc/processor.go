@@ -114,7 +114,7 @@ func (ip Processor) GetRawImage() models.Image {
 	return models.Image{
 		ID:           uint64(raw.id),
 		Timestamp:    time.Now(),
-		Buffer:       unsafe.Pointer(raw.buffer),
+		Buffer:       raw.buffer,
 		Rows:         int(raw.rows),
 		Cols:         int(raw.cols),
 		PixelType:    int64(raw.pixelType),

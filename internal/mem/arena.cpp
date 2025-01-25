@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cstdlib>
-
 #include "arena.h"
+
+#include <cstdlib>
 
 void Mem_Delete(Ptr ptr, Deleter del) {
 	if (ptr && del) {
@@ -14,7 +14,7 @@ void Mem_Delete(Ptr ptr, Deleter del) {
 
 void Mem_DeleteCharPtr(Ptr ptr) {
 	if (ptr) {
-		char** p {static_cast<char**>(ptr)};
+		char** p{static_cast<char**>(ptr)};
 		if (*p) {
 			delete[] *p;
 			*p = nullptr;
@@ -26,7 +26,7 @@ void Mem_DeleteCharPtrArr(Ptr ptr) {
 	if (ptr) {
 		// a pointer to an array-pointer of char*
 		// FIXME: wtf bro
-		char*** p {static_cast<char***>(ptr)};
+		char*** p{static_cast<char***>(ptr)};
 		if (*p) {
 			delete[] *p;
 			*p = nullptr;

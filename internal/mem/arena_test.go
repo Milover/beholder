@@ -45,12 +45,21 @@ func (c ctrAssert) AssertWithGC() {
 //
 // TODO: test C-string stuff.
 func TestStorage(t *testing.T) {
+	t.Parallel()
+
+	// make sure we reset all counters before and after the test
+	internal.Reset()
+	defer internal.Reset()
+
 	ca := ctrAssert{
 		ass: assert.New(t),
 		tst: t,
 	}
 	ar := &Arena{}
 	defer ar.Free()
+
+	// sanity check
+	ca.Assert()
 
 	// test with a simple pointer
 	ca.tst.Log("Array.Store(ptr to Counter)")
@@ -67,7 +76,7 @@ func TestStorage(t *testing.T) {
 	ca.destr += 1
 	ca.AssertWithGC()
 
-	count := 10
+	count := 10 // the number of elements in the array
 
 	// test with a pointer to an array (of values)
 	ca.tst.Logf("Array.Store(ptr to Counter[%d])", count)

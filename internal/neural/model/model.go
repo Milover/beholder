@@ -83,7 +83,8 @@ func (m Model) File() (string, Cleanup, error) {
 		return "", rNoop, errors.Join(err, os.Remove(s))
 	}
 	// if m is an embedded model create a temporary file and return it
-	if id := getEmbedID(m); id != -1 {
+	if m.isEmbed() {
+		id := getEmbedID(m)
 		f, err := os.CreateTemp("", "model_*"+embeds[id].Ext)
 		if err != nil {
 			return "", rNoop, err

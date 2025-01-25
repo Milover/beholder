@@ -105,7 +105,7 @@ func (t Tesseract) Inference(img models.Image, res *models.Result) error {
 
 	results := (*C.ResArr)(ar.Store(
 		unsafe.Pointer(C.Tess_Recognize(t.p)),
-		unsafe.Pointer(C.ResArr_Delete)),
+		C.ResArr_Delete),
 	)
 	if unsafe.Pointer(results) == nil {
 		return fmt.Errorf("neural.Tesseract.Inference: %w", ErrInference)
@@ -124,13 +124,13 @@ func (t Tesseract) Init() error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(patternsFile) // this could fail, but we don't care
+	defer os.Remove(patternsFile) //nolint:errcheck // don't care
 	// handle the model
 	mfn, cleanup, err := t.Model.File()
 	if err != nil {
 		return err
 	}
-	defer cleanup() // this could fail, but we don't care
+	defer cleanup() //nolint:errcheck // don't care
 
 	ar := &mem.Arena{}
 	defer ar.Free()
@@ -196,7 +196,7 @@ func (t *Tesseract) setPatterns() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck // don't care
 
 	var b strings.Builder
 	for i, p := range t.Patterns {

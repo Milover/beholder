@@ -28,6 +28,7 @@ size_t Count_Destructed();
 Count Count_New();
 Count Count_NewArray(size_t count);
 Count* Count_NewPtrArray(size_t count);
+void Count_Reset();	 // XXX: spooky
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type arrayTest struct {
@@ -89,6 +90,7 @@ func TestArray(t *testing.T) {
 	for _, tt := range arrayTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
 			// configure the test
 			if tt.NonEmulated && emuOnly {
@@ -108,7 +110,7 @@ func TestArray(t *testing.T) {
 			}()
 			// unmarshal
 			err := json.Unmarshal([]byte(tt.Config), &p)
-			assert.Nil(err, err)
+			require.NoError(err)
 			// initialize
 			err = func() error {
 				if err := p.Cs.Init(); err != nil {
@@ -119,11 +121,11 @@ func TestArray(t *testing.T) {
 				//}
 				return nil
 			}()
-			assert.Nil(err, err)
+			require.NoError(err)
 
 			// try to acquire images
 			err = p.Cs.StartAcquisition()
-			assert.Nil(err, err)
+			require.NoError(err)
 			defer p.Cs.StopAcquisition() // happens automatically
 
 			for i := uint64(0); i < nImgs && p.Cs.IsAcquiring(); i++ {
@@ -136,8 +138,7 @@ func TestArray(t *testing.T) {
 				t.Log("acquiring...")
 				err = errors.Join(err, p.Cs.Acquire())
 				for _, cam := range p.Cs {
-					if cam.Result.Buffer != nil {
-						// wat do?
+					if cam.Result.Buffer != nil { //nolint:staticcheck // wat do?
 					}
 				}
 				assert.ErrorIs(err, tt.Error, "unexpected error")

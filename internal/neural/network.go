@@ -222,7 +222,7 @@ func (n network) Inference(img models.Image, res *models.Result) error {
 	raw := toCImg(img)
 	results := (*C.ResArr)(ar.Store(
 		unsafe.Pointer(C.Det_Detect(n.p, &raw)),
-		unsafe.Pointer(C.ResArr_Delete)))
+		C.ResArr_Delete))
 	if unsafe.Pointer(results) == nil {
 		return ErrInference
 	}
@@ -241,7 +241,7 @@ func (n network) Init() error {
 	if err != nil {
 		return err
 	}
-	defer cleanup() // this could fail, but we don't care
+	defer cleanup() //nolint:errcheck // this could fail, but we don't care
 
 	ar := &mem.Arena{}
 	defer ar.Free()

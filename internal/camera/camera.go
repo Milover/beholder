@@ -152,11 +152,11 @@ func (c *Camera) Acquire() error {
 		return fmt.Errorf("camera.Camera.Acquire: %w", ErrAcquisition)
 	}
 	r := C.Cam_GetRawImage(c.p)
-	if unsafe.Pointer(r.buffer) == nil {
+	if r.buffer == nil {
 		return fmt.Errorf("camera.Camera.Acquire: could not get raw image data")
 	}
 	c.Result = models.Image{
-		Buffer:       unsafe.Pointer(r.buffer),
+		Buffer:       r.buffer,
 		ID:           uint64(r.id),
 		Timestamp:    time.Now(),
 		Rows:         int(r.rows),
@@ -193,7 +193,7 @@ func (c Camera) CmdIsDone(command string) bool {
 
 // Delete releases C-allocated memory. Once called, c is no longer valid.
 func (c *Camera) Delete() {
-	C.Cam_Delete((*C.Cam)(&c.p))
+	C.Cam_Delete(&c.p)
 }
 
 // IsAcquiring reports the image acquisition status of the camera.
@@ -309,7 +309,7 @@ func (c Camera) SetParameters(params Parameters) error {
 	defer ar.Free()
 	pars, nPars := params.makeCPars(ar)
 
-	if ok := C.Cam_SetParameters(c.p, (*C.Par)(pars), C.size_t(nPars)); !ok {
+	if ok := C.Cam_SetParameters(c.p, pars, nPars); !ok {
 		return errors.New("camera.Camera.SetParameters: could not set parameters")
 	}
 	return nil

@@ -45,12 +45,12 @@ Note that when building locally, to run the final binary, `LD_LIBRARY_PATH` need
 to be updated so that the shared libraries become available:
 
 ```sh
-LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging bin/beholder
+LD_LIBRARY_PATH=/<beholder-path>/_c-api/build/staging bin/beholder
 ```
 or
 
 ```sh
-export LD_LIBRARY_PATH=/<beholder-path>/c-deps/build/staging
+export LD_LIBRARY_PATH=/<beholder-path>/_c-api/build/staging
 bin/beholder
 ```
 

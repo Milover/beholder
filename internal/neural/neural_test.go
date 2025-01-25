@@ -16,6 +16,7 @@ import (
 	"github.com/Milover/beholder/internal/models"
 	"github.com/Milover/beholder/internal/neural/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -213,25 +214,28 @@ func TestNetworkInference(t *testing.T) {
 	for _, tt := range networkTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
 			// read image
 			f, err := os.Open(tt.Image)
-			assert.Nil(err, "could not open image file")
-			defer f.Close()
+			require.NoError(err, "could not open image file")
+			defer func() {
+				assert.NoError(f.Close())
+			}()
 			buf, err := io.ReadAll(f)
-			assert.Nil(err, "could not read image file")
+			require.NoError(err, "could not read image file")
 
 			// TODO: would be nice if we didn't have to import imgproc
 			p := imgproc.NewProcessor()
-			assert.Nil(p.Init(), "could not initialize image processor")
+			require.NoError(p.Init(), "could not initialize image processor")
 			defer p.Delete()
-			assert.Nil(p.DecodeImage(buf, imgproc.RMColor), "could not decode image")
+			require.NoError(p.DecodeImage(buf, imgproc.RMColor), "could not decode image")
 			img := p.GetRawImage()
 
 			// set up network
 			net := tt.Factory()
 			defer net.Delete()
-			assert.Nil(net.Init(), "unexpected Network.Init error")
+			require.NoError(net.Init(), "unexpected Network.Init error")
 
 			// test
 			for range netInfRepeat {

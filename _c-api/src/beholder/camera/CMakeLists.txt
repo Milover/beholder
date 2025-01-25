@@ -1,10 +1,13 @@
+# TODO: this should be a component library
+
 # the camera support library is always dymanic, because of pylon
 add_library(beholder_camera SHARED)
 add_library(beholder::beholder_camera ALIAS beholder_camera)
 
 set_target_properties(beholder_camera
 	PROPERTIES
-		SOVERSION "${PROJECT_VERSION}"
+		VERSION "${PROJECT_VERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+		SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
 #if (CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)

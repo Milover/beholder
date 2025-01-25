@@ -1,0 +1,55 @@
+{
+	"version": 6,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 25,
+		"patch": 1
+	},
+	"configurePresets": [
+		{
+			"name": "default",
+			"hidden": true,
+			"displayName": "Default config",
+			"description": "Default build using Ninja generator",
+			"binaryDir": "${sourceDir}/build/${presetName}",
+			"generator": "Ninja",
+			"cacheVariables": {
+				"CMAKE_CXX_STANDARD": "20",
+				"CMAKE_CXX_STANDARD_REQUIRED": true,
+				"CMAKE_CXX_EXTENSIONS": false,
+				"CMAKE_EXPORT_COMPILE_COMMANDS": true,
+				"BUILD_SHARED_LIBS": false
+			}
+		},
+		{
+			"name": "release",
+			"inherits": "default",
+			"displayName": "Default Release config",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_INTERPROCEDURAL_OPTIMIZATION": false,
+				"CMAKE_CXX_FLAGS": "-march=native"
+			}
+		}
+	],
+	"buildPresets": [
+		{ "name": "release", "configurePreset": "release", "verbose": true }
+	],
+	"packagePresets": [
+		{
+			"name": "release",
+			"configurePreset": "release",
+			"generators": [ "TGZ" ]
+		}
+	],
+	"workflowPresets": [
+		{
+			"name": "release",
+			"steps": [
+				{ "type": "configure", "name": "release" },
+				{ "type": "build",     "name": "release" },
+				{ "type": "package",   "name": "release" }
+			]
+		}
+	]
+}

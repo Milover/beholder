@@ -56,15 +56,11 @@ var outTargetFactoryMap = map[OutTargetType]outTargetFactory{
 }
 
 func newOutTarget(t OutTargetType, m json.RawMessage) (io.WriteCloser, error) {
-	switch t {
-	case OTTNone:
-		return newOutTargetNone(m)
-	case OTTStdout:
-		return newOutTargetStdout(m)
-	case OTTFile:
-		return newOutTargetFile(m)
+	factory, ok := outTargetFactoryMap[t]
+	if !ok {
+		return nil, ErrBadOutputTarget
 	}
-	return nil, ErrBadOutputTarget
+	return factory(m)
 }
 
 // outTargetNone is a dummy output target.

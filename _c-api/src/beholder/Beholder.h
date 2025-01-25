@@ -8,11 +8,10 @@
 #define BEHOLDER_H
 
 #include "beholder/BeholderExport.h"
+#include "beholder/camera/BeholderCamera.h"
 #include "beholder/capi/BeholderCAPI.h"
 #include "beholder/image/BeholderImage.h"
 #include "beholder/neural/BeholderNeural.h"
 #include "beholder/util/BeholderUtil.h"
-
-#include "beholder/camera/BeholderCamera.h"
 
 #endif	// BEHOLDER_H
