@@ -2,41 +2,40 @@ name: ci
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
+    paths-ignore:
+      - 'build/ci/beholder.Dockerfile'
+      - 'build/ci/beholder.Dockerfile.dockerignore'
+      - '_c-api/third_party/**'
+      - '.github/workflows/base_image.yml'
+      - '*.md'
   workflow_dispatch:
 
 env:
   GOLANGCI_VERSION: '1.63.4'
-  GCC_VERSION: 12
-  CLANG_VERSION: 14
+  CMAKE_PREFIX: '/usr/local'
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    container: debian:slim
+    runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         cfg:
-          #- { id: amd64-gnu-debug,   cmake_preset: debug,   build_flags: '-asan' }
-          - { id: amd64-gnu-release, cmake_preset: release, build_flags: '' }
+          #- { id: amd64-clang-debug,   base_tag: amd64-gnu,  cmake_preset: debug,   build_flags: '-asan' }
+          #- { id: amd64-clang-release, base_tag: amd64-gnu,  cmake_preset: release, build_flags: '' }
+          #- { id: amd64-gnu-debug,   base_tag: amd64-gnu,  cmake_preset: debug,   build_flags: '-asan' }
+          - { id: amd64-gnu-release, base_tag: amd64-gnu,  cmake_preset: release, build_flags: '' }
 
+    container:
+      image: ${{ vars.DOCKERHUB_USERNAME }}/beholder-third-party:${{ matrix.cfg.base_tag }}
+      credentials:
+        username: ${{ vars.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # We're using this for the time being, because we haven't set up
-      # cross-job caching at this point.
-      # Once we do, filtering can be done at workflow-level.
-      - name: Check file changes
-        uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            third-party:
-              - '_c-api/third_party/**'
-              - '.github/**'
-            c-api:
-              - '_c-api/**'
-              - '.github/**'
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -45,56 +44,25 @@ jobs:
           cache-dependency-path: |
             ./go.sum
 
-      # this should get re-built ~1/week
-      - name: Install packages
+      - name: Install Go modules
         run: |
-          apt-get install -y --no-install-recommends \
-            ca-certificates \
-            clang-${{ env.CLANG_VERSION }} \
-            clang-tidy-${{ env.CLANG_VERSION }} \
-            cmake \
-            curl \
-            findutils \
-            g++-${{ env.GCC_VERSION }} \
-            git \
-            make \
-            ninja-build \
-            pkg-config \
-            protobuf-compiler
-          rm -rf /var/lib/apt/lists/*
-
-          update-alternatives \
-              --install /usr/bin/gcc gcc /usr/bin/gcc-${{ env.GCC_VERSION }} 50 \
-              --slave   /usr/bin/g++ g++ /usr/bin/g++-${{ env.GCC_VERSION }}
-          update-alternatives \
-              --install /usr/bin/clang   clang   /usr/bin/clang-${{ env.CLANG_VERSION }} 50 \
-              --slave   /usr/bin/clang++ clang++ /usr/bin/clang++-${{ env.CLANG_VERSION }}
-
           go install google.golang.org/protobuf/cmd/protoc-gen-go
 
-      # FIXME: this should get built if there are changes to _c-api/third_party
-      # and the package should get cached --- subsequent steps then install
-      # cached archive
-      - name: Build third-party
-        #if: ${{ steps.changes.outputs.third-party == 'true' }}
-        run: |
-          make third-party
-
-      # FIXME: this should get built if there are changes to _c-api
-      # and the package should get cached --- subsequent steps then install
-      # cached archive
+      # FIXME: no caching and we lint every time we build, instead
+      # of only once per workflow run
       - name: Build C-API
-        #if: ${{ steps.changes.outputs.c-api == 'true' }}
         run: |
-          make c-api
+          CMAKE_PREFIX=${{ env.CMAKE_PREFIX }} \
+            CMAKE_PRESET=${{ matrix.cfg.cmake_preset }} \
+            make c-api
           ldconfig
 
       - name: Test C-API
-        #if: ${{ steps.changes.outputs.c-api == 'true' }}
         run: |
-          cd /usr/local/src/_c-api
+          cd _c-api
           ctest --preset=${{ matrix.cfg.cmake_preset }}
 
+      # FIXME: we should lint in an unrelated workflow
       - name: Lint beholder
         uses: golangci/golangci-lint-action@v6
         with:

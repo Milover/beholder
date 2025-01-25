@@ -1,9 +1,14 @@
 # syntax=docker/dockerfile:1
 
+# Are we building locally or from CI?
+ARG ci_build=false
+
 # CMake preset used for the build.
 ARG cmake_preset=release
 # Version of Go we're working with
 ARG go_version=1.23.5
+# Version of golangci we're working with
+ARG golangci_version=1.63.4
 # Version of Clang we're working with.
 ARG gcc_version=12
 # Version of Clang we're working with.
@@ -32,7 +37,9 @@ EOF
 # A base image containing build tools.
 FROM base AS builder-base
 
+ARG ci_build
 ARG go_version
+ARG golangci_version
 ARG gcc_version
 ARG clang_version
 ARG DEBIAN_FRONTEND
@@ -64,23 +71,26 @@ update-alternatives \
 	--install /usr/bin/clang   clang   /usr/bin/clang-${clang_version} 50 \
 	--slave   /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version}
 
-# FIXME: bad!
-curl -L -O https://go.dev/dl/go${go_version}.linux-amd64.tar.gz
-rm -rf /usr/local/go
-tar -C /usr/local -xzf go${go_version}.linux-amd64.tar.gz
-rm go${go_version}.linux-amd64.tar.gz
+# If we're running from CI, then CI handles Go setup,
+# we do it ourselves only if we're building locally
+if [ ${ci_build} = false ]; then
+	# install Go
+	curl -L -O https://go.dev/dl/go${go_version}.linux-amd64.tar.gz
+	rm -rf /usr/local/go
+	tar -C /usr/local -xzf go${go_version}.linux-amd64.tar.gz
+	rm go${go_version}.linux-amd64.tar.gz
 
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-
-# golangci recommends not using 'go install'
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.63.4
+	# install Go tools
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	# golangci recommends not using 'go install'
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${golangci_version}
+fi
 EOF
 
 # -----------------------------------------------------------------------------
 # Build, test and install libbeholder third-party libraries.
 FROM builder-base AS builder-third-party
 
-ARG cmake_preset
 ARG cmake_prefix
 ARG bh_src
 
@@ -96,13 +106,18 @@ set -exu
 
 cd ${bh_src}
 
-make third-party
+CMAKE_PREFIX=${cmake_prefix} \
+	make third-party
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
-# inspection and caching
-#rm -rf ${bh_src}/* ${bh_src}/.* 2> /dev/null || true
+# inspection and/or caching
+rm -rf ${bh_src}/* ${bh_src}/.* 2> /dev/null || true
 EOF
+
+# -----------------------------------------------------------------------------
+# NOTE: this is where the CI build ends, the rest of the Dockerfile is used
+# only when building locally.
 
 # -----------------------------------------------------------------------------
 # Build, test and install the libbeholder library.
@@ -112,19 +127,20 @@ ARG cmake_preset
 ARG cmake_prefix
 ARG bh_src
 
-# if we're not cleaning builder-third-party, then we don't have to re-copy
-#COPY ./ ${bh_src}/
+COPY ./ ${bh_src}/
 
 RUN <<EOF
 set -exu
 
 cd ${bh_src}
 
-make c-api
+CMAKE_PRESET=${cmake_preset} \
+	CMAKE_PREFIX=${cmake_prefix} \
+	make c-api
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
-# inspection and caching
+# inspection and/or caching
 #rm -rf ${bh_src}/* ${bh_src}/.* 2> /dev/null || true
 EOF
 

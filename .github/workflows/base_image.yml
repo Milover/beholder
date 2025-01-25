@@ -1,0 +1,61 @@
+# This workflow builds a base image containing packages and  third-party
+# dependencies used by both the C-API and the final beholder binary during
+# the build phase.
+
+name: base_image
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'build/ci/beholder.Dockerfile'
+      - 'build/ci/beholder.Dockerfile.dockerignore'
+      - '_c-api/third_party/**'
+      - '.github/workflows/base_image.yml'
+  schedule:
+    - cron: '42 0 * * 1'
+  workflow_dispatch:
+
+env:
+  GCC_VERSION: 12
+  CLANG_VERSION: 14
+  CMAKE_PREFIX: '/usr/local'
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        cfg:
+          # NOTE: we could technically have a GCC and a Clang version, but
+          # since we're not using IPO it's not strictly necessary at this point
+          #- { id: amd64-clang }
+          - { id: amd64-gnu }
+
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
+
+      # we specifically don't cache anything
+      - name: Docker build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: build/ci/beholder.Dockerfile
+          build-args: |
+            gcc_version: ${{ env.GCC_VERSION }}
+            clang_version: ${{ env.CLANG_VERSION }}
+            cmake_prefix: ${{ matrix.cfg.cmake_prefix }}
+            cmake_preset: release
+            ci_build: 'true'
+          network: host
+          target: builder-third-party
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/beholder-third-party:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/beholder-third-party:${{ matrix.cfg.id }}
