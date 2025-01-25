@@ -1,7 +1,7 @@
 # beholder.Dockerfile.dockerignore
 
 # macOS files
-.DS_Store
+**/.DS_Store
 
 # Temporary files
 *.swp
@@ -9,10 +9,10 @@
 
 # git files
 .git
-.gitignore
+**/.gitignore
 
 # Environment files
-.env
+**/.env
 
 # Protobuf generated files
 *.pb.go
@@ -21,14 +21,12 @@
 bin/
 
 # CMake build directories
-c-deps/build
-c-deps/third_party/build
+_c-api/build/
+_c-api/third_party/build/
+_c-api/third_party/src/pylon/archive/
 
 # CMake local config
-CMakeUserPresets.json
-
-# Internal DNN model files
-internal/neural/model/_internal/*/internal/
+**/CMakeUserPresets.json
 
 # Misc stuff
-vagrant/
+_vagrant/

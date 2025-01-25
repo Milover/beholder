@@ -7,7 +7,7 @@ PLATFORM		:= $(shell uname)
 
 CMAKE_PREFIX	?= /usr/local
 CMAKE_PRESET	?= release
-TAGS			?=
+GO_FLAGS		?=
 
 ifeq ($(PLATFORM), Darwin)
  # TODO: remove when no longer necessary, for more info see:
@@ -20,7 +20,7 @@ endif
 .PHONY: build
 build:
 	@echo $(MODULE)
-	scripts/build_go_project.sh $(TAGS)
+	scripts/build_go_project.sh $(GO_FLAGS)
 
 .PHONY: c-capi
 c-api:
@@ -34,7 +34,7 @@ third-party:
 # -----------
 .PHONY: clean
 clean:
-	scripts/clean_go_project.sh $(TAGS)
+	scripts/clean_go_project.sh $(GO_FLAGS)
 
 .PHONY: clean-c-api
 clean-c-api:
@@ -48,11 +48,7 @@ clean-third-party:
 # ----------
 .PHONY: test
 test:
-	go test -race ./...
-
-.PHONY: testv
-testv:
-	go test -v -race ./...
+	go test -race $(GO_FLAGS) ./...
 
 # Go specific stuff
 # -----------------
