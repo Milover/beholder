@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type cameraTest struct {
@@ -167,6 +168,7 @@ func TestCamera(t *testing.T) {
 	for _, tt := range cameraTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
 			// configure the test
 			if tt.NonEmulated && emuOnly {
@@ -196,7 +198,7 @@ func TestCamera(t *testing.T) {
 			}()
 			// unmarshal
 			err := json.Unmarshal([]byte(tt.Config), &p)
-			assert.Nil(err, err)
+			require.NoError(err)
 			// set serial number if defined
 			if len(serialNo) != 0 {
 				p.C.SN = serialNo
@@ -211,17 +213,17 @@ func TestCamera(t *testing.T) {
 				//}
 				return nil
 			}()
-			assert.Nil(err, err)
+			require.NoError(err)
 
 			// try to acquire images
 			err = p.C.StartAcquisition()
-			assert.Nil(err, err)
+			require.NoError(err)
 			defer p.C.StopAcquisition() // happens automatically
 
 			// generate acquisition errors
 			if !tt.NonEmulated && tt.FailBuffers > uint64(0) {
 				err = p.C.TstFailBuffers(tt.FailBuffers)
-				assert.Nil(err, err)
+				require.NoError(err)
 			}
 
 			for i := uint64(0); i < nImgs && p.C.IsAcquiring(); i++ {

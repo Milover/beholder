@@ -16,6 +16,7 @@ import (
 
 	"github.com/Milover/beholder/internal/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -96,13 +97,14 @@ func TestOutputers(t *testing.T) {
 	for _, tt := range outputerTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
 			var target outputerTestTarget
 
 			o, err := newOutputer(tt.Typ, &target)
-			assert.ErrorIs(err, tt.ErrConstruct)
+			require.ErrorIs(err, tt.ErrConstruct)
 
-			// do further tests if o was succesfully constructed
+			// do further tests if o was successfully constructed
 			if tt.ErrConstruct == nil {
 				// check the constructed type
 				assert.NotNil(tt.TypCheck, "TypCheck not defined")
@@ -110,15 +112,15 @@ func TestOutputers(t *testing.T) {
 
 				// write data to target
 				err := o.Write(&result)
-				assert.ErrorIs(err, tt.ErrWrite)
+				require.ErrorIs(err, tt.ErrWrite)
 
 				// flush the buffer
 				err = o.Flush()
-				assert.ErrorIs(err, tt.ErrFlush)
+				require.ErrorIs(err, tt.ErrFlush)
 
 				// close the target
 				err = o.Close()
-				assert.ErrorIs(err, errors.Join(tt.ErrFlush, tt.ErrClose))
+				require.ErrorIs(err, errors.Join(tt.ErrFlush, tt.ErrClose))
 
 				// check output
 				assert.Equal(tt.Expected, target.String())
@@ -199,10 +201,11 @@ func TestOutTargets(t *testing.T) {
 	for _, tt := range outTargetTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			assert := assert.New(t)
+			require := require.New(t)
 
 			var m json.RawMessage
 			err := json.Unmarshal([]byte(tt.Spec), &m)
-			assert.Nil(err, "could not unmarshal JSON spec")
+			require.NoError(err, "could not unmarshal JSON spec")
 
 			wc, err := newOutTargetWRedirectedStdout(func() (io.WriteCloser, error) {
 				return newOutTarget(tt.Typ, m)
@@ -211,9 +214,9 @@ func TestOutTargets(t *testing.T) {
 			if tt.Cleanup != nil {
 				t.Cleanup(tt.Cleanup(wc))
 			}
-			assert.ErrorIs(err, tt.ErrConstruct)
+			require.ErrorIs(err, tt.ErrConstruct)
 
-			// do further tests if wc was succesfully constructed
+			// do further tests if wc was successfully constructed
 			if tt.ErrConstruct == nil {
 				// check the constructed type
 				assert.NotNil(tt.TypCheck, "TypCheck not defined")
@@ -224,11 +227,11 @@ func TestOutTargets(t *testing.T) {
 				// write data to target
 				count, err := wc.Write(data)
 				assert.Equal(len(data), count, "mismatch in written bytes")
-				assert.ErrorIs(err, tt.ErrWrite)
+				require.ErrorIs(err, tt.ErrWrite)
 
 				// close the target
 				err = wc.Close()
-				assert.ErrorIs(err, tt.ErrClose)
+				require.ErrorIs(err, tt.ErrClose)
 			}
 		})
 	}

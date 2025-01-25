@@ -78,7 +78,7 @@ func (app *ProcApp) Run(filename string, imgID id, res *models.Result) error {
 	if err != nil {
 		return err
 	}
-	defer img.Close()
+	defer img.Close() //nolint:errcheck // don't care
 
 	// run OCR
 	// FIXME: this should probably happen in a different goroutine
@@ -158,7 +158,7 @@ func runProc(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		defer dir.Close()
+		defer dir.Close() //nolint:errcheck // don't care
 		// OPTIMIZE: should maybe walk instead
 		filenames, err := dir.Readdirnames(-1)
 		if err != nil {

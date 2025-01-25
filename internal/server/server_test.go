@@ -19,7 +19,9 @@ import (
 	pb "github.com/Milover/beholder/internal/server/proto"
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 	assert "github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -128,7 +130,7 @@ func sendRequest(method, route string, handler http.HandlerFunc) int {
 
 	handler(w, req)
 	resp := w.Result()
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // don't care
 
 	_, _ = io.ReadAll(resp.Body)
 	return resp.StatusCode
@@ -210,21 +212,22 @@ func TestRoutes(t *testing.T) {
 		t.Run(strings.TrimPrefix(tt.route, "/"), func(t *testing.T) {
 			t.Parallel()
 			assert := assert.New(t)
+			require := require.New(t)
 
 			// set up the servers
 			mock := &mockAcq{}
 			as, err := NewAcquisitionServer(mock)
-			assert.Nil(err, err)
+			require.NoError(err)
 			as.Start()
 			defer func() {
 				err := as.Close()
-				assert.Nil(err, err)
+				require.NoError(err)
 			}()
 
 			// run setup
 			if tt.setup != nil {
 				err := tt.setup(as, mock)
-				assert.Nil(err, err)
+				require.NoError(err)
 			}
 
 			// test the route
@@ -235,7 +238,7 @@ func TestRoutes(t *testing.T) {
 			assert.Equal(tt.expStatus, statusCode)
 
 			err = tt.pass(as, mock)
-			assert.Nil(err, err)
+			require.NoError(err)
 		})
 	}
 }
@@ -249,6 +252,8 @@ type client struct {
 
 // newClient creates a new client with a WebSocket connection established
 // at url + endpoint.
+//
+//nolint:unparam // not changing signature
 func newClient(ctx context.Context, url, endpoint string, cl *http.Client) (*client, error) {
 	c, _, err := websocket.Dial(ctx, url+endpoint, nil)
 	if err != nil {
@@ -270,7 +275,7 @@ func (cl *client) nextMessage(ctx context.Context) (proto.Message, error) {
 		return nil, err
 	}
 	if typ != websocket.MessageBinary {
-		cl.c.Close(websocket.StatusUnsupportedData, "expected binary message")
+		cl.c.Close(websocket.StatusUnsupportedData, "expected binary message") //nolint:errcheck // don't care
 		return nil, fmt.Errorf("expected binary message, but got: %v", typ)
 	}
 	// unmarshall the message
@@ -281,6 +286,7 @@ func (cl *client) nextMessage(ctx context.Context) (proto.Message, error) {
 	return msg, nil
 }
 
+//nolint:unparam // not changing signature
 func (cl *client) doHTTPRequest(ctx context.Context, method, endpoint string, status int) error {
 	reqCtx, reqCancel := context.WithTimeout(ctx, time.Second*5)
 	defer reqCancel()
@@ -299,7 +305,7 @@ func (cl *client) doHTTPRequest(ctx context.Context, method, endpoint string, st
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // don't care
 
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -317,7 +323,7 @@ func (cl *client) doHTTPRequest(ctx context.Context, method, endpoint string, st
 func TestStartStopAcquisition(t *testing.T) {
 	rootPath = "." // mount "/" at current working directory
 	t.Parallel()
-	assert := assert.New(t)
+	require := require.New(t)
 
 	const nClients = 10
 	const nRequests = 100
@@ -325,11 +331,11 @@ func TestStartStopAcquisition(t *testing.T) {
 	// set up the servers
 	mock := &mockAcq{}
 	as, err := NewAcquisitionServer(mock)
-	assert.Nil(err, err)
+	require.NoError(err)
 	as.Start()
 	defer func() {
 		err := as.Close()
-		assert.Nil(err, err)
+		require.NoError(err)
 	}()
 	srv := httptest.NewServer(as)
 	defer srv.Close()
@@ -338,36 +344,32 @@ func TestStartStopAcquisition(t *testing.T) {
 	defer cancel()
 
 	// Set up evil clients and let them randomly start/stop acquisition.
-	var wg sync.WaitGroup
+	g := new(errgroup.Group)
 	ch := make(chan bool, 1)
 	for i := range nClients {
 		c, err := newClient(ctx, srv.URL, "/stream", srv.Client())
-		assert.Nil(err, err)
+		require.NoError(err)
 		defer func() {
 			err := c.Close()
-			assert.Nil(err, fmt.Sprintf("client[%v] close error: %v", i, err))
+			require.NoErrorf(err, "client[%v] close error: %v", i, err)
 		}()
-		wg.Add(nRequests)
 		for range nRequests {
 			select {
 			case ch <- true:
 				<-ch
-				go func() {
-					defer wg.Done()
-					err := c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-start", http.StatusOK)
-					assert.Nil(err, err)
-				}()
+				g.Go(func() error {
+					return c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-start", http.StatusOK)
+				})
 			case ch <- false:
 				<-ch
-				go func() {
-					defer wg.Done()
-					err := c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-stop", http.StatusOK)
-					assert.Nil(err, err)
-				}()
+				g.Go(func() error {
+					return c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-stop", http.StatusOK)
+				})
 			}
 		}
 	}
-	wg.Wait()
+	err = g.Wait()
+	require.NoError(err)
 }
 
 //
@@ -390,15 +392,16 @@ func TestMessageImage(t *testing.T) {
 	t.Run("simple-send-msg-image", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
+		require := require.New(t)
 
 		// set up the servers
 		mock := &mockAcq{}
 		as, err := NewAcquisitionServer(mock)
-		assert.Nil(err, err)
+		require.NoError(err)
 		as.Start()
 		defer func() {
 			err := as.Close()
-			assert.Nil(err, err)
+			require.NoError(err)
 		}()
 		srv := httptest.NewServer(as)
 		defer srv.Close()
@@ -408,31 +411,31 @@ func TestMessageImage(t *testing.T) {
 		defer cancel()
 
 		client, err := newClient(ctx, srv.URL, "/stream", srv.Client())
-		assert.Nil(err, err)
+		require.NoError(err)
 		defer func() {
 			err := client.Close()
-			assert.Nil(err, fmt.Sprintf("client close error: %v", err))
+			require.NoErrorf(err, "client close error: %v", err)
 		}()
 
 		// start acquisition
 		err = client.doHTTPRequest(ctx, http.MethodPost, "/acquisition-start", http.StatusOK)
-		assert.Nil(err, err)
+		require.NoError(err)
 		err = mock.assertAcquisitionStarted()
-		assert.Nil(err, err)
+		require.NoError(err)
 
 		// acquire (and send) blobs
 		expMsg := withPayload(mock.acquire())
 
 		// read and check the message
 		msg, err := client.nextMessage(ctx)
-		assert.Nil(err, err)
+		require.NoError(err)
 		assert.True(proto.Equal(expMsg, msg))
 
 		// stop acquisition
 		err = client.doHTTPRequest(ctx, http.MethodPost, "/acquisition-stop", http.StatusOK)
-		assert.Nil(err, err)
+		require.NoError(err)
 		err = mock.assertAcquisitionStopped()
-		assert.Nil(err, err)
+		require.NoError(err)
 	})
 
 	// This test is a real-worldish concurrent use scenario (eg. several
@@ -470,7 +473,7 @@ func TestMessageImage(t *testing.T) {
 	// development environments, so this implementation is ok for now.
 	t.Run("concurrent-send-msg-image", func(t *testing.T) {
 		t.Parallel()
-		assert := assert.New(t)
+		require := require.New(t)
 
 		const nMessages = 24
 		const nClients = 10
@@ -478,12 +481,12 @@ func TestMessageImage(t *testing.T) {
 		// set up the servers
 		mock := &mockAcq{}
 		as, err := NewAcquisitionServer(mock)
-		assert.Nil(err, err)
+		require.NoError(err)
 		as.ConnBufferSize = max(as.ConnBufferSize, nMessages) // to avoid 'connection too slow' failures
 		as.Start()
 		defer func() {
 			err := as.Close()
-			assert.Nil(err, err)
+			require.NoError(err)
 		}()
 		srv := httptest.NewServer(as)
 		defer srv.Close()
@@ -518,53 +521,50 @@ func TestMessageImage(t *testing.T) {
 		clients := make([]*client, nClients)
 		for i := range clients {
 			clients[i], err = newClient(ctx, srv.URL, "/stream", srv.Client())
-			assert.Nil(err, err)
+			require.NoError(err)
 			defer func() {
 				err := clients[i].Close()
-				assert.Nil(err, fmt.Sprintf("client[%v] close error: %v", i, err))
+				require.NoErrorf(err, "client[%v] close error: %v", i, err)
 			}()
 		}
 		// Let the clients start/stop acquisition and check their messages
 		// concurrently.
-		var wg sync.WaitGroup
+		g := new(errgroup.Group)
 		for _, c := range clients {
 			// start acquisition (should start only once, even when called
 			// concurrently)
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			g.Go(func() error {
 				defer canAcquireFn() // signal that we can start generating blobs
-				err := c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-start", http.StatusOK)
-				assert.Nil(err, err)
+				return c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-start", http.StatusOK)
 				// mock.assertAcquisitionStarted() needs further synchronization
-			}()
-			// read and check messages as they're comming in
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			})
+			// read and check messages as they're coming in
+			g.Go(func() error {
+				var err error
 				for i := range nMessages {
-					msg, err := c.nextMessage(ctx)
-					assert.Nil(err, err)
+					msg, errClient := c.nextMessage(ctx)
+					err = errors.Join(err, errClient)
 
 					// ok, because we can't receive more messages than we send
 					msgsMu.Lock()
-					assert.True(proto.Equal(msgs[i], msg))
+					if !proto.Equal(msgs[i], msg) {
+						err = errors.Join(err, fmt.Errorf(
+							"bad msg:\nexpected:\n%v\nbut got:\n%v", msgs[i], msg))
+					}
 					msgsMu.Unlock()
 				}
-			}()
+				return err
+			})
 			// stop acquisition (should stop only once, even when called
 			// concurrently)
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			g.Go(func() error {
 				<-acquisitionDone // wait until all blobs have been generated
-				err := c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-stop", http.StatusOK)
-				assert.Nil(err, err)
+				return c.doHTTPRequest(ctx, http.MethodPost, "/acquisition-stop", http.StatusOK)
 				// mock.assertAcquisitionStopped() needs further synchronization
-			}()
+			})
 		}
-
-		wg.Wait()
+		err = g.Wait()
+		require.NoError(err)
 	})
 }
 
@@ -649,7 +649,7 @@ var opMsgTests = []opMsgTest{
 		},
 		PostCheck: func(t *testing.T, _ *AcquisitionServer, mock *mockAcq) {
 			err := mock.assertAcquisitionStarted()
-			assert.Nil(t, err, err)
+			require.NoError(t, err)
 		},
 	},
 	{
@@ -670,11 +670,11 @@ var opMsgTests = []opMsgTest{
 		PreCheck: func(t *testing.T, _ *AcquisitionServer, mock *mockAcq) {
 			_, _ = mock.StartAcquisition(0)
 			err := mock.assertAcquisitionStarted()
-			assert.Nil(t, err, err)
+			require.NoError(t, err)
 		},
 		PostCheck: func(t *testing.T, _ *AcquisitionServer, mock *mockAcq) {
 			err := mock.assertAcquisitionStopped()
-			assert.Nil(t, err, err)
+			require.NoError(t, err)
 		},
 	},
 }
@@ -713,17 +713,17 @@ func TestMessageOpBasic(t *testing.T) {
 		name := fmt.Sprintf("%v-cli-%d-msg-%d", tst.Name, tv.clis, tv.msgs)
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			assert := assert.New(t)
+			require := require.New(t)
 
 			// setup
 			mock := &mockAcq{}
 			as, err := NewAcquisitionServer(mock)
-			assert.Nil(err, err)
+			require.NoError(err)
 			as.ConnBufferSize = max(as.ConnBufferSize, tv.msgs) // to avoid 'connection too slow' failures
 			as.Start()
 			defer func() {
 				err := as.Close()
-				assert.Nil(err, err)
+				require.NoError(err)
 			}()
 			srv := httptest.NewServer(as)
 			defer srv.Close()
@@ -735,10 +735,10 @@ func TestMessageOpBasic(t *testing.T) {
 			clients := make([]*client, tv.clis)
 			for i := range tv.clis {
 				clients[i], err = newClient(ctx, srv.URL, "/stream", srv.Client())
-				assert.Nil(err, err)
+				require.NoError(err)
 				defer func() {
 					err := clients[i].Close()
-					assert.Nil(err, err)
+					require.NoError(err)
 				}()
 			}
 
@@ -746,33 +746,37 @@ func TestMessageOpBasic(t *testing.T) {
 			req := tst.request()
 			expResp := tst.response(req, tst.Payload)
 			reqBuf, err := proto.Marshal(req)
-			assert.Nil(err, err)
+			require.NoError(err)
 
 			// send and receive/check messages
-			var wg sync.WaitGroup
+			g := new(errgroup.Group)
 			for _, client := range clients {
 				// send messages
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				g.Go(func() error {
+					var err error
 					for range tv.msgs {
-						err := client.c.Write(ctx, websocket.MessageBinary, reqBuf)
-						assert.Nil(err, err)
+						err = errors.Join(err,
+							client.c.Write(ctx, websocket.MessageBinary, reqBuf))
 					}
-				}()
+					return err
+				})
 				// receive and check messages
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				g.Go(func() error {
+					var err error
 					for range tv.msgs {
 						// read and check the server response message
-						resp, err := client.nextMessage(ctx)
-						assert.Nil(err, err)
-						assert.True(proto.Equal(expResp, resp))
+						resp, errClient := client.nextMessage(ctx)
+						err = errors.Join(err, errClient)
+						if !proto.Equal(expResp, resp) {
+							err = errors.Join(err, fmt.Errorf(
+								"bad response:\nexpected:\n%v\nbut got:\n%v", expResp, resp))
+						}
 					}
-				}()
+					return err
+				})
 			}
-			wg.Wait()
+			err = g.Wait()
+			require.NoError(err)
 		})
 	}
 }
@@ -805,16 +809,16 @@ func TestMessageOpPermissions(t *testing.T) {
 	for _, tt := range opMsgTests {
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
-			assert := assert.New(t)
+			require := require.New(t)
 
 			// setup
 			mock := &mockAcq{}
 			as, err := NewAcquisitionServer(mock)
-			assert.Nil(err, err)
+			require.NoError(err)
 			as.Start()
 			defer func() {
 				err := as.Close()
-				assert.Nil(err, err)
+				require.NoError(err)
 			}()
 			srv := httptest.NewServer(as)
 			defer srv.Close()
@@ -826,10 +830,10 @@ func TestMessageOpPermissions(t *testing.T) {
 			clients := make([]*client, clis)
 			for i := range clis {
 				clients[i], err = newClient(ctx, srv.URL, "/stream", srv.Client())
-				assert.Nil(err, err)
+				require.NoError(err)
 				defer func() {
 					err := clients[i].Close()
-					assert.Nil(err, err)
+					require.NoError(err)
 				}()
 			}
 
@@ -844,50 +848,53 @@ func TestMessageOpPermissions(t *testing.T) {
 			obsResp := tt.response(req, tt.ObsPayload)
 
 			reqBuf, err := proto.Marshal(req)
-			assert.Nil(err, err)
+			require.NoError(err)
 
 			// send and receive/check messages
-			var wg sync.WaitGroup
+			g := new(errgroup.Group)
 			for i, client := range clients {
 				// send messages
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err := client.c.Write(ctx, websocket.MessageBinary, reqBuf)
-					assert.Nil(err, err)
-				}()
+				g.Go(func() error {
+					return client.c.Write(ctx, websocket.MessageBinary, reqBuf)
+				})
 				// receive and check messages
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				g.Go(func() error {
 					if i == 0 {
 						// the first client is the 'controller' and receives
 						// a response only to it's own request
 						resp, err := client.nextMessage(ctx)
-						assert.Nil(err, err)
-						assert.True(proto.Equal(ctrlResp, resp))
+						if !proto.Equal(ctrlResp, resp) {
+							err = errors.Join(err, fmt.Errorf(
+								"bad controler response:\nexpected:\n%v\nbut got:\n%v",
+								ctrlResp, resp))
+						}
+						return err
 					} else { // everyone else is an 'observer'
 						// everyone else is an 'observer' and receives both
 						// their own response, and the 'controller' response,
 						// but we don't know in which order
 						gotCtrlResp, gotObsResp := false, false
+						var err error
 						for range 2 {
-							resp, err := client.nextMessage(ctx)
-							assert.Nil(err, err)
+							resp, errClient := client.nextMessage(ctx)
+							err = errors.Join(err, errClient)
 							gotCtrlResp = gotCtrlResp || proto.Equal(ctrlResp, resp)
 							gotObsResp = gotObsResp || proto.Equal(obsResp, resp)
 						}
-						assert.True(gotCtrlResp && gotObsResp)
+						if !(gotCtrlResp && gotObsResp) {
+							err = errors.Join(err, errors.New("bad observer response"))
+						}
+						return err
 					}
-				}()
+				})
 			}
-			wg.Wait()
+			err = g.Wait()
+			require.NoError(err)
 
 			// run post-check
 			if tt.PostCheck != nil {
 				tt.PostCheck(t, as, mock)
 			}
 		})
-
 	}
 }

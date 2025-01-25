@@ -44,7 +44,7 @@ func (p *Pointer) Delete() {
 // An Arena manages C-allocated memory.
 //
 // Arena assumes ownership of all of it's pointers, hence when Free is called
-// all memory accessable through the Arena is freed.
+// all memory accessible through the Arena is freed.
 //
 // The zero value for an Arena is a ready-to-use zero-sized array of pointers
 // to C-allocated memory.
@@ -143,7 +143,7 @@ func (ar *Arena) StoreArray(ptrs, delP, delEl unsafe.Pointer, count uint64) unsa
 //
 // cstr is returned for convenience.
 func (ar *Arena) StoreCStr(cstr unsafe.Pointer) unsafe.Pointer {
-	return ar.Store(cstr, unsafe.Pointer(C.Mem_DeleteCharPtr))
+	return ar.Store(cstr, C.Mem_DeleteCharPtr)
 }
 
 // StoreCStrConv stores the C-string (*C.char) cstr into ar, which then assumes
@@ -163,8 +163,8 @@ func (ar *Arena) StoreCStrConv(cstr unsafe.Pointer) string {
 func (ar *Arena) StoreCStrArray(cstr unsafe.Pointer, count uint64) unsafe.Pointer {
 	return ar.StoreArray(
 		cstr,
-		unsafe.Pointer(C.Mem_DeleteCharPtrArr),
-		unsafe.Pointer(C.Mem_DeleteCharPtr),
+		C.Mem_DeleteCharPtrArr,
+		C.Mem_DeleteCharPtr,
 		count,
 	)
 }
@@ -180,13 +180,13 @@ func (ar *Arena) StoreCStrArrayConv(cstr unsafe.Pointer, count uint64) []string 
 	for _, ptr := range chs {
 		*ar = append(*ar, Pointer{
 			Ptr: unsafe.Pointer(ptr),
-			Del: unsafe.Pointer(C.Mem_DeleteCharPtr),
+			Del: C.Mem_DeleteCharPtr,
 		})
 		strs = append(strs, C.GoString(ptr))
 	}
 	*ar = append(*ar, Pointer{
 		Ptr: cstr,
-		Del: unsafe.Pointer(C.Mem_DeleteCharPtrArr),
+		Del: C.Mem_DeleteCharPtrArr,
 	})
 	return strs
 }

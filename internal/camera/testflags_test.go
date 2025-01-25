@@ -22,7 +22,7 @@ import (
 // This variable is evaluated before any init() functions are run, and thus
 // ensures that "PYLON_CAMEMU" is present in the environment before
 // the pylon API is initialized.
-var _ = func() (_ struct{}) {
+var _ = func() (_ struct{}) { //nolint: unparam
 	if err := os.Setenv("PYLON_CAMEMU", "3"); err != nil {
 		panic("could not set 'PYLON_CAMEMU'")
 	}

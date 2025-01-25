@@ -761,7 +761,7 @@ func NewMorphology(m json.RawMessage) (unsafe.Pointer, error) {
 	)), nil
 }
 
-// normBC represents an automatic brigthness and contrast adjustment operation.
+// normBC represents an automatic brightness and contrast adjustment operation.
 type normBC struct {
 	ClipLowPct  float32 `json:"clip_low_pct"`  // low-value side clip percentage
 	ClipHighPct float32 `json:"clip_high_pct"` // high-value side clip percentage

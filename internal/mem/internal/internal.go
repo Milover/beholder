@@ -43,12 +43,16 @@ func Destructed() uint64 {
 	return uint64(C.Count_Destructed())
 }
 
+func Reset() {
+	C.Count_Reset()
+}
+
 // CounterArrDeleter is a convenience function which sets p's deleter
 // to C.Count_DeleteArr.
 //
 // It is necessary because C functions can't be called from tests.
 func CounterArrDeleter() unsafe.Pointer {
-	return unsafe.Pointer(C.Count_DeleteArr)
+	return C.Count_DeleteArr
 }
 
 // CounterDeleter is a convenience function which sets p's deleter
@@ -56,7 +60,7 @@ func CounterArrDeleter() unsafe.Pointer {
 //
 // It is necessary because C functions can't be called from tests.
 func CounterDeleter() unsafe.Pointer {
-	return unsafe.Pointer(C.Count_Delete)
+	return C.Count_Delete
 }
 
 // CounterPtrArrDeleter is a convenience function which sets p's deleter
@@ -64,5 +68,5 @@ func CounterDeleter() unsafe.Pointer {
 //
 // It is necessary because C functions can't be called from tests.
 func CounterPtrArrDeleter() unsafe.Pointer {
-	return unsafe.Pointer(C.Count_DeletePtrArr)
+	return C.Count_DeletePtrArr
 }

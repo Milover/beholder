@@ -110,5 +110,5 @@ func getTransportLayer(typ Type) (*transportLayer, error) {
 // If tl is the last transport layer instance, the pylon runtime resources
 // are also freed.
 func (tl *transportLayer) Delete() {
-	C.Trans_Delete((*C.Trans)(&tl.p))
+	C.Trans_Delete(&tl.p)
 }

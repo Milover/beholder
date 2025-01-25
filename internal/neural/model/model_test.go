@@ -9,7 +9,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -64,19 +64,19 @@ var modelTests = []modelTest{
 func TestModelFile(t *testing.T) {
 	for _, tt := range modelTests {
 		t.Run(tt.Name, func(t *testing.T) {
-			assert := assert.New(t)
+			require := require.New(t)
 
 			f, cleanup, err := tt.Mod.File()
-			assert.ErrorIs(err, tt.Error)
+			require.ErrorIs(err, tt.Error)
 
 			// check the model file
 			if tt.Error == nil {
 				_, err = os.Stat(f)
-				assert.Nil(err, "model file error")
+				require.NoError(err, "model file error")
 			}
 
 			// cleanup
-			assert.Nil(cleanup(), "unexpected Cleanup error")
+			require.NoError(cleanup(), "unexpected Cleanup error")
 		})
 	}
 }

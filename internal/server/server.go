@@ -289,7 +289,11 @@ func (s *AcquisitionServer) Close() error {
 
 	var err error
 	for c := range s.conns {
-		err = errors.Join(err, c.drop(websocket.StatusGoingAway, nil))
+		e := c.drop(websocket.StatusGoingAway, nil)
+		// trying to close a closed connection is ok, otherwise we report
+		if !errors.Is(e, net.ErrClosed) {
+			err = errors.Join(err, e)
+		}
 	}
 	return err
 }
@@ -326,8 +330,7 @@ func (s *AcquisitionServer) Start() {
 				return
 			case req := <-s.inbox:
 				resp, uuid, err := s.processRequest(req)
-				// ignore the error if it's specifically a 'no-distribute' error
-				if err != nil && err != ErrNoDistribute {
+				if err != nil && err != ErrNoDistribute { //nolint:errorlint // ignore if it's specifically a 'no-distribute' error
 					s.Logf("%v (uuid: %v; conn: %p)", err, uuid, req.orig)
 				}
 				// if there is an error, only the request origin should receive
@@ -379,7 +382,10 @@ func (s *AcquisitionServer) streamHandler(w http.ResponseWriter, r *http.Request
 	}
 	if websocket.CloseStatus(err) == websocket.StatusNormalClosure ||
 		websocket.CloseStatus(err) == websocket.StatusGoingAway {
-		s.Logf("websocket connection closed (%p)", err.(*connError).conn)
+		var conErr *connError
+		if errors.As(err, &conErr) {
+			s.Logf("websocket connection closed (%p)", conErr.conn)
+		}
 		return
 	}
 	if err != nil {
