@@ -66,7 +66,7 @@ jobs:
       - name: Lint beholder
         uses: golangci/golangci-lint-action@v6
         with:
-          version: ${{ env.GOLANGCI_VERSION }}
+          version: v${{ env.GOLANGCI_VERSION }}
 
       - name: Build beholder
         run: |
