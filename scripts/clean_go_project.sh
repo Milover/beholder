@@ -18,10 +18,10 @@ function usage() {
 	exit 1
 }
 
-go_flags="${1:-""}"
+go_flags="${1:-}"
 
 cd "$BH_ROOT"
 
 # TODO: clean generated files
-go clean "$go_flags" ./...
+go clean $go_flags ./...
 rm -rf bin

@@ -18,11 +18,11 @@ function usage() {
 	exit 1
 }
 
-go_flags="${1:-""}"
+go_flags="${1:-}"
 target=$(basename $(go list -m))
 
 cd "$BH_ROOT"
 
-go generate -x "$go_flags" ./...
+go generate -x $go_flags ./...
 go mod tidy
-go build "$go_flags" -o bin/$target main.go
+go build $go_flags -o bin/$target main.go
