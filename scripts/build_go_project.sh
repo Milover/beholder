@@ -23,6 +23,6 @@ target=$(basename $(go list -m))
 
 cd "$BH_ROOT"
 
+go generate -x "$go_flags" ./...
 go mod tidy
-go generate "$go_flags" ./...
 go build "$go_flags" -o bin/$target main.go
