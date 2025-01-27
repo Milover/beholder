@@ -1,0 +1,38 @@
+[
+	{
+		"version": "8.0.2",
+		"vertag": "16314",
+		"linux": {
+			"amd64": {
+				"setup_archive": "pylon-8.0.2.16314_linux-x86_64_setup.tar.gz",
+				"archive": "pylon-8.0.2.16314_linux-x86_64.tar.gz",
+				"url_base": "https://downloadbsl.blob.core.windows.net/software",
+				"md5": "8ce682ac8d9012b21c1533dc30ecc9de"
+			},
+			"arm64": {
+				"setup_archive": "pylon-8.0.2.16314_linux-aarch64_setup.tar.gz",
+				"archive": "pylon-8.0.2.16314_linux-aarch64.tar.gz",
+				"url_base": "https://downloads-ctf.baslerweb.com/dg51pdwahxgw/2hYtOdhN3XS2T8LXCD2PWm/4265334f5b42514b1d6c7ccc9c0d4b37",
+				"md5": "f95e76bd5b6e839b097dec90d17e3e01"
+			}
+		}
+	},
+	{
+		"version": "7.5.0",
+		"vertag": "15658",
+		"linux": {
+			"amd64": {
+				"setup_archive": "pylon-7.5.0.15658_linux-x86_64_setup.tar.gz",
+				"archive": "pylon-7.5.0.15658_linux-x86_64.tar.gz",
+				"url_base": "https://downloads-ctf.baslerweb.com/dg51pdwahxgw/2Yng7CRH1jg02IKHvbUsNR/6adf0ef8b4d37cd33d37f432065893b8",
+				"md5": "31223a576da03796489a3e4a3da51fcb"
+			},
+			"arm64": {
+				"setup_archive": "pylon-7.5.0.15658-linux-aarch64_setup.tar.gz",
+				"archive": "pylon-7.5.0.15658_linux-aarch64.tar.gz",
+				"url_base": "https://downloads-ctf.baslerweb.com/dg51pdwahxgw/2n0895dRYhYMngejm33gao/1302df1b607a8197feadda7e739645de",
+				"md5": "7cdc72ad33bcfefd1455ff55128ba10b"
+			}
+		}
+	}
+]

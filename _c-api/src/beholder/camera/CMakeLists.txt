@@ -6,8 +6,7 @@ add_library(beholder::beholder_camera ALIAS beholder_camera)
 
 set_target_properties(beholder_camera
 	PROPERTIES
-		VERSION "${PROJECT_VERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-		SOVERSION ${PROJECT_VERSION_MAJOR}
+		SOVERSION ${PROJECT_VERSION}
 )
 
 #if (CMAKE_BUILD_TYPE OR CMAKE_CONFIGURATION_TYPES)
@@ -39,8 +38,8 @@ target_sources(beholder_camera
 )
 target_link_libraries(beholder_camera
 	PRIVATE
-		pylon::pylon
 		beholder::beholder
+		pylon::pylon
 )
 target_compile_features(beholder_camera PUBLIC cxx_std_17)
 

@@ -1,62 +1,116 @@
 # MODULE:   bhPylonVars
 #
 # PROVIDES:
-#	bh_set_pylon_vars(pylon-ver pylon-archive pylon-url pylon-md5)
+#	bh_set_pylon_vars(
+#		json-string
+#		version-string
+#		archive-var
+#		url-var
+#		md5-var
+#	)
 #
-#		Set up and export variables for pylon version, archive file name,
-#		URL and archive MD5 hash.
+#	Extract pylon archive file name, download URL and MD5 hash from a
+#	JSON configuration string for the requested pylon version.
 #
-#		FIXME: the URLs, MD5s and the version is hardcoded, so this will
-#		probably break in the most inopportune time.
+#	The returned configuration variables are for the host platform.
+#
+#	The JSON file containing configuration data should have the following
+#	structure:
+#
+#		[
+#			{
+#				"version": "0.1.2",
+#				"vertag": "12345",
+#				"linux": {
+#					"amd64": {
+#						"setup_archive": "pylon-0.1.2.12345_linux-x86_64_setup.tar.gz",
+#						"archive": "pylon-0.1.2.12345_linux-x86_64.tar.gz",
+#						"url_base": "https://example.com/download",
+#						"md5": "8ce682ac8d9012b21c1533dc30ecc9de"
+#					},
+#					"arm64": { ... },
+#					"some-other-arch": { ... }
+#				},
+#				"darwin": { ...  },
+#				"some-other-platform": { ... }
+#			},
+#			{ ... }
+#		]
 #
 # EXAMPLE USAGE:
 #
 #	project(beholder-pylon)
 #
+#	set(version "7.5.0")
+#	file(READ "versions.json" json)
+#
 #	include(bhPylonVars.cmake)
-#	bh_set_pylon_vars(pylon-ver pylon-archive pylon-url pylon-md5)
+#	bh_set_pylon_vars(
+#		"${json}"
+#		"${verson}"
+#		archive-var
+#		url-var
+#		md5-var
+#	)
 #
 #	ExternalProject_Add(
 #		bh-pylon
-#		URL "${pylon-url}"
-#		URL_MD5 "${pylon-md5}"
+#		URL "${url-var}"
+#		URL_MD5 "${md5-var}"
 #	)
 #
 #==============================================================================
 
-function(bh_set_pylon_vars ver archive url md5)
-	set(_p_pkg "pylon")
-	set(_p_ver "8.0.2")
-	set(_p_vertag "${_p_ver}.16314")
-	string(TOLOWER "${CMAKE_SYSTEM_NAME}" _p_os)
-	set(_p_arch "")
-	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "^(aarch64|arm64)")
-		set(_p_arch "aarch64")
-	else()
-		set(_p_arch "${CMAKE_SYSTEM_PROCESSOR}")
-	endif()
-	set(_p_basename "${_p_pkg}-${_p_vertag}_${_p_os}-${_p_arch}")
-	set(_p_setup "${_p_basename}_setup.tar.gz")
-	set(_p_archive "${_p_basename}.tar.gz")
+function(bh_set_pylon_vars json ver archive url md5)
+	unset(_ver)
+	unset(_setup_archive)
+	unset(_archive)
+	unset(_url_base)
+	unset(_md5)
 
-	set(_p_url "")
-	set(_p_md5 "")
-	if(_p_arch STREQUAL "x86_64")
-		set(_p_url "https://downloadbsl.blob.core.windows.net/software/${_p_setup}")
-		set(_p_md5 "8ce682ac8d9012b21c1533dc30ecc9de")
-	elseif(_p_arch MATCHES "^(aarch64|arm64)")
-		set(_p_url "https://downloads-ctf.baslerweb.com/dg51pdwahxgw/2hYtOdhN3XS2T8LXCD2PWm/4265334f5b42514b1d6c7ccc9c0d4b37/${_p_setup}")
-		set(_p_md5 "f95e76bd5b6e839b097dec90d17e3e01")
+	# set the os and architecture
+	string(TOLOWER "${CMAKE_SYSTEM_NAME}" _os)
+	string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" _arch)
+	if("${_arch}" MATCHES "^(aarch64|arm64)")
+		set(_arch "arm64")
+	elseif("${_arch}" MATCHES "^(x86_64|arm64)")
+		set(_arch "amd64")
 	else()
-		message(FATAL_ERROR "Unsupported ${_p_pkg} architecture: ${_p_arch}")
+		message(FATAL_ERROR "Unsupported pylon architecture: ${_arch}")
+	endif()
+
+	# find the config for the supplied version
+	string(JSON _n_items LENGTH "${json}")
+	math(EXPR _looprange "${_n_items} - 1")
+	foreach(i RANGE ${_looprange})
+		# get the current config and it's version
+		string(JSON _item GET "${json}" ${i})
+		string(JSON _ver GET "${_item}" "version")
+		if ("${_ver}" STREQUAL "${ver}")
+			# check if the ver-os-arch setup we want exists
+			string(JSON _cfg ERROR_VARIABLE _err GET "${_item}" ${_os} ${_arch})
+			if (NOT("${_err}" STREQUAL "NOTFOUND"))
+				continue()
+			endif()
+			# pull out the config variables
+			string(JSON _setup_archive GET "${_cfg}" "setup_archive")
+			string(JSON _archive GET "${_cfg}" "archive")
+			string(JSON _url_base GET "${_cfg}" "url_base")
+			string(JSON _md5 GET "${_cfg}" "md5")
+			# found our config, bail
+			break()
+		endif()
+	endforeach()
+	# check if config data has been correctly extracted
+	if (NOT(_setup_archive AND _archive AND _url_base AND _md5))
+		message(FATAL_ERROR "Could not find pylon config for ${_ver}-${_os}-${_arch} (version-os-arch)")
 	endif()
 	# use a local archive if it's available
-	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/archive/${_p_setup}")
-		set(_p_url "file://${CMAKE_CURRENT_SOURCE_DIR}/archive/${_p_setup}")
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/archive/${_setup_archive}")
+		set(_url_base "file://${CMAKE_CURRENT_SOURCE_DIR}/archive")
 	endif()
 
-	set(${ver} "${_p_ver}" PARENT_SCOPE)
-	set(${archive} "${_p_archive}" PARENT_SCOPE)
-	set(${url} "${_p_url}" PARENT_SCOPE)
-	set(${md5} "${_p_md5}" PARENT_SCOPE)
+	set(${archive} "${_archive}" PARENT_SCOPE)
+	set(${url} "${_url_base}/${_setup_archive}" PARENT_SCOPE)
+	set(${md5} "${_md5}" PARENT_SCOPE)
 endfunction()

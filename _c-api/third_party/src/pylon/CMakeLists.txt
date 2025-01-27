@@ -1,8 +1,30 @@
 cmake_minimum_required(VERSION 3.25.1)
 project(beholder-pylon)
 
+# WARNING:
+#
+# v8.0.2
+# ------
+# - ASan reports an indirect memory leak in libpylon_TL_camemu.so
+# - libpylon_TL_usb.so calls dlopen() with RTLD_DEEPBIND pylon-libusb-1.0.27.so
+#	which makes ASan unusable;
+#	see https://github.com/google/sanitizers/issues/611
+#
+# v7.5.0
+# ------
+# - ASan reports an indirect memory leak in libpylon_TL_camemu.so
+# - libpylon_TL_usb.so calls dlopen() with RTLD_DEEPBIND pylon-libusb-1.0.so
+#	which makes ASan unusable;
+#	see https://github.com/google/sanitizers/issues/611
+
+# the pylon version we're using (about ~500MB smaller, and we're not using
+# any of the v8.0.2 features)
+set(pylon_ver "7.5.0")
+
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/versions.json" pylon_json)
+
 include(cmake/bhPylonVars.cmake)
-bh_set_pylon_vars(pylon_ver pylon_archive pylon_url pylon_md5)
+bh_set_pylon_vars("${pylon_json}" "${pylon_ver}" pylon_archive pylon_url pylon_md5)
 
 message(STATUS "pylon setup")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")

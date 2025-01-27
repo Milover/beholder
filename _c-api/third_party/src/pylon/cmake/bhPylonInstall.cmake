@@ -4,6 +4,8 @@ file(INSTALL "${bh_pylon_bindir}/include/"
 	DESTINATION "${bh_pylon_prefix}/include/pylon"
 	FILES_MATCHING PATTERN "*"
 )
+# the USB library doesn't have a proper symlink
+file(GLOB bh_pylon_libusb "${bh_pylon_bindir}/lib/pylon-libusb-*.so")
 file(INSTALL
 	"${bh_pylon_bindir}/lib/libpylonbase.so"
 	"${bh_pylon_bindir}/lib/libpylonc.so"
@@ -20,8 +22,9 @@ file(INSTALL
 	"${bh_pylon_bindir}/lib/libuxapi.so"
 	"${bh_pylon_bindir}/lib/libpylon_TL_gige.so"
 	"${bh_pylon_bindir}/lib/libpylon_TL_camemu.so"
-	"${bh_pylon_bindir}/lib/libpylon_TL_usb.so"
-	"${bh_pylon_bindir}/lib/pylon-libusb-1.0.27.so"
+	# we don't want these because they break ASan, and we're not using them
+	#"${bh_pylon_bindir}/lib/libpylon_TL_usb.so"
+	#"${bh_pylon_libusb}"
 	DESTINATION "${bh_pylon_prefix}/lib"
 	FOLLOW_SYMLINK_CHAIN
 )

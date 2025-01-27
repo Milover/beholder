@@ -11,7 +11,6 @@
 #include <beholder/capi/Image.h>
 #include <beholder/image/Processor.h>
 #include <gtest/gtest.h>
-#include <stdlib.h>	 // NOLINT(modernize-*): needed for setenv
 
 #include <array>
 #include <chrono>
@@ -30,6 +29,9 @@ namespace test {
 
 // Tests
 // -----
+//
+// NOTE: camera emulation is enabled for all tests by default through CMake
+// defined environment variables, and 3 emulated devices are available.
 
 // Connect to an emulated camera device and acquire an image.
 TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
@@ -46,10 +48,8 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ParamEntry{"ImageFilename", testimage},
 	};
 	constexpr std::string_view sn{"0815-0000"};	 // emulated camera SN
-	constexpr std::size_t nImages{1};			 // No. images to acquire
+	constexpr std::size_t nImages{3};			 // No. images to acquire
 
-	// set to enable camera emulation
-	setenv("PYLON_CAMEMU", "1", static_cast<int>(true));
 	// before using any pylon methods, the pylon runtime must be initialized.
 	const PylonAPI api{};
 
