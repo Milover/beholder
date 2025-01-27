@@ -11,11 +11,16 @@ BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 
 function usage() {
 	echo "This script builds and installs a CMake project."
-	echo "It is used to build/install the C-API or it's third-party dependencies."
+	echo "It is used to build and install the C-API or it's third-party dependencies."
 	echo ""
-	echo "Usage: $0 <cmake-project-dir> <cmake-preset>"
+	echo "Usage:"
 	echo ""
-	echo "Example: $0 $BH_ROOT/_c-api debug"
+	echo "    scripts/${0##*/} <cmake-project-dir> <cmake-preset>"
+	echo ""
+	echo "Example:"
+	echo ""
+	echo "    scripts/${0##*/} _c-api debug"
+	echo ""
 	exit 1
 }
 

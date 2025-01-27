@@ -12,9 +12,14 @@ BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 function usage() {
 	echo "This script cleans the beholder build (Go code only)."
 	echo ""
-	echo "Usage: $0 [go-flags]"
+	echo "Usage:"
 	echo ""
-	echo "Example: $0 \"-x -cache\""
+	echo "    scripts/${0##*/} [go-flags]"
+	echo ""
+	echo "Example:"
+	echo ""
+	echo "    scripts/${0##*/} \"-x -cache\""
+	echo ""
 	exit 1
 }
 

@@ -13,7 +13,10 @@ function usage() {
 	echo "This script builds a Docker image containing the beholder binary and"
 	echo "runtime libraries."
 	echo ""
-	echo "Usage: $0 <cmake-preset> [docker-target]"
+	echo "Usage:"
+	echo ""
+	echo "    scripts/${0##*/} <cmake-preset> [docker-target]"
+	echo ""
 	exit 1
 }
 
@@ -24,7 +27,7 @@ fi
 cmake_preset="$1"
 docker_target="${2:-runtime}"
 
-docker build \
+docker buildx build \
 	--file="$BH_ROOT/build/ci/beholder.Dockerfile" \
 	--build-arg cmake_preset="$cmake_preset" \
 	--tag="beholder:latest" \
