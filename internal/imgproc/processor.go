@@ -289,21 +289,6 @@ func (ip Processor) SetRotatedROI(roi models.Rectangle, ang float64) {
 	C.Proc_SetRotatedROI(ip.p, &r, C.double(ang))
 }
 
-// ShowImage renders the current image in a new window and
-// waits for a key press.
-//
-// Deprecated: this function crashes on darwin when not called from the main
-// thread.
-// There are ways around this, but they are all overly complex (and ugly)
-// for what we need and could potentially cause more critical issues.
-// Hence, any functionality requiring a GUI, regardless of the platform,
-// should be implemented through the web app.
-func (ip Processor) ShowImage(title string) {
-	cs := C.CString(title)
-	defer C.free(unsafe.Pointer(cs))
-	C.Proc_ShowImage(ip.p, cs)
-}
-
 // ToColor converts the image to a color (BGR) image and resets
 // the region interest back to the whole image.
 func (ip Processor) ToColor() {

@@ -24,8 +24,11 @@ list(APPEND CMAKE_ARGS
 	"-DOPENCV_EXTRA_MODULES_PATH=${bh-opencv-contrib_SOURCE_DIR}/modules"
 	"-DOPENCV_FORCE_3RDPARTY_BUILD=TRUE"
 	"-DOPENCV_GENERATE_PKGCONFIG=TRUE"
-	"-DWITH_CUDA=${beholder_USE_CUDA}"
 	"-DOPENCV_3P_LIB_INSTALL_PATH=${CMAKE_INSTALL_LIBDIR}"
+	"-DWITH_CUDA=${beholder_USE_CUDA}"
+	"-DWITH_FFMPEG=FALSE"
+	"-DWITH_OBSENSOR=FALSE"
+	"-DBUILD_LIST=core,imgproc,imgcodecs,videoio,video,dnn,photo,gapi"
 )
 
 ExternalProject_Add(

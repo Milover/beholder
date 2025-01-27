@@ -3,8 +3,7 @@ add_library(beholder::beholder ALIAS beholder)
 
 set_target_properties(beholder
 	PROPERTIES
-		VERSION "${PROJECT_VERSION}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-		SOVERSION ${PROJECT_VERSION_MAJOR}
+		SOVERSION ${PROJECT_VERSION}
 		COMPILE_OPTIONS $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:-DBEHOLDER_STATIC_DEFINE>
 )
 
@@ -13,8 +12,19 @@ set_target_properties(beholder
 #	set_target_properties(beholder PROPERTIES LIBRARY_OUTPUT_NAME "beholder.$<LOWER_CASE:$<CONFIG>>")
 #endif()
 
-find_package(Iconv REQUIRED)
-find_package(OpenCV REQUIRED)
+# we only use these OpenCV modules
+list(APPEND bh_ocv_modules
+	core
+	imgproc
+	imgcodecs
+	videoio
+	video
+	dnn
+	photo
+	gapi
+)
+
+find_package(OpenCV REQUIRED ${bh_ocv_modules})
 find_package(Tesseract REQUIRED)
 
 # convenience variable, so that we can propagate it to sub-directories easily
@@ -36,10 +46,12 @@ target_include_directories(beholder
 		${OpenCV_INCLUDE_DIRS}
 		${Tesseract_INCLUDE_DIRS}
 )
+list(TRANSFORM bh_ocv_modules PREPEND "opencv_" OUTPUT_VARIABLE bh_ocv_libs)
 target_link_libraries(beholder
 	PRIVATE
 		Tesseract::libtesseract
-		${OpenCV_LIBS}
+		#${OpenCV_LIBS}
+		${bh_ocv_libs}
 )
 # This is necessary so that OpenCV's 3rd-party dependencies get
 # properly propagated to other components

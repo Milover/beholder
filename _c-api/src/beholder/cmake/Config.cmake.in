@@ -1,7 +1,6 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-find_dependency(Iconv)
 find_dependency(OpenCV)
 find_dependency(Leptonica)
 find_dependency(Tesseract)

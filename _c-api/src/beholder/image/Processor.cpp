@@ -12,7 +12,6 @@
 #include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
@@ -191,11 +190,6 @@ void Processor::setRotatedROI(const Rectangle& roi, double angle) const {
 		crop.y + crop.height <= tmp.rows ? crop.height : tmp.rows - crop.y;
 
 	*roi_ = tmp(crop);
-}
-
-void Processor::showImage(const std::string& title) const {
-	cv::imshow(title, *roi_);
-	cv::waitKey();
 }
 
 void Processor::toColor() const {

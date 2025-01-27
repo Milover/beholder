@@ -1,6 +1,5 @@
 add_executable(opencv.test)
 
-find_package(Iconv REQUIRED)
 find_package(OpenCV REQUIRED)
 
 target_sources(opencv.test PRIVATE

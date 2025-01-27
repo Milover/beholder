@@ -116,14 +116,6 @@ void Proc_SetRotatedROI(Proc p, const Rect* roi, double ang) {
 	p->setRotatedROI(r, ang);
 }
 
-void Proc_ShowImage(Proc p, const char* title) {
-	if (!p) {
-		return;
-	}
-	std::string s{title};
-	p->showImage(s);
-}
-
 void Proc_ToColor(Proc p) {
 	if (!p) {
 		return;

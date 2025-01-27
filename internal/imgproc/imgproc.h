@@ -42,7 +42,6 @@ bool Proc_ReadImage(Proc p, const char* filename, int flags);
 void Proc_ResetROI(Proc p);
 void Proc_SetROI(Proc p, const Rect* roi);
 void Proc_SetRotatedROI(Proc p, const Rect* roi, double ang);
-void Proc_ShowImage(Proc p, const char* title);
 void Proc_ToColor(Proc p);
 void Proc_ToGrayscale(Proc p);
 bool Proc_WriteImage(Proc p, const char* filename);

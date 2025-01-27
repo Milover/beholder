@@ -127,9 +127,6 @@ public:
 	// not the current ROI
 	void setRotatedROI(const Rectangle& roi, double angle) const;
 
-	// Show an image and wait for a keypress
-	void showImage(const std::string& title = "image") const;
-
 	// Convert image to color (BGR) and reset the ROI.
 	void toColor() const;
 
