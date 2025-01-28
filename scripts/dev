@@ -4,30 +4,75 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# This script exports variables needed by various go tools when beholder C-API
-# is built/installed into a local staging directory.
-#
-# Usage:
-#
-# 	dev go test ./...
-#
-# To override the default staging directory path, define (or export) the
-# 'CMAKE_PREFIX' variable before calling 'dev':
-#
-# 	CMAKE_PREFIX=/path/to/staging/dir dev go test ./...
+set -euo pipefail
 
+# Constants
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 
-if [ -z "$CMAKE_PREFIX" ]; then
-	CMAKE_PREFIX="$BH_ROOT/_c-api/build/staging"
+# Defaults
+BUILD_MODE="release"
+STAGING_DIR="$BH_ROOT/_c-api/build/staging"
+
+# sanity check
+CGO_CPPFLAGS="${CGO_CPPFLAGS:-}"
+CGO_CXXFLAGS="${CGO_CXXFLAGS:-}"
+CGO_LDFLAGS="${CGO_LDFLAGS:-}"
+LIBRARY_PATH="${LIBRARY_PATH:-}"
+LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
+PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"
+
+function usage() {
+	cat <<EOF
+Set up environment variables needed for building the project and call
+the supplied command.
+
+Usage:
+    scripts/${0##*/} [flags] <command>
+
+Example:
+    scripts/${0##*/} -d go test ./...
+
+Flags:
+    -d           - build debug configuration
+    -h           - print usage
+    -r           - build release configuration (default)
+    -s DIRECTORY - C-API staging directory (default is '_c-api/build/staging')
+
+EOF
+	exit 1
+}
+
+[ "$#" -lt 1 ] && usage
+
+while getopts "dhrs:" opt; do
+	case "$opt" in
+		d) BUILD_MODE="debug" ;;
+		r) BUILD_MODE="release" ;;
+		s) STAGING_DIR="$(realpath "$OPTARG")" ;;
+		h) usage ;;
+		*) usage ;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [ ! -d "$STAGING_DIR" ]; then
+	mkdir -p "$STAGING_DIR"
 fi
-if [ ! -d "$CMAKE_PREFIX" ]; then
-	mkdir -p "$CMAKE_PREFIX"
+# set cgo include/link directories
+if [ "$STAGING_DIR" != "/usr" ] || [ "$STAGING_DIR" != "/usr/local" ]; then
+	export CGO_CPPFLAGS="$CGO_CPPFLAGS -I$STAGING_DIR/include"
+	export CGO_LDFLAGS="$CGO_LDFLAGS -L$STAGING_DIR/lib"
+fi
+# set cgo compiler/linker flags
+if [ "$BUILD_MODE" = "debug" ]; then
+	export CGO_CXXFLAGS="$CGO_CXXFLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"
+	export CGO_LDFLAGS="$CGO_LDFLAGS -fsanitize=address,undefined"
 fi
 
-export CMAKE_PREFIX="$CMAKE_PREFIX"
-export PKG_CONFIG_PATH="$CMAKE_PREFIX/lib/pkgconfig"
-export LD_LIBRARY_PATH="$CMAKE_PREFIX/lib"
-export LIBRARY_PATH="$CMAKE_PREFIX/lib"
+export CMAKE_PRESET="$BUILD_MODE"
+export CMAKE_PREFIX="$STAGING_DIR"
+export LIBRARY_PATH="$STAGING_DIR/lib:$LIBRARY_PATH"
+export LD_LIBRARY_PATH="$STAGING_DIR/lib:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="$STAGING_DIR/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 exec "$@"
