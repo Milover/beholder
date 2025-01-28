@@ -9,12 +9,6 @@ CMAKE_PREFIX	?= /usr/local
 CMAKE_PRESET	?= release
 GO_FLAGS		?=
 
-ifeq ($(PLATFORM), Darwin)
- # TODO: remove when no longer necessary, for more info see:
- # https://stackoverflow.com/questions/77164140/ld-warning-ignoring-duplicate-libraries-lgcc-after-the-recent-update-of-xc
- export CGO_LDFLAGS="jWl,-no_warn_duplicate_libraries"
-endif
-
 # build stuff
 # -----------
 .PHONY: build
@@ -49,6 +43,10 @@ clean-third-party:
 .PHONY: test
 test:
 	go test -race $(GO_FLAGS) ./...
+
+.PHONY: test-c-api
+test-c-api:
+	cd _c-api && ctest --preset=$(CMAKE_PRESET)
 
 # Go specific stuff
 # -----------------
