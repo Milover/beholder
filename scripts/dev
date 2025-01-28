@@ -21,6 +21,9 @@ BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 if [ -z "$CMAKE_PREFIX" ]; then
 	CMAKE_PREFIX="$BH_ROOT/_c-api/build/staging"
 fi
+if [ ! -d "$CMAKE_PREFIX" ]; then
+	mkdir -p "$CMAKE_PREFIX"
+fi
 
 export CMAKE_PREFIX="$CMAKE_PREFIX"
 export PKG_CONFIG_PATH="$CMAKE_PREFIX/lib/pkgconfig"
