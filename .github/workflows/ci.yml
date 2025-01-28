@@ -4,6 +4,12 @@ on:
   push:
     branches: [ master ]
   workflow_dispatch:
+    inputs:
+      skip-third-party:
+        description: 'Skip building the base image'
+        required: true
+        type: boolean
+        default: true
 
 # cannot use env in 'uses' contexts, see
 # https://github.com/actions/runner/issues/2372
@@ -36,19 +42,22 @@ jobs:
               - '_c-api/third_party/**'
             beholder:
               - '_c-api/**'
-              - '!_c-api/third_party/**'
+              - 'cmd/**'
               - 'go.mod'
               - 'go.sum'
-              - 'main.go'
-              - 'cmd/**'
               - 'internal/**'
+              - 'main.go'
 
   # build and push base container image
   third-party:
     needs: changes
     uses: ./.github/workflows/base_image.yml
     with:
-      skip-build: ${{ needs.changes.outputs.third-party == 'false' }}
+      skip-build: |-
+        ${{
+          needs.changes.outputs.third-party == 'false' ||
+          (github.event_name == 'workflow_dispatch' && inputs.skip-third-party)
+        }}
       gcc-version: 12
       clang-version: 14
       staging-dir: '/usr/local'
@@ -59,7 +68,11 @@ jobs:
   # build and test beholder
   beholder:
     needs: [changes, third-party]
-    if: ${{ needs.changes.outputs.beholder == 'true' }}
+    if: |-
+      ${{
+        needs.changes.outputs.beholder == 'true' ||
+        github.event_name == 'workflow_dispatch'
+      }}
     uses: ./.github/workflows/build.yml
     with:
       docker-image: ${{ needs.third-party.outputs.image }}
