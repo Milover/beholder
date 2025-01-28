@@ -22,7 +22,7 @@ build:
 	@echo $(MODULE)
 	scripts/build_go_project.sh $(GO_FLAGS)
 
-.PHONY: c-capi
+.PHONY: c-api
 c-api:
 	scripts/build_cmake_project.sh _c-api $(CMAKE_PRESET) $(CMAKE_PREFIX)
 
