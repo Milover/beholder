@@ -42,7 +42,7 @@ clean-third-party:
 # ----------
 .PHONY: test
 test:
-	go test -race $(GO_FLAGS) ./...
+	go test $(GO_FLAGS) ./...
 
 .PHONY: test-c-api
 test-c-api:

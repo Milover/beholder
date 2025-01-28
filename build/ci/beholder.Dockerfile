@@ -4,7 +4,9 @@
 ARG ci_build=false
 
 # CMake preset used for the build.
-ARG cmake_preset=release
+ARG build_mode=release
+# CMake install directory.
+ARG staging_dir=/usr/local
 # Version of Go we're working with
 ARG go_version=1.23.5
 # Version of golangci we're working with
@@ -15,7 +17,6 @@ ARG gcc_version=12
 ARG clang_version=16
 
 # local vars which don't need to be supplied
-ARG cmake_prefix=/usr/local
 ARG bh_src=/usr/local/src
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -91,7 +92,7 @@ EOF
 # Build, test and install libbeholder third-party libraries.
 FROM builder-base AS builder-third-party
 
-ARG cmake_prefix
+ARG staging_dir
 ARG bh_src
 
 COPY ./ ${bh_src}/
@@ -106,8 +107,7 @@ set -exu
 
 cd ${bh_src}
 
-CMAKE_PREFIX=${cmake_prefix} \
-	make third-party
+./scripts/dev -s ${staging_dir} make third-party
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
@@ -123,8 +123,8 @@ EOF
 # Build, test and install the libbeholder library.
 FROM builder-third-party AS builder-capi
 
-ARG cmake_preset
-ARG cmake_prefix
+ARG build_mode
+ARG staging_dir
 ARG bh_src
 
 COPY ./ ${bh_src}/
@@ -134,9 +134,7 @@ set -exu
 
 cd ${bh_src}
 
-CMAKE_PRESET=${cmake_preset} \
-	CMAKE_PREFIX=${cmake_prefix} \
-	make c-api
+./scripts/dev -s $staging_dir -p $build_mode make c-api
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
@@ -148,7 +146,8 @@ EOF
 # Build, test and install the beholder binary.
 FROM builder-capi AS builder
 
-ARG cmake_prefix
+ARG build_mode
+ARG staging_dir
 ARG bh_src
 
 # if we're not cleaning builder-capi, then we don't have to re-copy
@@ -159,11 +158,10 @@ set -exu
 
 cd ${bh_src}
 
-ldconfig
-make lint
-make build
+./scripts/dev -s $staging_dir -p $build_mode make lint
+./scripts/dev -s $staging_dir -p $build_mode make build
 # FIXME: this should be a make call
-mv bin/* ${cmake_prefix}/bin/
+mv bin/* ${staging_dir}/bin/
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
@@ -175,12 +173,12 @@ EOF
 # The final image which gets pushed to the registry.
 FROM base AS runtime
 
-ARG cmake_prefix
+ARG staging_dir
 ARG bh_src
 
 # FIXME: globbing the shared libs is pretty janky
-COPY --from=builder ${cmake_prefix}/lib/*.so* /usr/local/lib/
-COPY --from=builder ${cmake_prefix}/bin /usr/local/bin/
+COPY --from=builder ${staging_dir}/lib/*.so* /usr/local/lib/
+COPY --from=builder ${staging_dir}/bin /usr/local/bin/
 
 RUN <<EOF
 set -exu

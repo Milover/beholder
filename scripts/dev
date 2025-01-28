@@ -14,6 +14,7 @@ BUILD_MODE="release"
 STAGING_DIR="$BH_ROOT/_c-api/build/staging"
 
 # sanity check
+GOFLAGS="${GOFLAGS:-}"
 CGO_CPPFLAGS="${CGO_CPPFLAGS:-}"
 CGO_CXXFLAGS="${CGO_CXXFLAGS:-}"
 CGO_LDFLAGS="${CGO_LDFLAGS:-}"
@@ -33,10 +34,9 @@ Example:
     scripts/${0##*/} -d go test ./...
 
 Flags:
-    -d           - build debug configuration
-    -h           - print usage
-    -r           - build release configuration (default)
-    -s DIRECTORY - C-API staging directory (default is '_c-api/build/staging')
+    -h               - print usage
+    -p release|debug - build configuration (default is release)
+    -s DIRECTORY     - C-API staging directory (default is '_c-api/build/staging')
 
 EOF
 	exit 1
@@ -44,20 +44,26 @@ EOF
 
 [ "$#" -lt 1 ] && usage
 
-while getopts "dhrs:" opt; do
+while getopts "hp:s:" opt; do
 	case "$opt" in
-		d) BUILD_MODE="debug" ;;
-		r) BUILD_MODE="release" ;;
-		s) STAGING_DIR="$(realpath "$OPTARG")" ;;
 		h) usage ;;
+		p) BUILD_MODE="$OPTARG" ;;
+		s) STAGING_DIR="$(realpath "$OPTARG")" ;;
 		*) usage ;;
 	esac
 done
 shift $((OPTIND-1))
 
+# sanity checks
 if [ ! -d "$STAGING_DIR" ]; then
 	mkdir -p "$STAGING_DIR"
 fi
+if [ "$BUILD_MODE" != "release" ] && [ "$BUILD_MODE" != "debug" ]; then
+	echo "bad build configuration"
+	echo "available configurations: release, debug"
+	exit 1
+fi
+
 # set cgo include/link directories
 if [ "$STAGING_DIR" != "/usr" ] || [ "$STAGING_DIR" != "/usr/local" ]; then
 	export CGO_CPPFLAGS="$CGO_CPPFLAGS -I$STAGING_DIR/include"
@@ -67,6 +73,10 @@ fi
 if [ "$BUILD_MODE" = "debug" ]; then
 	export CGO_CXXFLAGS="$CGO_CXXFLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"
 	export CGO_LDFLAGS="$CGO_LDFLAGS -fsanitize=address,undefined"
+else
+	# '-race' cannot be enabled in debug mode because of clashes with other
+	# sanitizers
+	export GOFLAGS="$GOFLAGS -race"
 fi
 
 export CMAKE_PRESET="$BUILD_MODE"
