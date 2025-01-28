@@ -2,61 +2,72 @@
 # dependencies used by both the C-API and the final beholder binary during
 # the build phase.
 
-name: base_image
+name: build base image
 
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - 'build/ci/beholder.Dockerfile'
-      - 'build/ci/beholder.Dockerfile.dockerignore'
-      - '_c-api/third_party/**'
-      - '.github/workflows/base_image.yml'
-  schedule:
-    - cron: '42 0 * * 1'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      dockerhub-username:
+        type: string
+        required: true
+      gcc-version:
+        type: string
+        required: false
+        default: 12
+      clang-version:
+        type: string
+        required: false
+        default: 14
+      staging-dir:
+        type: string
+        required: false
+        default: '/usr/local'
+      skip-build:
+        type: boolean
+        required: false
+        default: false
+    outputs:
+      image:
+        description: "Digest of the pushed Docker image"
+        value: ${{ jobs.build.outputs.image }}
+    secrets:
+      dockerhub-token:
+        required: true
 
 env:
-  GCC_VERSION: 12
-  CLANG_VERSION: 14
-  CMAKE_PREFIX: '/usr/local'
+  IMAGE: ${{ inputs.dockerhub-username }}/beholder-third-party:latest
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    strategy:
-      matrix:
-        cfg:
-          # NOTE: we could technically have a GCC and a Clang version, but
-          # since we're not using IPO it's not strictly necessary at this point
-          #- { id: amd64-clang }
-          - { id: amd64-gnu }
-
+    outputs:
+      image: ${{ inputs.skip-build == true && env.IMAGE || steps.build.outputs.digest }}
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ inputs.dockerhub-username}}
+          password: ${{ secrets.dockerhub-token}}
 
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
 
       # we specifically don't cache anything
       - name: Docker build and push
+        id: build
+        if: ${{ inputs.skip-build == false }}
         uses: docker/build-push-action@v6
         with:
           push: true
           file: build/ci/beholder.Dockerfile
           build-args: |
-            gcc_version: ${{ env.GCC_VERSION }}
-            clang_version: ${{ env.CLANG_VERSION }}
-            cmake_prefix: ${{ matrix.cfg.cmake_prefix }}
-            cmake_preset: release
-            ci_build: 'true'
+            gcc_version: ${{ inputs.gcc-version}}
+            clang_version: ${{ inputs.clang-version}}
+            staging_dir: ${{ inputs.staging-dir }}
+            build_mode: release
+            ci_build: true
           network: host
           target: builder-third-party
           tags: |
-            ${{ vars.DOCKERHUB_USERNAME }}/beholder-third-party:latest
-            ${{ vars.DOCKERHUB_USERNAME }}/beholder-third-party:${{ matrix.cfg.id }}
+            ${{ env.IMAGE }}

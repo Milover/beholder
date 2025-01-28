@@ -1,0 +1,100 @@
+name: build and test
+
+on:
+  workflow_call:
+    inputs:
+      dockerhub-username:
+        type: string
+        required: true
+      docker-image:
+        type: string
+        required: true
+        description: "Container (base image) name for the jobs"
+      golangci-version:
+        type: string
+        required: false
+        default: '1.63.4'
+      staging-dir:
+        type: string
+        required: false
+        default: '/usr/local'
+    secrets:
+      dockerhub-token:
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg:
+          - { id: amd64-gnu-debug,   build_mode: 'debug' }
+          - { id: amd64-gnu-release, build_mode: 'release' }
+
+    container:
+      image: ${{ inputs.docker-image }}
+      credentials:
+        username: ${{ inputs.dockerhub-username }}
+        password: ${{ secrets.dockerhub-token }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: './go.mod'
+          cache-dependency-path: |
+            ./go.sum
+
+      # tools first so we can generate files before installing other dependencies
+      - name: Install Go tools
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go
+
+      # FIXME: no caching and we lint every time we build, instead
+      # of only once per workflow run
+      - name: Build C-API
+        run: |
+          ./scripts/dev -s ${{ inputs.staging-dir }} \
+                        -p ${{ cfg.build_mode }} \
+                        make c-api
+
+      - name: Test C-API
+        run: |
+          ./scripts/dev -s ${{ inputs.staging-dir }} \
+                        -p ${{ cfg.build_mode }} \
+                        make test-c-api
+
+      - name: Build beholder
+        run: |
+          ./scripts/dev -s ${{ inputs.staging-dir }} \
+                        -p ${{ cfg.build_mode }} \
+                        make build
+
+      # FIXME: package 'server' tests should use '-count > 1'
+      - name: Test beholder
+        run: |
+          ./scripts/dev -s ${{ inputs.staging-dir }} \
+                        -p ${{ cfg.build_mode }} \
+                        make test
+
+      # HACK: because we're using the action instead of running it ourselves,
+      # but it still needs the environment variables to build correctly
+      - name: Set golangci environment
+        run: |
+          source ./scripts/dev \
+            -s ${{ inputs.staging-dir }} \
+            -p ${{ cfg.build_mode }}
+
+      # FIXME: we should lint in an unrelated workflow
+      # this has to happen after we build since we first have to generate files
+      # and then install module dependencies
+      - name: Lint beholder
+        uses: golangci/golangci-lint-action@v6
+        env:
+          GOFLAGS: '-buildvcs=false'
+        with:
+          version: v${{ inputs.golangci-version }}

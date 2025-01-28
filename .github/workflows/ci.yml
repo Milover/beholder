@@ -3,81 +3,66 @@ name: ci
 on:
   push:
     branches: [ master ]
-    paths-ignore:
-      - 'build/ci/beholder.Dockerfile'
-      - 'build/ci/beholder.Dockerfile.dockerignore'
-      - '_c-api/third_party/**'
-      - '.github/workflows/base_image.yml'
-      - '*.md'
   workflow_dispatch:
 
 env:
+  GCC_VERSION: 12
+  CLANG_VERSION: 14
   GOLANGCI_VERSION: '1.63.4'
-  CMAKE_PREFIX: '/usr/local'
+  STAGING_DIR: '/usr/local'
 
 jobs:
-  test:
+  changes:
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        cfg:
-          #- { id: amd64-clang-debug,   base_tag: amd64-gnu,  cmake_preset: debug,   build_flags: '-asan' }
-          #- { id: amd64-clang-release, base_tag: amd64-gnu,  cmake_preset: release, build_flags: '' }
-          #- { id: amd64-gnu-debug,   base_tag: amd64-gnu,  cmake_preset: debug,   build_flags: '-asan' }
-          - { id: amd64-gnu-release, base_tag: amd64-gnu,  cmake_preset: release, build_flags: '' }
-
-    container:
-      image: ${{ vars.DOCKERHUB_USERNAME }}/beholder-third-party:${{ matrix.cfg.base_tag }}
-      credentials:
-        username: ${{ vars.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+    permissions:
+      pull-request: read
+    outputs:
+      third-party: ${{ steps.filter.outputs.third-party }}
+      c-api: ${{ steps.filter.outputs.c-api }}
+      backend: ${{ steps.filter.outputs.backend }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          go-version-file: './go.mod'
-          cache-dependency-path: |
-            ./go.sum
+          filters: |
+            third-party:
+              - 'build/ci/beholder.Dockerfile'
+              - '_c-api/third_party/**'
+            beholder:
+              - '_c-api/**'
+              - '!_c-api/third_party/**'
+              - 'go.mod'
+              - 'go.sum'
+              - 'main.go'
+              - 'cmd/**'
+              - 'internal/**'
 
-      # tools first so we can generate files before installing other dependencies
-      - name: Install Go tools
-        run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go
+  # build and push base container image
+  third-party:
+    needs: changes
+    runs-on: ubuntu-24.04
+    steps:
+      uses: ./.github/workflows/base_image.yml
+      with:
+        skip-build: ${{ needs.changes.outputs.third-party == 'false' }}
+        gcc-version: ${{ env.GCC_VERSION }}
+        clang-version: ${{ env.CLANG_VERSION }}
+        staging-dir: ${{ env.STAGING_DIR }}
+        dockerhub-username: ${{ vars.DOCKERHUB_USERNAME }}
+      secrets:
+        dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # FIXME: no caching and we lint every time we build, instead
-      # of only once per workflow run
-      - name: Build C-API
-        run: |
-          CMAKE_PREFIX=${{ env.CMAKE_PREFIX }} \
-            CMAKE_PRESET=${{ matrix.cfg.cmake_preset }} \
-            make c-api
-          ldconfig
-
-      - name: Test C-API
-        run: |
-          cd _c-api
-          ctest --preset=${{ matrix.cfg.cmake_preset }}
-
-      - name: Build beholder
-        run: |
-          GO_FLAGS=${{ matrix.cfg.build_flags }} make build
-
-      # FIXME: package 'server' tests should use '-count > 1'
-      - name: Test beholder
-        run: |
-          GO_FLAGS="${{ matrix.cfg.build_flags }} -race" make test
-
-      # FIXME: we should lint in an unrelated workflow
-      # this has to happen after we build since we first have to generate files
-      # and then install module dependencies
-      - name: Lint beholder
-        uses: golangci/golangci-lint-action@v6
-        env:
-          GOFLAGS: '-buildvcs=false'
-        with:
-          version: v${{ env.GOLANGCI_VERSION }}
+  # build and test beholder
+  beholder:
+    needs: [changes, third-party]
+    if: ${{ needs.changes.outputs.beholder == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      uses: ./.github/workflows/build.yml
+      with:
+        docker-image: ${{ needs.third-party.outputs.image }}
+        golangci-version: ${{ env.GOLANGCI_VERSION }}
+        staging-dir: ${{ env.STAGING_DIR }}
+        dockerhub-username: ${{ vars.DOCKERHUB_USERNAME }}
+      secrets:
+        dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
