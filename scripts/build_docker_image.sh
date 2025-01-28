@@ -10,13 +10,13 @@ set -euo pipefail
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 
 function usage() {
-	echo "This script builds a Docker image containing the beholder binary and"
-	echo "runtime libraries."
-	echo ""
-	echo "Usage:"
-	echo ""
-	echo "    scripts/${0##*/} <cmake-preset> [docker-target]"
-	echo ""
+	cat<<EOF
+Build the beholder project runtime Docker image.
+
+Usage:
+    scripts/${0##*/} <cmake-preset> [docker-target]
+
+EOF
 	exit 1
 }
 

@@ -13,21 +13,21 @@ BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 CMAKE_PREFIX="$(realpath ${3:-/usr/local})"
 
 function usage() {
-	echo "This script builds and installs a CMake project."
-	echo "It is used to build/install the C-API or it's third-party dependencies."
-	echo ""
-	echo "The project is installed into 'CMAKE_PREFIX' (environment variable), which"
-	echo "defaults to '/usr/local' if not set."
-	echo "An override can be supplied as a command line argument through [cmake-prefix]"
-	echo ""
-	echo "Usage:"
-	echo ""
-	echo "    scrips/${0##*/} <cmake-project-dir> <cmake-preset> [cmake-prefix]"
-	echo ""
-	echo "Example:"
-	echo ""
-	echo "    scripts/${0##*/} _c-api debug _c-api/build/staging"
-	echo ""
+	cat<<EOF
+Build and install a CMake project.
+Used to build and install the C-API or it's third-party dependencies.
+
+The project is installed into 'CMAKE_PREFIX' (environment variable), which
+defaults to '/usr/local' if not set.
+An override can be supplied as a command line argument through [cmake-prefix].
+
+Usage:
+    scrips/${0##*/} <cmake-project-dir> <cmake-preset> [cmake-prefix]
+
+Example:
+    scripts/${0##*/} _c-api debug _c-api/build/staging
+
+EOF
 	exit 1
 }
 

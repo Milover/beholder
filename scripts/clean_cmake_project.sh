@@ -10,17 +10,17 @@ set -euo pipefail
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 
 function usage() {
-	echo "This script builds and installs a CMake project."
-	echo "It is used to build and install the C-API or it's third-party dependencies."
-	echo ""
-	echo "Usage:"
-	echo ""
-	echo "    scripts/${0##*/} <cmake-project-dir> <cmake-preset>"
-	echo ""
-	echo "Example:"
-	echo ""
-	echo "    scripts/${0##*/} _c-api debug"
-	echo ""
+	cat<<EOF
+Clean a CMake project.
+Used to clean the C-API, or it's third-party dependencies, build artifacts.
+
+Usage:
+    scripts/${0##*/} <cmake-project-dir> <cmake-preset>
+
+Example:
+    scripts/${0##*/} _c-api debug
+
+EOF
 	exit 1
 }
 

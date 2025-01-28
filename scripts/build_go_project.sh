@@ -10,17 +10,17 @@ set -euo pipefail
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 
 function usage() {
-	echo "This script builds a Go project."
-	echo "It is used to build the beholder binary."
-	echo ""
-	echo "Usage:"
-	echo ""
-	echo "    scripts/${0##*/} [go-flags]"
-	echo ""
-	echo "Example:"
-	echo ""
-	echo "    scripts/${0##*/} \"-asan -tags=tag1,tag2\""
-	echo ""
+	cat<<EOF
+Build a Go project.
+Used to build the beholder binary.
+
+Usage:
+    scripts/${0##*/} [go-flags]
+
+Example:
+    scripts/${0##*/} "-asan -tags=tag1,tag2"
+
+EOF
 	exit 1
 }
 

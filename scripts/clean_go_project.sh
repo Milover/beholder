@@ -10,16 +10,17 @@ set -euo pipefail
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
 
 function usage() {
-	echo "This script cleans the beholder build (Go code only)."
-	echo ""
-	echo "Usage:"
-	echo ""
-	echo "    scripts/${0##*/} [go-flags]"
-	echo ""
-	echo "Example:"
-	echo ""
-	echo "    scripts/${0##*/} \"-x -cache\""
-	echo ""
+	cat<<EOF
+Clean a Go project.
+Used to clean the beholder binary build artifacts.
+
+Usage:
+    scripts/${0##*/} [go-flags]
+
+Example:
+    scripts/${0##*/} "-x -cache"
+
+EOF
 	exit 1
 }
 
