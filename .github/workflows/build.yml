@@ -85,7 +85,7 @@ jobs:
       # but it still needs the environment variables to build correctly
       - name: Set golangci environment
         run: |
-          source ./scripts/dev \
+          . ./scripts/dev \
             -s ${{ inputs.staging-dir }} \
             -p ${{ matrix.cfg.build_mode }}
 
