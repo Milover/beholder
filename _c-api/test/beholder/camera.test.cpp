@@ -73,7 +73,7 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ASSERT_TRUE(cam.startAcquisition(nImages));
 
 		for (auto i{0UL}; i < nImages; ++i) {
-			EXPECT_TRUE(cam.waitAndTrigger());
+			EXPECT_TRUE(cam.waitAndTrigger(std::chrono::seconds{1}));
 			EXPECT_TRUE(cam.acquire());
 
 			auto img{cam.getImage()};
