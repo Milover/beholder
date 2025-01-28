@@ -5,23 +5,29 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
-env:
-  GCC_VERSION: 12
-  CLANG_VERSION: 14
-  GOLANGCI_VERSION: '1.63.4'
-  STAGING_DIR: '/usr/local'
+# cannot use env in 'uses' contexts, see
+# https://github.com/actions/runner/issues/2372
+#env:
+#  GCC_VERSION: 12
+#  CLANG_VERSION: 14
+#  GOLANGCI_VERSION: '1.63.4'
+#  STAGING_DIR: '/usr/local'
 
 jobs:
   changes:
     runs-on: ubuntu-24.04
     permissions:
-      pull-request: read
+      pull-requests: read
     outputs:
       third-party: ${{ steps.filter.outputs.third-party }}
       c-api: ${{ steps.filter.outputs.c-api }}
       backend: ${{ steps.filter.outputs.backend }}
     steps:
-      - uses: dorny/paths-filter@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get file changes
+        uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -40,29 +46,25 @@ jobs:
   # build and push base container image
   third-party:
     needs: changes
-    runs-on: ubuntu-24.04
-    steps:
-      uses: ./.github/workflows/base_image.yml
-      with:
-        skip-build: ${{ needs.changes.outputs.third-party == 'false' }}
-        gcc-version: ${{ env.GCC_VERSION }}
-        clang-version: ${{ env.CLANG_VERSION }}
-        staging-dir: ${{ env.STAGING_DIR }}
-        dockerhub-username: ${{ vars.DOCKERHUB_USERNAME }}
-      secrets:
-        dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
+    uses: ./.github/workflows/base_image.yml
+    with:
+      skip-build: ${{ needs.changes.outputs.third-party == 'false' }}
+      gcc-version: 12
+      clang-version: 14
+      staging-dir: '/usr/local'
+      dockerhub-username: ${{ vars.DOCKERHUB_USERNAME }}
+    secrets:
+      dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
 
   # build and test beholder
   beholder:
     needs: [changes, third-party]
     if: ${{ needs.changes.outputs.beholder == 'true' }}
-    runs-on: ubuntu-24.04
-    steps:
-      uses: ./.github/workflows/build.yml
-      with:
-        docker-image: ${{ needs.third-party.outputs.image }}
-        golangci-version: ${{ env.GOLANGCI_VERSION }}
-        staging-dir: ${{ env.STAGING_DIR }}
-        dockerhub-username: ${{ vars.DOCKERHUB_USERNAME }}
-      secrets:
-        dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
+    uses: ./.github/workflows/build.yml
+    with:
+      docker-image: ${{ needs.third-party.outputs.image }}
+      golangci-version: '1.63.4'
+      staging-dir: '/usr/local'
+      dockerhub-username: ${{ vars.DOCKERHUB_USERNAME }}
+    secrets:
+      dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}

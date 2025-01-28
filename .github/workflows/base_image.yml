@@ -34,13 +34,14 @@ on:
       dockerhub-token:
         required: true
 
-env:
-  IMAGE: ${{ inputs.dockerhub-username }}/beholder-third-party:latest
-
 jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    # cannot use env in global context for reusable workflows
+    # https://github.com/actions/runner/issues/2372
+    env:
+      IMAGE: ${{ inputs.dockerhub-username }}/beholder-third-party:latest
     outputs:
       image: ${{ inputs.skip-build == true && env.IMAGE || steps.build.outputs.digest }}
     steps:

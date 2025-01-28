@@ -59,26 +59,26 @@ jobs:
       - name: Build C-API
         run: |
           ./scripts/dev -s ${{ inputs.staging-dir }} \
-                        -p ${{ cfg.build_mode }} \
+                        -p ${{ matrix.cfg.build_mode }} \
                         make c-api
 
       - name: Test C-API
         run: |
           ./scripts/dev -s ${{ inputs.staging-dir }} \
-                        -p ${{ cfg.build_mode }} \
+                        -p ${{ matrix.cfg.build_mode }} \
                         make test-c-api
 
       - name: Build beholder
         run: |
           ./scripts/dev -s ${{ inputs.staging-dir }} \
-                        -p ${{ cfg.build_mode }} \
+                        -p ${{ matrix.cfg.build_mode }} \
                         make build
 
       # FIXME: package 'server' tests should use '-count > 1'
       - name: Test beholder
         run: |
           ./scripts/dev -s ${{ inputs.staging-dir }} \
-                        -p ${{ cfg.build_mode }} \
+                        -p ${{ matrix.cfg.build_mode }} \
                         make test
 
       # HACK: because we're using the action instead of running it ourselves,
@@ -87,7 +87,7 @@ jobs:
         run: |
           source ./scripts/dev \
             -s ${{ inputs.staging-dir }} \
-            -p ${{ cfg.build_mode }}
+            -p ${{ matrix.cfg.build_mode }}
 
       # FIXME: we should lint in an unrelated workflow
       # this has to happen after we build since we first have to generate files
