@@ -6,9 +6,8 @@
 beholder is a program for building industrial machine vision solutions.
 
 The following features are currently implemented:
-- configuration and control of [GenICam][genicam] compliant cameras, with
-  support for various transport protocols (GigE, USB) through integration
-  with [pylon][pylon]
+- configuration and control of [GenICam][genicam] compliant cameras
+  integration with [pylon][pylon]
 - loading and running DNN inferencing (object detection/classification,
   text detection, text recognition) models as part of the image processing
   pipeline through integration with [OpenCV's DNN module][opencv-dnn] and
@@ -38,27 +37,44 @@ and defining processing pipelines.
 
 ### Building
 
-To build the project into a local staging directory run the
-[`build_local.sh`](scripts/build_local.sh) script.
+The following are needed to build the project locally:
+- CMake 3.25 or newer
+- GCC 12 or newer (or Clang 16 or newer)
+- ninja
+- pkg-config
+- make (optional, but handy)
+- git
+- protobuf compiler
 
-Note that when building locally, to run the final binary, `LD_LIBRARY_PATH` needs
-to be updated so that the shared libraries become available:
+On Debian/Ubuntu use the following to install the dependencies:
 
 ```sh
-LD_LIBRARY_PATH=/<beholder-path>/_c-api/build/staging bin/beholder
+apt-get install cmake g++ git make ninja-build pkg-config protobuf-compiler
 ```
-or
+
+To build the project locally run:
 
 ```sh
-export LD_LIBRARY_PATH=/<beholder-path>/_c-api/build/staging
-bin/beholder
+$ ./scripts/dev -p release make all
 ```
 
-To build a Docker image run the [`beholder_image.sh`](scripts/beholder_image.sh)
-script.
+Note that when the project is built into a local staging directory, the final
+binary will also have to be run through the `scripts/dev` script so that
+shared libraries are in the loader search path:
+
+```sh
+$ ./scripts/dev ./bin/beholder
+```
+
+To build a [Docker][docker] runtime image run:
+
+```sh
+$ ./scripts/build_docker_image.sh
+```
 
 **TODO**
-- [ ] describe manual building
+- [ ] provide a compose file so the Docker image is easier to use/deploy
+- [ ] move local build into dev-details, regular users should use the Docker image
 
 ### Licensing
 
@@ -71,6 +87,7 @@ If you intend on using some of them, check [their licensing terms](test/assets/m
 - [ ] add licences for third-party C++/Go dependencies.
 
 
+[docker]: https://docker.com
 [genicam]: https://www.emva.org/standards-technology/genicam/
 [pylon]: https://www.baslerweb.com/en/software/pylon/
 [tesseract]: https://tesseract-ocr.github.io/
