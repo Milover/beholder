@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-set -euo pipefail
+set -eu
 
 # Constants
 BH_ROOT="$(dirname $(dirname $(realpath $0)))"
@@ -22,7 +22,7 @@ LIBRARY_PATH="${LIBRARY_PATH:-}"
 LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
 PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"
 
-function usage() {
+usage() {
 	cat <<EOF
 Set up environment variables needed for building the project and call
 the supplied command.
@@ -42,7 +42,9 @@ EOF
 	exit 1
 }
 
-[ "$#" -lt 1 ] && usage
+# 'sh' does not set $# when sourced, so this fails the script, and technically
+# it's not necessary --- if no arguments are provided we just do nothing.
+#[ "$#" -lt 1 ] && usage
 
 while getopts "hp:s:" opt; do
 	case "$opt" in
@@ -65,7 +67,7 @@ if [ "$BUILD_MODE" != "release" ] && [ "$BUILD_MODE" != "debug" ]; then
 fi
 
 # set cgo include/link directories
-if [ "$STAGING_DIR" != "/usr" ] || [ "$STAGING_DIR" != "/usr/local" ]; then
+if [ "$STAGING_DIR" != "/usr" ] && [ "$STAGING_DIR" != "/usr/local" ]; then
 	export CGO_CPPFLAGS="$CGO_CPPFLAGS -I$STAGING_DIR/include"
 	export CGO_LDFLAGS="$CGO_LDFLAGS -L$STAGING_DIR/lib"
 fi
@@ -74,8 +76,7 @@ if [ "$BUILD_MODE" = "debug" ]; then
 	export CGO_CXXFLAGS="$CGO_CXXFLAGS -fsanitize=address,undefined -fno-omit-frame-pointer"
 	export CGO_LDFLAGS="$CGO_LDFLAGS -fsanitize=address,undefined"
 else
-	# '-race' cannot be enabled in debug mode because of clashes with other
-	# sanitizers
+	# '-race' cannot be enabled in debug mode because of clashes with sanitizers
 	export GOFLAGS="$GOFLAGS -race"
 fi
 
