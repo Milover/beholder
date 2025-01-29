@@ -11,6 +11,9 @@ GO_FLAGS		?=
 
 # build stuff
 # -----------
+.PHONY: all
+all: third-party c-api build
+
 .PHONY: build
 build:
 	@echo $(MODULE)
@@ -26,6 +29,9 @@ third-party:
 
 # clean stuff
 # -----------
+.PHONY: clean-all
+clean-all: clean-third-party clean-c-api clean
+
 .PHONY: clean
 clean:
 	scripts/clean_go_project.sh $(GO_FLAGS)
@@ -40,6 +46,9 @@ clean-third-party:
 
 # test stuff
 # ----------
+.PHONY: test-all
+test-all: test-c-api test
+
 .PHONY: test
 test:
 	go test $(GO_FLAGS) ./...
