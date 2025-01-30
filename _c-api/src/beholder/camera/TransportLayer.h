@@ -119,14 +119,6 @@ public:
 
 	// Get the serial number of the first device found
 	[[nodiscard]] std::string getFirstSN() const noexcept;
-
-#ifndef NDEBUG
-	// Return the underlying pointer
-	// FIXME: either convert to std::unique_ptr or remove
-	[[nodiscard]] Pylon::ITransportLayer* getPtr() const noexcept {
-		return tl_.get();
-	}
-#endif
 };
 
 // Return a formatted string of the device designator
