@@ -11,6 +11,7 @@ set(ocv_INSTALL_DIR "${INSTALL_DIR}")
 set(CMAKE_ARGS ${bh_cmake_args})
 list(APPEND CMAKE_ARGS
 	"-DBUILD_TESTS=FALSE"
+	# FIXME: this should be on if we pass -march=native on the CLI (which we do)
 	"-DENABLE_NATIVE=${CMAKE_INTERPROCEDURAL_OPTIMIZATION}"	# something more appropriate would be nicer
 	"-DENABLE_LTO=${CMAKE_INTERPROCEDURAL_OPTIMIZATION}"
 	"-DBUILD_TRAINING_TOOLS=FALSE"

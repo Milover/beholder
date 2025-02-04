@@ -19,13 +19,14 @@ FetchContent_MakeAvailable(googletest)
 # are compiled, which we don't want.
 add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Wshadow")
 
+add_subdirectory(incbin)
+add_subdirectory(zlib)
 add_subdirectory(opencv)
 # NOTE: Leptonica is an internal Tesseract dependency, so we're not testing
 # it directly. If the Tesseract test passes, we're good to go.
 #add_subdirectory(leptonica)
 add_subdirectory(tesseract)
 add_subdirectory(pylon)
-add_subdirectory(incbin)
 
 # symlink the latest compile_commands.json to the root of the build directory
 # so tooling can easily find it

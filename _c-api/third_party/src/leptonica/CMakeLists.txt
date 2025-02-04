@@ -13,8 +13,6 @@ list(APPEND CMAKE_ARGS
 	"-DENABLE_GIF=FALSE"
 	"-DPNG_LIBRARY=liblibpng.a"
 	"-DPNG_PNG_INCLUDE_DIR=${ocv_SOURCE_DIR}/3rdparty/libpng"
-	"-DZLIB_LIBRARY=libzlib.a"
-	"-DZLIB_INCLUDE_DIR=${ocv_SOURCE_DIR}/3rdparty/zlib,${ocv_BINARY_DIR}/3rdparty/zlib"
 	"-DTIFF_LIBRARY=liblibtiff.a"
 	"-DTIFF_INCLUDE_DIR=${ocv_SOURCE_DIR}/3rdparty/libtiff,${ocv_BINARY_DIR}/3rdparty/libtiff"
 	"-DJPEG_LIBRARY=liblibjpeg-turbo.a"
