@@ -25,6 +25,7 @@ add_subdirectory(opencv)
 #add_subdirectory(leptonica)
 add_subdirectory(tesseract)
 add_subdirectory(pylon)
+add_subdirectory(incbin)
 
 # symlink the latest compile_commands.json to the root of the build directory
 # so tooling can easily find it

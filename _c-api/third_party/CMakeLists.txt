@@ -25,7 +25,13 @@ add_library(beholder::third_party ALIAS third_party)
 set_property(TARGET third_party
 	PROPERTY SOVERSION "${CMAKE_PROJECT_VERSION}"
 )
-add_dependencies(third_party bh-opencv bh-leptonica bh-tesseract bh-pylon)
+add_dependencies(third_party
+	bh-opencv
+	bh-leptonica
+	bh-tesseract
+	bh-pylon
+	bh-incbin
+)
 
 # NOTE: not sure if this necessarily has to go last/after installs
 ExternalProject_Add(
