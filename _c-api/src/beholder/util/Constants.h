@@ -7,6 +7,7 @@
 #ifndef BEHOLDER_UTIL_CONSTANTS_H
 #define BEHOLDER_UTIL_CONSTANTS_H
 
+#include <cstddef>
 #include <limits>
 #include <type_traits>
 
@@ -22,10 +23,18 @@ using enable_if_arith = std::enable_if_t<std::is_arithmetic_v<T>, T>;
 template<typename T>
 constexpr detail::enable_if_arith<T> bits_v{8};
 
-constexpr std::size_t bits = bits_v<std::size_t>;
+constexpr size_t bits = bits_v<size_t>;
 
 // Max 8-bit number.
 constexpr auto max8bit = std::numeric_limits<unsigned char>::max();
+
+namespace charconv {
+
+constexpr int defaultBase{10};
+constexpr int minBase{2};
+constexpr int maxBase{32};
+
+}  // namespace charconv
 
 }  // namespace cst
 }  // namespace beholder

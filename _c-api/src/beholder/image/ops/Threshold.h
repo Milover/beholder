@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "beholder/capi/Result.h"
 #include "beholder/image/ProcessingOp.h"
 #include "beholder/util/Constants.h"
 #include "beholder/util/Enums.h"
@@ -30,13 +31,13 @@ public:
 	// Supported types of thresholding. For more info, see:
 	// https://docs.opencv.org/4.10.0/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576
 	enum class Type {
-		Binary,
-		BinaryInv,
-		Truncate,
-		ToZero,
-		ToZeroInv,
+		Binary = 0,
+		BinaryInv = 1,
+		Truncate = 2,
+		ToZero = 3,
+		ToZeroInv = 4,
 		Mask = 7,
-		Otsu,
+		Otsu = 8,
 		Triangle = 16
 	};
 

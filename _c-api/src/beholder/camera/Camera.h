@@ -7,15 +7,13 @@
 #ifndef BEHOLDER_CAMERA_CAMERA_H
 #define BEHOLDER_CAMERA_CAMERA_H
 
-#include <algorithm>
 #include <chrono>
-#include <iostream>
+#include <cstddef>
 #include <memory>
 #include <optional>
-#include <ratio>
+#include <string>
 
 #include "beholder/BeholderExport.h"
-#include "beholder/camera/Exception.h"
 #include "beholder/camera/ParamEntry.h"
 #include "beholder/capi/Image.h"
 
@@ -28,7 +26,7 @@ class IPylonDevice;
 namespace beholder {
 
 // Supported camera acquisition trigger types.
-enum class BH_API TriggerType { Software, Unknown = -1 };
+enum class BH_API TriggerType { Unknown = -1, Software };
 
 // The default timeout for acquiring an image.
 inline static constexpr std::chrono::milliseconds DfltAcqTimeout{1000};
@@ -139,7 +137,7 @@ public:
 
 	// Start image acquisition and stop after nImages have been acquired.
 	// If nImages is 0, the camera will keep acquiring indefinitely.
-	bool startAcquisition(std::size_t nImages = 0UL) noexcept;
+	bool startAcquisition(size_t nImages = 0UL) noexcept;
 
 	// Stop image acquisition.
 	void stopAcquisition() noexcept;

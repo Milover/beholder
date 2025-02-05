@@ -4,21 +4,22 @@
 
 #include "beholder/image/Processor.h"
 
-#include <algorithm>
-#include <array>
+#include <opencv2/core/hal/interface.h>
+
 #include <cstddef>
-#include <cstdint>
 #include <iostream>
-#include <opencv2/core/fast_math.hpp>
+#include <limits>
+#include <memory>
+#include <opencv2/core/base.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "beholder/capi/Image.h"
+#include "beholder/capi/Rectangle.h"
 #include "beholder/capi/Result.h"
 #include "beholder/image/ConversionInfo.h"
 #include "beholder/util/Constants.h"
@@ -42,9 +43,9 @@ Processor::Processor() : img_{new cv::Mat{}}, roi_{new cv::Mat{}} {
 }
 
 // NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
-Processor::~Processor(){};
+Processor::~Processor() {};
 
-bool Processor::decodeImage(void* buffer, std::size_t bufSize, ReadMode mode) {
+bool Processor::decodeImage(void* buffer, size_t bufSize, ReadMode mode) {
 	if (bufSize > std::numeric_limits<int>::max()) {
 		std::cerr << "could not decode image: size too large" << std::endl;
 		return false;
@@ -66,7 +67,7 @@ Processor::encodeImage(const std::string& ext) {
 
 const cv::Mat& Processor::getImage() const { return *roi_; }
 
-std::size_t Processor::getImageID() const { return id_; }
+size_t Processor::getImageID() const { return id_; }
 
 Image Processor::getRawImage() const {
 	// WARNING: we assume that we can only have 8-bit Mono or BGR images

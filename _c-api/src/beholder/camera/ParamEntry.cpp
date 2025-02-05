@@ -4,11 +4,10 @@
 
 #include "beholder/camera/ParamEntry.h"
 
-#include <GenApi/Types.h>
+#include <GenApi/Types.h>  // NOLINT
 
 #include <algorithm>
-#include <type_traits>
-#include <utility>
+#include <string>
 
 #include "beholder/util/Enums.h"
 

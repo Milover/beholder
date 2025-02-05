@@ -7,6 +7,8 @@
 #ifndef BEHOLDER_IMAGE_OPS_H
 #define BEHOLDER_IMAGE_OPS_H
 
+// NOLINTBEGIN(misc-include-cleaner)
+
 #include "beholder/image/ops/AdaptiveThreshold.h"
 #include "beholder/image/ops/AddPadding.h"
 #include "beholder/image/ops/AutoCrop.h"
@@ -34,5 +36,7 @@
 #include "beholder/image/ops/Rotate.h"
 #include "beholder/image/ops/Threshold.h"
 #include "beholder/image/ops/UnsharpMask.h"
+
+// NOLINTEND(misc-include-cleaner)
 
 #endif	// BEHOLDER_IMAGE_OPS_H

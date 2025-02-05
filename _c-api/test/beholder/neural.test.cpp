@@ -14,7 +14,7 @@
 #include <exception>
 #include <filesystem>
 
-#include "Testing.h"
+#include "Testing.h" // NOLINT
 
 namespace beholder {
 namespace test {

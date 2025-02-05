@@ -7,7 +7,6 @@
 #ifndef BEHOLDER_CAMERA_INTERNAL_GEN_API_UTILS_H
 #define BEHOLDER_CAMERA_INTERNAL_GEN_API_UTILS_H
 
-#include <numeric>
 #include <type_traits>
 #include <utility>
 #include <vector>

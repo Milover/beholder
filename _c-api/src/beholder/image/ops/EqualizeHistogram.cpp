@@ -8,6 +8,7 @@
 #include <opencv2/imgproc.hpp>
 #include <vector>
 
+#include "beholder/capi/Result.h"
 #include "beholder/image/ProcessingOp.h"
 
 namespace beholder {

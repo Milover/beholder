@@ -7,11 +7,9 @@
 #ifndef BEHOLDER_IMAGE_PROCESSOR_H
 #define BEHOLDER_IMAGE_PROCESSOR_H
 
-#include <array>
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "beholder/capi/Image.h"
@@ -47,7 +45,7 @@ private:
 	std::vector<unsigned char> encoding_;  // local encoding buffer
 	// FIXME: only images received from a camera will have an ID.
 	// It's probably better that we handle ID tagging entirely.
-	std::size_t id_{0};	 // camera assigned ID of the current image.
+	size_t id_{0};	// camera assigned ID of the current image.
 
 public:
 	using OpList = std::vector<ProcessingOp::OpPtr>;
@@ -76,7 +74,7 @@ public:
 	// The buffer is left unchanged and the data is copied into the
 	// Processor. New memory is not allocated if the Processor
 	// has enough space to hold the decoded image.
-	bool decodeImage(void* buffer, std::size_t bufSize, ReadMode mode);
+	bool decodeImage(void* buffer, size_t bufSize, ReadMode mode);
 
 	// Encode an image (current ROI) into a local buffer in the specified
 	// format, and return the encoding.
@@ -90,7 +88,7 @@ public:
 	// NOTE: the image ID is assigned by a camera device, hence
 	// only images received as acquisition results, i.e. as a result
 	// of calling receiveAcquisitionResult(...), will have an ID.
-	[[nodiscard]] std::size_t getImageID() const;
+	[[nodiscard]] size_t getImageID() const;
 
 	// Get the stored image as an Image
 	[[nodiscard]] Image getRawImage() const;

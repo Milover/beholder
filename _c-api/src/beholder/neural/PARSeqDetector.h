@@ -8,7 +8,7 @@
 #ifndef BEHOLDER_NEURAL_PARSEQ_DETECTOR_H
 #define BEHOLDER_NEURAL_PARSEQ_DETECTOR_H
 
-#include <cstddef>
+#include <string>
 
 #include "beholder/neural/ObjDetector.h"
 
@@ -24,7 +24,7 @@ protected:
 
 	// Store results.
 	// NOTE: no-op, everything stored during extraction.
-	void store() override{};
+	void store() override {};
 
 public:
 	// The max length of the recognized list of characters, i.e.
@@ -32,7 +32,7 @@ public:
 	//
 	// For more info, see:
 	// https://github.com/baudm/parseq/tree/main?tab=readme-ov-file#method-tldr
-	inline static constexpr int nPos{26};
+	static constexpr int nPos{26};
 
 	// The character set recognized by the model.
 	std::string charset{

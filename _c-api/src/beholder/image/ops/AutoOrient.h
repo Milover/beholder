@@ -5,9 +5,9 @@
 #ifndef BEHOLDER_IMAGE_OPS_AUTO_ORIENT_H
 #define BEHOLDER_IMAGE_OPS_AUTO_ORIENT_H
 
-#include <array>
 #include <vector>
 
+#include "beholder/capi/Result.h"
 #include "beholder/image/ProcessingOp.h"
 #include "beholder/util/Constants.h"
 

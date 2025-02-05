@@ -8,8 +8,6 @@
 #ifndef BEHOLDER_NEURAL_EAST_DETECTOR_H
 #define BEHOLDER_NEURAL_EAST_DETECTOR_H
 
-#include <array>
-
 #include "beholder/neural/ObjDetector.h"
 
 namespace cv {

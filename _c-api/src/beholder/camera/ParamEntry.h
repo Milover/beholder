@@ -8,6 +8,7 @@
 #define BEHOLDER_CAMERA_PARAM_ENTRY_H
 
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -20,23 +21,23 @@ using ParamList = std::vector<ParamEntry>;	// handy-dandy typedef
 
 // Supported GenICam parameter types.
 enum class BH_API ParamType {
-	_val,		  // GenAPI value (unused)
-	_base,		  // GenAPI base (unused)
-	Int,		  // GenAPI integer
-	Bool,		  // GenAPI boolean
-	Cmd,		  // GenAPI command
-	Float,		  // GenAPI float
-	Str,		  // GenAPI string
-	Reg,		  // GenAPI register
-	_cat,		  // GenAPI category (unused)
-	Enum,		  // GenAPI enumeration
-	_entry,		  // GenAPI enumeration entry (unused)
-	_port,		  // GenAPI port (unused)
-	Unknown = -1  // we don't actually know if this is ok; yolo
+	Unknown = -1,  // we don't actually know if this is ok; yolo
+	_val,		   // GenAPI value (unused)
+	_base,		   // GenAPI base (unused)
+	Int,		   // GenAPI integer
+	Bool,		   // GenAPI boolean
+	Cmd,		   // GenAPI command
+	Float,		   // GenAPI float
+	Str,		   // GenAPI string
+	Reg,		   // GenAPI register
+	_cat,		   // GenAPI category (unused)
+	Enum,		   // GenAPI enumeration
+	_entry,		   // GenAPI enumeration entry (unused)
+	_port,		   // GenAPI port (unused)
 };
 
 // Supported parameter access modes.
-enum class BH_API ParamAccessMode { Read, ReadWrite, Unknown = -1 };
+enum class BH_API ParamAccessMode { Unknown = -1, Read, ReadWrite };
 
 // ParamEntry represents a GenICam parameter.
 class BH_API ParamEntry {

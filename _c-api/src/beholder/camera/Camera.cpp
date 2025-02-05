@@ -13,11 +13,15 @@
 #include <pylon/InstantCamera.h>
 #include <pylon/Parameter.h>
 #include <pylon/PixelType.h>
+#include <pylon/TypeMappings.h>
 
+#include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 #include <optional>
+#include <string>
 #include <utility>
 
 #include "beholder/camera/Exception.h"
@@ -60,7 +64,7 @@ Camera::Camera()
 }
 
 // NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
-Camera::~Camera(){};
+Camera::~Camera() {};
 
 bool Camera::acquire(std::chrono::milliseconds timeout) {
 	if (!isAttached()) {
@@ -127,14 +131,14 @@ std::optional<Image> Camera::getImage() noexcept {
 		if (!res.IsValid()) {
 			return std::nullopt;
 		}
-		std::size_t step{0UL};
+		size_t step{0UL};
 		return std::optional{Image{
-			static_cast<std::size_t>(res->GetID()),
+			static_cast<size_t>(res->GetID()),
 			static_cast<int>(res->GetHeight()),
 			static_cast<int>(res->GetWidth()),
-			static_cast<std::int64_t>(res->GetPixelType()), res->GetBuffer(),
+			static_cast<int64_t>(res->GetPixelType()), res->GetBuffer(),
 			res->GetStride(step) ? step : 0UL,
-			static_cast<std::size_t>(Pylon::BitPerPixel(res->GetPixelType()))}};
+			static_cast<size_t>(Pylon::BitPerPixel(res->GetPixelType()))}};
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could get raw image data: " << e.what() << std::endl;
 	} catch (...) {
@@ -242,7 +246,7 @@ bool Camera::setParams(const ParamList& params) noexcept {
 	return ok;
 }
 
-bool Camera::startAcquisition(std::size_t nImages) noexcept {
+bool Camera::startAcquisition(size_t nImages) noexcept {
 	// XXX: not sure what happens here if the camera gets disconnected
 	if (isAcquiring()) {
 		return true;

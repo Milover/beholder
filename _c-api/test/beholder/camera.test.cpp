@@ -9,17 +9,14 @@
 #include <beholder/camera/PylonAPI.h>
 #include <beholder/camera/TransportLayer.h>
 #include <beholder/capi/Image.h>
-#include <beholder/image/Processor.h>
 #include <gtest/gtest.h>
 
-#include <array>
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
-#include <limits>
-#include <ostream>
-#include <string>
+#include <string_view>
 
-#include "Testing.h"
+#include "Testing.h"  // NOLINT
 
 namespace beholder {
 namespace test {
@@ -59,6 +56,7 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ASSERT_TRUE(tl.init(DeviceClass::Emulated));
 
 		// create device
+		// NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
 		auto* dev{tl.createDevice(sn.data(), DeviceDesignator::SN)};
 		ASSERT_NE(dev, nullptr);
 

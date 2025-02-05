@@ -5,7 +5,9 @@
 #include "beholder/image/ops/AddPadding.h"
 
 #include <opencv2/core.hpp>
+#include <opencv2/core/base.hpp>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <vector>
 
 #include "beholder/capi/Result.h"
@@ -14,7 +16,7 @@
 namespace beholder {
 
 bool AddPadding::execute(const cv::Mat& in, cv::Mat& out) const {
-	cv::Mat tmp{in.rows + 2 * padding, in.cols + 2 * padding, in.depth()};
+	cv::Mat tmp{in.rows + (2 * padding), in.cols + (2 * padding), in.depth()};
 	// assume white background
 	cv::copyMakeBorder(in, tmp, padding, padding, padding, padding,
 					   cv::BORDER_ISOLATED, cv::Scalar::all(padValue));

@@ -5,11 +5,10 @@
 #include "beholder/neural/Tesseract.h"
 
 #include <tesseract/baseapi.h>
+#include <tesseract/publictypes.h>
 
 #include <cstdio>
 #include <memory>
-#include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,7 +29,7 @@ void Tesseract::Deleter::operator()(tesseract::TessBaseAPI* t) {
 }
 
 // NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
-Tesseract::~Tesseract(){};
+Tesseract::~Tesseract() {};
 
 Tesseract::Tesseract() : p_{new tesseract::TessBaseAPI{}, Deleter{}} {}
 

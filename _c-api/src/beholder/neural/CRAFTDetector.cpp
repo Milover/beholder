@@ -4,17 +4,19 @@
 
 #include "beholder/neural/CRAFTDetector.h"
 
+#include <opencv2/core/hal/interface.h>
+
+#include <algorithm>
 #include <cmath>
 #include <opencv2/core.hpp>
 #include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-#include <opencv2/dnn/dnn.hpp>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-#include <string>
+#include <utility>
 #include <vector>
 
+#include "beholder/capi/Result.h"
 #include "beholder/neural/internal/ObjDetectorImpl.h"
 #include "beholder/util/Constants.h"
 

@@ -7,9 +7,13 @@
 #ifndef BEHOLDER_IMAGE_H
 #define BEHOLDER_IMAGE_H
 
+// NOLINTBEGIN(misc-include-cleaner)
+
 #include "beholder/image/ConversionInfo.h"
 #include "beholder/image/ProcessingOp.h"
 #include "beholder/image/Processor.h"
 #include "beholder/image/ops/BeholderOps.h"
+
+// NOLINTEND(misc-include-cleaner)
 
 #endif	// BEHOLDER_IMAGE_H

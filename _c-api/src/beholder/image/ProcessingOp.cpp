@@ -4,11 +4,7 @@
 
 #include "beholder/image/ProcessingOp.h"
 
-#include <algorithm>
-#include <memory>
 #include <opencv2/core/mat.hpp>
-#include <string>
-#include <utility>
 #include <vector>
 
 #include "beholder/capi/Result.h"

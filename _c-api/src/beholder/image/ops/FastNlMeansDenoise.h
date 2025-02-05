@@ -7,6 +7,7 @@
 
 #include <vector>
 
+#include "beholder/capi/Result.h"
 #include "beholder/image/ProcessingOp.h"
 
 namespace cv {

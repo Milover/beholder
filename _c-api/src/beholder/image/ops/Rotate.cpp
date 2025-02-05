@@ -4,6 +4,7 @@
 
 #include "beholder/image/ops/Rotate.h"
 
+#include <opencv2/core/base.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>

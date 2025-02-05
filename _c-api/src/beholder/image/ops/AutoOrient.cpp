@@ -4,6 +4,7 @@
 
 #include "beholder/image/ops/AutoOrient.h"
 
+#include <opencv2/core/base.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
@@ -108,10 +109,10 @@ void findTextBox(const cv::Mat& in, int kSize, float txtHeight, float txtWidth,
 		}
 	}
 
-	returnValue = cv::RotatedRect{
-		box.center,
-		cv::Size2f{box.size.width + 2 * padding, box.size.height + 2 * padding},
-		box.angle};
+	returnValue = cv::RotatedRect{box.center,
+								  cv::Size2f{box.size.width + (2 * padding),
+											 box.size.height + (2 * padding)},
+								  box.angle};
 }
 
 }  // namespace beholder

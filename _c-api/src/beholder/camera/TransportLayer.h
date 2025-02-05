@@ -8,6 +8,7 @@
 #define BEHOLDER_CAMERA_TRANSPORT_LAYER_H
 
 #include <chrono>
+#include <cstddef>
 #include <memory>
 #include <string>
 
@@ -22,25 +23,25 @@ namespace beholder {
 
 // Supported Transport layer types (device classes).
 enum class BH_API DeviceClass {
+	Unknown = -1,
 	GigE,
 	Emulated,
 	//USB,
-	Unknown = -1
 };
 
 // Supported device designator types, used to select a specific device.
 enum class BH_API DeviceDesignator {
+	Unknown = -1,
 	MAC,  // device MAC address
 	SN,	  // device serial number
 	//IP,			// device IP address
-	Unknown = -1
 };
 
 // The default timeout for connecting to a camera device.
 inline static constexpr std::chrono::milliseconds DfltDevConnTimeout{3000};
 
 // The default number of retry attempts for connecting to a camera device.
-inline static constexpr std::size_t DfltDevNRetries{5UL};
+inline static constexpr size_t DfltDevNRetries{5UL};
 
 // TransportLayer handles communication with physical (camera) devices.
 class BH_API TransportLayer {
@@ -99,7 +100,7 @@ public:
 				 DeviceDesignator ddt = DeviceDesignator::SN,
 				 bool reboot = true,
 				 std::chrono::milliseconds timeout = DfltDevConnTimeout,
-				 std::size_t retries = DfltDevNRetries) const noexcept;
+				 size_t retries = DfltDevNRetries) const noexcept;
 
 	// Find and establish a connection to a device with the provided designator.
 	// If reboot is true, the device will be rebooted/reset during creation.
@@ -115,7 +116,7 @@ public:
 				 DeviceDesignator ddt = DeviceDesignator::SN,
 				 bool reboot = true,
 				 std::chrono::milliseconds timeout = DfltDevConnTimeout,
-				 std::size_t retries = DfltDevNRetries) const noexcept;
+				 size_t retries = DfltDevNRetries) const noexcept;
 
 	// Get the serial number of the first device found
 	[[nodiscard]] std::string getFirstSN() const noexcept;

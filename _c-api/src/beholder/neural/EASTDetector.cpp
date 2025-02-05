@@ -4,14 +4,16 @@
 
 #include "beholder/neural/EASTDetector.h"
 
-#include <array>
+#include <opencv2/core/cvdef.h>
+#include <opencv2/core/hal/interface.h>
+
 #include <cmath>
-#include <opencv2/core.hpp>
-#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
+#include <utility>
 
+#include "beholder/capi/Result.h"
 #include "beholder/neural/internal/ObjDetectorImpl.h"
 
 namespace beholder {
@@ -56,8 +58,9 @@ void EASTDetector::extract() {
 			const float h{x0s[x] + x2s[x]};
 			const float w{x1s[x] + x3s[x]};
 
-			const cv::Point2f offset{offsetX + cosA * x1s[x] + sinA * x2s[x],
-									 offsetY - sinA * x1s[x] + cosA * x2s[x]};
+			const cv::Point2f offset{
+				offsetX + (cosA * x1s[x]) + (sinA * x2s[x]),
+				offsetY - (sinA * x1s[x]) + (cosA * x2s[x])};
 			const cv::Point2f p1{cv::Point2f{-sinA * h, -cosA * h} + offset};
 			const cv::Point2f p3{cv::Point2f{-cosA * w, sinA * w} + offset};
 

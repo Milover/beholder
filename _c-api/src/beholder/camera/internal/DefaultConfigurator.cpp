@@ -5,13 +5,16 @@
 #include "beholder/camera/internal/DefaultConfigurator.h"
 
 #include <GenApi/INodeMap.h>
+#include <pylon/CommandParameter.h>
 #include <pylon/ConfigurationHelper.h>
+#include <pylon/EnumParameter.h>
 #include <pylon/InstantCamera.h>
-#include <pylon/ParameterIncludes.h>
+#include <pylon/IntegerParameter.h>
+#include <pylon/TypeMappings.h>
 
 #include <array>
+#include <exception>
 #include <iostream>
-#include <stdexcept>
 
 #include "beholder/camera/Exception.h"
 

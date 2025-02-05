@@ -4,13 +4,14 @@
 
 #include "beholder/image/ops/DrawLabels.h"
 
-#include <array>
 #include <iomanip>
-#include <opencv2/core.hpp>
+#include <ios>
+#include <opencv2/core/cvstd.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "beholder/capi/Result.h"

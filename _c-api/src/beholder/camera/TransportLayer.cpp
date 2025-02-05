@@ -4,13 +4,14 @@
 
 #include "beholder/camera/TransportLayer.h"
 
+#include <pylon/CommandParameter.h>
 #include <pylon/Container.h>
 #include <pylon/Device.h>
 #include <pylon/DeviceClass.h>
 #include <pylon/DeviceInfo.h>
-#include <pylon/ParameterIncludes.h>
 #include <pylon/TlFactory.h>
 #include <pylon/TransportLayer.h>
+#include <pylon/TypeMappings.h>
 #include <pylon/gige/GigETransportLayer.h>
 
 #include <algorithm>
@@ -83,7 +84,7 @@ TransportLayer::createDeviceImpl(const char* designator,
 }
 
 // NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
-TransportLayer::~TransportLayer(){};
+TransportLayer::~TransportLayer() {};
 
 bool TransportLayer::init(DeviceClass dc) noexcept {
 	// a transport layer can only be initialized once
@@ -123,14 +124,14 @@ Pylon::IPylonDevice*
 TransportLayer::createDevice(const std::string& designator,
 							 DeviceDesignator ddt, bool reboot,
 							 std::chrono::milliseconds timeout,
-							 std::size_t retries) const noexcept {
+							 size_t retries) const noexcept {
 	return createDevice(designator.c_str(), ddt, reboot, timeout, retries);
 }
 
 Pylon::IPylonDevice*
 TransportLayer::createDevice(const char* designator, DeviceDesignator ddt,
 							 bool reboot, std::chrono::milliseconds timeout,
-							 std::size_t retries) const noexcept {
+							 size_t retries) const noexcept {
 	auto* d{createDeviceImpl(designator, ddt)};
 	if (!reboot || !static_cast<bool>(d)) {
 		return d;

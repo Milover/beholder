@@ -7,8 +7,13 @@
 #ifndef BEHOLDER_UTIL_UTILITY_H
 #define BEHOLDER_UTIL_UTILITY_H
 
+#include <beholder/util/Constants.h>
+
+#include <charconv>
+#include <iostream>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <type_traits>
 #include <vector>
 
@@ -30,6 +35,24 @@ void trimWhiteR(std::string& s);
 
 // Trim leading and trailing whitespace (left-right trim).
 void trimWhiteLR(std::string& s);
+
+// TODO: the return type should wrap the value and a possible error.
+template<typename T, int Base = cst::charconv::defaultBase,
+		 std::enable_if_t<std::is_arithmetic_v<T> &&
+							  Base >= cst::charconv::minBase &&
+							  Base <= cst::charconv::maxBase,
+						  bool> = true>
+T toDecimal(const char* first, const char* last) {
+	T val{};
+	std::from_chars_result res{std::from_chars(first, last, &val, Base)};
+
+	if (res.ec != std::errc{}) {
+		const std::error_code e{std::make_error_code(res.ec)};
+		std::cerr << "error (" << e.value() << "): " << e.message()
+				  << std::endl;	 // NOLINT(performance-avoid-endl)
+	}
+	return val;
+}
 
 }  // namespace beholder
 
