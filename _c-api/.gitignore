@@ -6,4 +6,4 @@ CMakeUserPresets.json
 build/
 
 # Local archives
-*.tar.gz
+third_party/**/*.tar.gz
