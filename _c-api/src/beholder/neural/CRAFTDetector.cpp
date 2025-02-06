@@ -132,7 +132,7 @@ void CRAFTDetector::extract() {
 			rect.center *= 2;
 			if (rect.size.width < rect.size.height) {
 				rect.size = cv::Size2f{rect.size.height, rect.size.width};
-				rect.angle -= 90.0F;
+				rect.angle -= cst::deg90_v<float>;
 			}
 			buf_->tBoxes.emplace_back(
 				cv::RotatedRect{rect.center, rect.size, 0.0}.boundingRect());
