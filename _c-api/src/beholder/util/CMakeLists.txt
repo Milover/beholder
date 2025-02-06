@@ -8,6 +8,8 @@ target_sources(beholder
 			Constants.h
 			Enums.h
 			Packs.h
+			ScopeGuard.h
 			Traits.h
+			Units.h
 			Utility.h
 )

@@ -65,7 +65,7 @@ target_link_directories(beholder BEFORE
 		$<BUILD_INTERFACE:${OpenCV_INSTALL_PATH}/${CMAKE_INSTALL_LIBDIR}>
 		$<BUILD_INTERFACE:${OpenCV_INSTALL_PATH}/${CMAKE_INSTALL_LIBDIR}/opencv4/3rdparty>
 )
-target_compile_features(beholder PUBLIC cxx_std_17)
+target_compile_features(beholder PUBLIC cxx_std_20)
 
 add_subdirectory(util)
 add_subdirectory(capi)

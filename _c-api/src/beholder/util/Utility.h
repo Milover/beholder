@@ -12,12 +12,15 @@
 #include <charconv>
 #include <iostream>
 #include <memory>
+#include <span>
 #include <string>
 #include <system_error>
 #include <type_traits>
 #include <vector>
 
 namespace beholder {
+
+using CCharSpan = std::span<const char>;
 
 // Helper function for setting ch to raw.
 // If ch != nullptr, calls delete[] on ch.
@@ -42,9 +45,11 @@ template<typename T, int Base = cst::charconv::defaultBase,
 							  Base >= cst::charconv::minBase &&
 							  Base <= cst::charconv::maxBase,
 						  bool> = true>
-T toDecimal(const char* first, const char* last) {
+T toDecimal(CCharSpan chars) {
 	T val{};
-	std::from_chars_result res{std::from_chars(first, last, &val, Base)};
+	const char* begin{&(*chars.begin())};
+	const char* end{&(*chars.end())};
+	std::from_chars_result res{std::from_chars(begin, end, val, Base)};
 
 	if (res.ec != std::errc{}) {
 		const std::error_code e{std::make_error_code(res.ec)};
