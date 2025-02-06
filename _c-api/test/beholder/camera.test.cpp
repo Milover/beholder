@@ -29,10 +29,12 @@ namespace test {
 //
 // NOTE: camera emulation is enabled for all tests by default through CMake
 // defined environment variables, and 3 emulated devices are available.
+// However, defining the environment within the test or fixture might be
+// more appropriate.
 
 // Connect to an emulated camera device and acquire an image.
 TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{assetsDir / "images/red_100x100.png"};
+	const auto testimage{globalAssetsDir / "images/red_100x100.png"};
 	const ParamList camParams{
 		ParamEntry{"AcquisitionMode", "Continuous"},
 
