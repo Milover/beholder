@@ -6,10 +6,12 @@ target_sources(beholder.test
 			"${CMAKE_CURRENT_SOURCE_DIR}"
 		FILES
 			Testing.h
+			embed.test.h
 	PRIVATE
-		image.test.cpp
-		neural.test.cpp
 		Testing.cpp
+		image.test.cpp
+		embed.test.cpp
+		neural.test.cpp
 )
 target_link_libraries(beholder.test
 	PRIVATE

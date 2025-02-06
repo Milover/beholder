@@ -24,13 +24,53 @@ list(APPEND bh_ocv_modules
 	gapi
 )
 
+find_package(incbin REQUIRED)
+find_package(zlib REQUIRED)
 find_package(OpenCV REQUIRED ${bh_ocv_modules})
 find_package(Tesseract REQUIRED)
+find_package(pylon REQUIRED)
+
+# TODO: clean this up
+# disgusting hack to get the generic install path
+get_target_property(pylon_imported_loc pylon::PylonBase LOCATION)
+cmake_path(GET pylon_imported_loc PARENT_PATH pylon_imported_loc)
+add_custom_command(
+	OUTPUT pylon.tar.gz
+	COMMAND
+		${CMAKE_COMMAND} -E tar cvz pylon.tar.gz
+			"${pylon_imported_loc}/libpylonbase.so"
+			"${pylon_imported_loc}/libpylonbase.so.8.0"
+			"${pylon_imported_loc}/libpylonbase.so.8.0.0"
+			"${pylon_imported_loc}/libpylonc.so"
+			"${pylon_imported_loc}/libpylonc.so.8.0"
+			"${pylon_imported_loc}/libpylonc.so.8.0.0"
+			"${pylon_imported_loc}/libpylonutility.so"
+			"${pylon_imported_loc}/libpylonutility.so.8.0"
+			"${pylon_imported_loc}/libpylonutility.so.8.0.0"
+			"${pylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
+			"${pylon_imported_loc}/libgxapi.so"
+			"${pylon_imported_loc}/libgxapi.so.14.3"
+			"${pylon_imported_loc}/libgxapi.so.14.3.1"
+			"${pylon_imported_loc}/libuxapi.so"
+			"${pylon_imported_loc}/libuxapi.so.13.0"
+			"${pylon_imported_loc}/libuxapi.so.13.0.1"
+			"${pylon_imported_loc}/libpylon_TL_gige.so"
+			"${pylon_imported_loc}/libpylon_TL_camemu.so"
+)
 
 # convenience variable, so that we can propagate it to sub-directories easily
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH bh_base_dir)
 
 target_sources(beholder
+	PRIVATE
+		pylon.tar.gz
 	PUBLIC
 		FILE_SET HEADERS
 		BASE_DIRS
@@ -38,6 +78,11 @@ target_sources(beholder
 		FILES
 			Beholder.h
 			BeholderExport.h
+)
+target_compile_definitions(beholder
+	PRIVATE
+		BH_EMBED_DIR="${CMAKE_CURRENT_BINARY_DIR}"
+		ZLIB_CONST
 )
 # Tesseract's include dirs are necessary when Tesseract is installed to a
 # non-default location
@@ -49,6 +94,8 @@ target_include_directories(beholder
 list(TRANSFORM bh_ocv_modules PREPEND "opencv_" OUTPUT_VARIABLE bh_ocv_libs)
 target_link_libraries(beholder
 	PRIVATE
+		beholder::incbin
+		ZLIB::ZLIBSTATIC
 		Tesseract::libtesseract
 		#${OpenCV_LIBS}
 		${bh_ocv_libs}
@@ -69,6 +116,7 @@ target_compile_features(beholder PUBLIC cxx_std_20)
 
 add_subdirectory(util)
 add_subdirectory(capi)
+add_subdirectory(embed)
 add_subdirectory(image)
 add_subdirectory(neural)
 
