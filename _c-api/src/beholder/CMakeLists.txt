@@ -34,35 +34,27 @@ find_package(pylon REQUIRED)
 # disgusting hack to get the generic install path
 get_target_property(pylon_imported_loc pylon::PylonBase LOCATION)
 cmake_path(GET pylon_imported_loc PARENT_PATH pylon_imported_loc)
+file(GLOB pylon_lib_files
+	"${pylon_imported_loc}/libpylonbase.so*"
+	"${pylon_imported_loc}/libpylonc.so*"
+	"${pylon_imported_loc}/libpylonutility.so*"
+	"${pylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
+	"${pylon_imported_loc}/libgxapi.so*"
+	"${pylon_imported_loc}/libuxapi.so*"
+	"${pylon_imported_loc}/libpylon_TL_gige.so"
+	"${pylon_imported_loc}/libpylon_TL_camemu.so"
+)
 add_custom_command(
 	OUTPUT pylon.tar.gz
 	COMMAND
-		${CMAKE_COMMAND} -E tar cvz pylon.tar.gz
-			"${pylon_imported_loc}/libpylonbase.so"
-			"${pylon_imported_loc}/libpylonbase.so.8.0"
-			"${pylon_imported_loc}/libpylonbase.so.8.0.0"
-			"${pylon_imported_loc}/libpylonc.so"
-			"${pylon_imported_loc}/libpylonc.so.8.0"
-			"${pylon_imported_loc}/libpylonc.so.8.0.0"
-			"${pylon_imported_loc}/libpylonutility.so"
-			"${pylon_imported_loc}/libpylonutility.so.8.0"
-			"${pylon_imported_loc}/libpylonutility.so.8.0.0"
-			"${pylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
-			"${pylon_imported_loc}/libgxapi.so"
-			"${pylon_imported_loc}/libgxapi.so.14.3"
-			"${pylon_imported_loc}/libgxapi.so.14.3.1"
-			"${pylon_imported_loc}/libuxapi.so"
-			"${pylon_imported_loc}/libuxapi.so.13.0"
-			"${pylon_imported_loc}/libuxapi.so.13.0.1"
-			"${pylon_imported_loc}/libpylon_TL_gige.so"
-			"${pylon_imported_loc}/libpylon_TL_camemu.so"
+		${CMAKE_COMMAND} -E tar cvz pylon.tar.gz ${pylon_lib_files}
 )
 
 # convenience variable, so that we can propagate it to sub-directories easily

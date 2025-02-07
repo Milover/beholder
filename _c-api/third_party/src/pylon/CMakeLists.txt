@@ -19,7 +19,7 @@ project(beholder-pylon)
 
 # the pylon version we're using (about ~500MB smaller, and we're not using
 # any of the v8.0.2 features)
-set(pylon_ver "7.5.0")
+set(pylon_ver "8.0.2")
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/versions.json" pylon_json)
 

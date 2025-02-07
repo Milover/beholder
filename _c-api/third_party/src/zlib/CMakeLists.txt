@@ -16,7 +16,7 @@ ExternalProject_Add(
 	bh-zlib
 	GIT_REPOSITORY https://github.com/madler/zlib.git
 	GIT_TAG ed1610791c0c681ee562bb3997e0f29bfae11b2d # 1.4.1.1-dev @ 2025-02-04
-	GIT_SHALLOW TRUE
+	#GIT_SHALLOW TRUE # disabled until 1.4 releases
 	UPDATE_DISCONNECTED TRUE
 	PATCH_COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/zlib.patch
 	INSTALL_DIR "${bh_staging_prefix}"

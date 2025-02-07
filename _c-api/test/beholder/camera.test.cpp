@@ -33,6 +33,11 @@ namespace test {
 // more appropriate.
 
 // Connect to an emulated camera device and acquire an image.
+//
+// BUG: when compiling with clang and running with sanitizers, this test
+// can occasionally hang --- the camera times out while waiting for the trigger
+// to become available.
+// This only happens on the first run after a fresh build.
 TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 	const auto testimage{globalAssetsDir / "images/red_100x100.png"};
 	const ParamList camParams{
@@ -73,7 +78,7 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ASSERT_TRUE(cam.startAcquisition(nImages));
 
 		for (auto i{0UL}; i < nImages; ++i) {
-			EXPECT_TRUE(cam.waitAndTrigger(std::chrono::seconds{1}));
+			EXPECT_TRUE(cam.waitAndTrigger(std::chrono::seconds{30}));
 			EXPECT_TRUE(cam.acquire());
 
 			auto img{cam.getImage()};
