@@ -26,19 +26,19 @@ using enable_if_floating = std::enable_if_t<std::is_floating_point_v<T>, T>;
 
 // The number of bits in a byte.
 template<typename T>
-constexpr detail::enable_if_arith<T> bits_v{8};
+constexpr detail::enable_if_arith<T> bits_v = 8;
 
 constexpr size_t bits = bits_v<size_t>;
 
 // Degrees constants.
 template<typename T>
-constexpr detail::enable_if_floating<T> deg90_v{90};
+constexpr detail::enable_if_floating<T> deg90_v = 90;
 template<typename T>
-constexpr detail::enable_if_floating<T> deg180_v{180};
+constexpr detail::enable_if_floating<T> deg180_v = 180;
 template<typename T>
-constexpr detail::enable_if_floating<T> deg270_v{270};
+constexpr detail::enable_if_floating<T> deg270_v = 270;
 template<typename T>
-constexpr detail::enable_if_floating<T> deg360_v{360};
+constexpr detail::enable_if_floating<T> deg360_v = 360;
 
 constexpr double deg90 = deg90_v<double>;
 constexpr double deg180 = deg180_v<double>;
@@ -48,11 +48,14 @@ constexpr double deg360 = deg360_v<double>;
 // Max 8-bit number.
 constexpr auto max8bit = std::numeric_limits<unsigned char>::max();
 
+// Integer bases.
 namespace charconv {
 
-constexpr int defaultBase{10};
-constexpr int minBase{2};
-constexpr int maxBase{32};
+constexpr int base2 = 2;
+constexpr int base8 = 8;
+constexpr int base10 = 10;
+constexpr int base16 = 16;
+constexpr int base32 = 32;
 
 }  // namespace charconv
 

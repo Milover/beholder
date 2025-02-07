@@ -40,11 +40,11 @@ void trimWhiteR(std::string& s);
 void trimWhiteLR(std::string& s);
 
 // TODO: the return type should wrap the value and a possible error.
-template<typename T, int Base = cst::charconv::defaultBase,
-		 std::enable_if_t<std::is_arithmetic_v<T> &&
-							  Base >= cst::charconv::minBase &&
-							  Base <= cst::charconv::maxBase,
-						  bool> = true>
+template<
+	typename T, int Base = cst::charconv::base10,
+	std::enable_if_t<std::is_arithmetic_v<T> && Base >= cst::charconv::base2 &&
+						 Base <= cst::charconv::base32,
+					 bool> = true>
 T toDecimal(CCharSpan chars) {
 	T val{};
 	const char* begin{&(*chars.begin())};

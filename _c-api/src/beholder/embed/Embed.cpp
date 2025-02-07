@@ -12,15 +12,16 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <memory>
 #include <system_error>
 
 #include "beholder/embed/Tar.h"
+#include "beholder/util/Constants.h"
 #include "beholder/util/Enums.h"
 #include "beholder/util/ScopeGuard.h"
 #include "beholder/util/Utility.h"
 
 namespace fs = std::filesystem;
+namespace csc = beholder::cst::charconv;
 
 namespace beholder {
 namespace embed {
@@ -65,19 +66,22 @@ ByteVector decompressGzip(ByteSpan data) {
 	return out;
 }
 
-void extractTar(ByteSpan data, const fs::path& root) {
+// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+void unarchiveTar(ByteSpan data, const fs::path& root) {
 	size_t offset{};
 	while (offset + tar::blockSize <= data.size()) {
-		auto delHdr = [](tar::Header* p) { p->~Header(); };
-		const std::unique_ptr<tar::Header, decltype(delHdr)> header{
-			(new (&(data[offset])) tar::Header{}), delHdr};
-
 		// check if this header block is zeroed out (end-of-archive marker)
 		if (std::ranges::all_of(data.subspan(offset, tar::blockSize),
 								[](auto&& v) { return v == '\0'; })) {
 			break;
 		}
-		const size_t fileSize{toDecimal<size_t>(header->size)};
+		if (!tar::checksum(data.subspan(offset, tar::blockSize))) {
+			std::cerr << "warning: checksum mismatch" << '\n';
+			// TODO: we should skip until the next valid header or something
+		}
+		const tar::Header* header{
+			reinterpret_cast<const tar::Header*>(data.data() + offset)};
+		const size_t fileSize{toDecimal<size_t, csc::base8>(header->size)};
 
 		fs::path filename = fs::path{header->name};
 		if (header->prefix[0] != '\0') {
@@ -96,8 +100,7 @@ void extractTar(ByteSpan data, const fs::path& root) {
 			case tar::FileType::RegA: {
 				// ensure the parent directory exists
 				fs::create_directories(fs::path(outPath).parent_path());
-				std::basic_ofstream<ByteSpan::element_type> ofs{
-					outPath, std::ios::binary};
+				std::ofstream ofs{outPath, std::ios::binary | std::ios::trunc};
 				if (!ofs) {
 					std::cerr << "io error: failed to open: " << outPath
 							  << std::endl;
@@ -107,9 +110,25 @@ void extractTar(ByteSpan data, const fs::path& root) {
 				const ByteSpan content{
 					data.subspan(offset + tar::blockSize, fileSize)};
 				// write only the actual file content (data is padded up to next block)
-				ofs.write(content.data(),
+				ofs.write(reinterpret_cast<const char*>(content.data()),
 						  static_cast<std::streamsize>(content.size()));
+				if (!ofs) {
+					std::cerr << "io output error: " << outPath << std::endl;
+					break;
+				}
 				ofs.close();
+				// set permissions
+				std::error_code err{};
+				fs::permissions(
+					outPath,
+					enums::from<fs::perms>(
+						toDecimal<size_t, csc::base8>(header->mode)),
+					err);
+				if (err) {
+					std::cerr << err.category().name() << " error ("
+							  << err.value() << "): " << err.message()
+							  << std::endl;
+				}
 				break;
 			}
 			case tar::FileType::Symlink: {
@@ -126,6 +145,8 @@ void extractTar(ByteSpan data, const fs::path& root) {
 				break;
 			}
 			default: {
+				std::cerr << "skipping unsupported file type (" << flag
+						  << "): " << outPath;
 				// TODO: unsupported file types are skipped
 				break;
 			}
@@ -140,6 +161,7 @@ void extractTar(ByteSpan data, const fs::path& root) {
 		offset += totalSize;
 	};
 };
+// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
 }  // namespace embed
 }  // namespace beholder
