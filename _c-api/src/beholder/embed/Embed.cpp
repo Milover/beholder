@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -17,6 +18,7 @@
 #include "beholder/embed/Tar.h"
 #include "beholder/util/Constants.h"
 #include "beholder/util/Enums.h"
+#include "beholder/util/Errors.h"
 #include "beholder/util/ScopeGuard.h"
 #include "beholder/util/Utility.h"
 
@@ -125,9 +127,7 @@ void unarchiveTar(ByteSpan data, const fs::path& root) {
 						toDecimal<size_t, csc::base8>(header->mode)),
 					err);
 				if (err) {
-					std::cerr << err.category().name() << " error ("
-							  << err.value() << "): " << err.message()
-							  << std::endl;
+					err::printErr(err);
 				}
 				break;
 			}
@@ -138,9 +138,7 @@ void unarchiveTar(ByteSpan data, const fs::path& root) {
 				// create_directory_symlink, however, we don't need this atm
 				fs::create_symlink(header->linkname, outPath, err);
 				if (err) {
-					std::cerr << err.category().name() << " error ("
-							  << err.value() << "): " << err.message()
-							  << std::endl;
+					err::printErr(err);
 				}
 				break;
 			}

@@ -15,8 +15,8 @@
 namespace beholder {
 namespace test {
 
-// printErr pretty-prints an error category, code and message.
-std::string printErr(const std::error_code& err);
+// errString returns a pretty-printed error category, code and message.
+std::string errString(const std::error_code& err);
 
 // readFile reads a file into the provided buffer.
 // The buffer is resized to the file size.

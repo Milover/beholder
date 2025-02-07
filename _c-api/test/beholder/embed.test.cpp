@@ -29,7 +29,7 @@ namespace test {
 // Test fixtures and helpers
 // -------------------------
 
-std::string printErr(const std::error_code& err) {
+std::string errString(const std::error_code& err) {
 	std::stringstream ss;
 	ss << err.category().name() << " error (" << err.value()
 	   << "): " << err.message() << '\n';
@@ -41,7 +41,7 @@ readFile(const fs::path& file, embed::ByteVector& buf) {
 	std::error_code err{};
 	const size_t fsize{fs::file_size(file, err)};
 	if (err) {
-		return testing::AssertionFailure() << printErr(err);
+		return testing::AssertionFailure() << errString(err);
 	}
 	buf.resize(fsize);
 
@@ -92,7 +92,7 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 	std::cerr << "creating output directory: " << outDir << '\n';
 	std::error_code err{};
 	fs::create_directories(outDir, err);
-	ASSERT_FALSE(err) << printErr(err);
+	ASSERT_FALSE(err) << errString(err);
 	const ScopeGuard g{[&]() noexcept {
 		std::error_code e{};
 		if (err) {
@@ -102,7 +102,7 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 		}
 		fs::remove_all(outDir, e);
 		if (e) {
-			std::cerr << printErr(e);
+			std::cerr << errString(e);
 		}
 	}};
 
@@ -117,26 +117,26 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 
 	std::cerr << "checking directory: " << expDir << '\n';
 	auto dirStatus{fs::status(expDir, err)};
-	ASSERT_FALSE(err) << printErr(err);
+	ASSERT_FALSE(err) << errString(err);
 	EXPECT_EQ(dirStatus.type(), fs::file_type::directory);
 
 	std::cerr << "checking file: " << expFile << '\n';
 	auto fileStatus{fs::status(expFile, err)};
-	ASSERT_FALSE(err) << printErr(err);
+	ASSERT_FALSE(err) << errString(err);
 	EXPECT_EQ(fileStatus.type(), fs::file_type::regular);
 
 	std::cerr << "checking link: " << expLink << '\n';
 	auto linkStatus{fs::symlink_status(expLink, err)};
-	ASSERT_FALSE(err) << printErr(err);
+	ASSERT_FALSE(err) << errString(err);
 	EXPECT_EQ(linkStatus.type(), fs::file_type::symlink);
 
 	const fs::path linkTarget(fs::read_symlink(expLink, err));
-	ASSERT_FALSE(err) << printErr(err);
+	ASSERT_FALSE(err) << errString(err);
 	EXPECT_EQ(linkTarget, expFile.filename());
 
 	std::cerr << "checking executable: " << expExe << '\n';
 	auto exeStatus{fs::symlink_status(expExe, err)};
-	ASSERT_FALSE(err) << printErr(err);
+	ASSERT_FALSE(err) << errString(err);
 	EXPECT_EQ(exeStatus.type(), fs::file_type::regular);
 
 	fs::perms expExePerms = fs::perms::all;

@@ -14,7 +14,7 @@
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
-#include <string_view>
+#include <string>
 
 #include "Testing.h"  // NOLINT
 
@@ -51,8 +51,8 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ParamEntry{"ImageFileMode", "On"},
 		ParamEntry{"ImageFilename", testimage},
 	};
-	constexpr std::string_view sn{"0815-0000"};	 // emulated camera SN
-	constexpr std::size_t nImages{3};			 // No. images to acquire
+	const std::string sn{"0815-0000"};	// emulated camera SN
+	const std::size_t nImages{3};		// No. images to acquire
 
 	// before using any pylon methods, the pylon runtime must be initialized.
 	const PylonAPI api{};
@@ -63,8 +63,7 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ASSERT_TRUE(tl.init(DeviceClass::Emulated));
 
 		// create device
-		// NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
-		auto* dev{tl.createDevice(sn.data(), DeviceDesignator::SN)};
+		auto* dev{tl.createDevice(sn.c_str(), DeviceDesignator::SN)};
 		ASSERT_NE(dev, nullptr);
 
 		// create camera and apply configuration
