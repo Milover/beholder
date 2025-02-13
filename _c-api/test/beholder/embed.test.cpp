@@ -7,11 +7,15 @@
 #include "embed.test.h"
 
 #include <beholder/embed/Embed.h>
+#include <beholder/embed/Manager.h>
 #include <beholder/util/ScopeGuard.h>
+#include <dlfcn.h>
 #include <gtest/gtest.h>
+#include <incbin/incbin.h>
 
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -20,8 +24,11 @@
 #include <system_error>
 
 #include "Testing.h"  // NOLINT
+#include "fake/Fake.h"
 
 namespace fs = std::filesystem;
+
+INCBIN(FakeArchive, BH_TEST_EMBED_DIR "/fake.tar.gz");
 
 namespace beholder {
 namespace test {
@@ -142,6 +149,38 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 	fs::perms expExePerms = fs::perms::all;
 	expExePerms &= ~(fs::perms::group_write | fs::perms::others_write);
 	EXPECT_EQ(exeStatus.permissions(), expExePerms);
+}
+
+TEST(Embed, Manager) {
+	using FakeFn = int (*)();
+
+	// sanity checks
+	ASSERT_NE(gFakeArchiveData, nullptr);
+	ASSERT_GT(gFakeArchiveSize, 0);
+
+	std::cerr << "unpacking archive" << std::endl;
+	const embed::Manager mgr{{&(gFakeArchiveData[0]), gFakeArchiveSize},
+							 fs::path{}};
+
+	// TODO: either Manager, or another helper should handle loading/unloading
+	// libraries and/or symbols
+	std::cerr << "loading library" << std::endl;
+	void* libfake{
+		dlopen(fs::path{mgr.getOutDir() / "libfake.so"}.c_str(), RTLD_LAZY)};
+	ASSERT_NE(libfake, nullptr);
+
+	dlerror();	// clear errors
+
+	std::cerr << "loading symbols" << std::endl;
+	FakeFn fCall{reinterpret_cast<FakeFn>(dlsym(libfake, "call"))};	 // NOLINT
+	ASSERT_EQ(dlerror(), nullptr);
+
+	std::cerr << "calling" << std::endl;
+	EXPECT_EQ(fCall(), fake::Return);
+
+	std::cerr << "unloading library" << std::endl;
+	dlclose(libfake);
+	ASSERT_EQ(dlerror(), nullptr);
 }
 
 }  // namespace test

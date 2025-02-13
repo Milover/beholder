@@ -1,3 +1,5 @@
+find_package(incbin REQUIRED)
+
 FetchContent_Declare(
 	googletest
 	GIT_REPOSITORY https://github.com/google/googletest.git
@@ -5,9 +7,7 @@ FetchContent_Declare(
 	GIT_SHALLOW TRUE
 	FIND_PACKAGE_ARGS NAMES GTest
 )
-
 set(INSTALL_GTEST FALSE)
-
 FetchContent_MakeAvailable(googletest)
 
 # set properties for GTest
