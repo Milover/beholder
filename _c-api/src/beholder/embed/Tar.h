@@ -13,7 +13,7 @@
 #include <span>
 #include <type_traits>
 
-using ByteSpan = std::span<unsigned char>;
+using ConstByteSpan = std::span<const unsigned char>;
 
 namespace beholder {
 namespace embed {
@@ -92,7 +92,7 @@ enum class FileType : char {
 // NOLINTEND(*-c-arrays, *-magic-numbers)
 
 // checksum checks the tar header (signed and unsigned) checksum.
-bool checksum(ByteSpan hdr);
+bool checksum(ConstByteSpan hdr);
 
 // global stream output operator
 std::ostream& operator<<(std::ostream& os, FileType t);

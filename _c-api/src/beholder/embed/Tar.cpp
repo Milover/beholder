@@ -84,7 +84,7 @@ std::ostream& operator<<(std::ostream& os, FileType t) {
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-bool checksum(ByteSpan hdr) {
+bool checksum(ConstByteSpan hdr) {
 	// the checksum can be either signed or unsigned, either which is fine
 	int64_t sSum{};
 	uint64_t uSum{};
@@ -96,7 +96,8 @@ bool checksum(ByteSpan hdr) {
 	}
 	// correct the checksum contribution
 	// NOTE: see comments for tar::detail::placeholderChksum
-	std::span<char> chksum{reinterpret_cast<tar::Header*>(hdr.data())->chksum};
+	std::span<const char> chksum{
+		reinterpret_cast<const tar::Header*>(hdr.data())->chksum};
 
 	auto correctSum = [&chksum](auto& sum) {
 		using Int = std::decay_t<decltype(sum)>;

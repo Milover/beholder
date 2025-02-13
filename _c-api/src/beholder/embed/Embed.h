@@ -5,7 +5,6 @@
 #ifndef BEHOLDER_EMBED_EMBED_H
 #define BEHOLDER_EMBED_EMBED_H
 
-#include <cstddef>
 #include <filesystem>
 #include <span>
 #include <vector>
@@ -14,14 +13,19 @@ namespace beholder {
 namespace embed {
 
 using ByteVector = std::vector<unsigned char>;
-using ByteSpan = std::span<unsigned char>;
+using ConstByteSpan = std::span<const unsigned char>;
 
+// Uncompress gzip/libz format.
+// If there is an error, the returned vector will be empty.
+//
 // TODO: we should return a result wrapping the value and an error value.
-[[nodiscard]] ByteVector decompressGzip(ByteSpan data);
+[[nodiscard]] ByteVector decompressGzip(ConstByteSpan data);
 
 // unarchiveTar extracts a tar archive using 'root' as the output directory, or
 // into PWD if 'root' is not supplied.
-void unarchiveTar(ByteSpan data, const std::filesystem::path& root = {});
+//
+// TODO: should return a file list
+void unarchiveTar(ConstByteSpan data, const std::filesystem::path& root = {});
 
 }  // namespace embed
 }  // namespace beholder

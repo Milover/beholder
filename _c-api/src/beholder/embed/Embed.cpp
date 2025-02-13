@@ -7,8 +7,10 @@
 #include <zlib.h>
 
 #include <algorithm>
+#include <cerrno>
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -31,9 +33,7 @@ namespace embed {
 constexpr static int zlibinflateFlag{15};  // inflate windowBits
 constexpr static int zlibAutoFmtFlag{32};  // auto-fmt windowBits
 
-ByteVector decompressGzip(ByteSpan data) {
-	ByteVector out{};
-
+ByteVector decompressGzip(ConstByteSpan data) {
 	z_stream zs{};
 	zs.next_in = data.data();
 	zs.avail_in = data.size();
@@ -42,11 +42,11 @@ ByteVector decompressGzip(ByteSpan data) {
 	// TODO: should return a result wrapper
 	if (ok != Z_OK) {
 		std::cerr << "zlib error (" << ok << "): " << zs.msg << std::endl;
-		return out;
+		return ByteVector{};
 	}
 	const ScopeGuard guard{[&]() noexcept { inflateEnd(&zs); }};
 
-	out.resize(data.size());  // we'll write at least data.size bytes
+	ByteVector out(data.size());  // we'll write at least data.size bytes
 	while (ok != Z_STREAM_END) {
 		zs.next_out = out.data() + zs.total_out;  // NOLINT(cppcoreguidelines-*)
 		zs.avail_out = out.size() - zs.total_out;
@@ -55,7 +55,8 @@ ByteVector decompressGzip(ByteSpan data) {
 		// TODO: should return a result wrapper
 		if (ok != Z_OK && ok != Z_STREAM_END) {
 			std::cerr << "zlib error (" << ok << "): " << zs.msg << std::endl;
-			return out;
+			out.clear();
+			return ByteVector{};
 		}
 		// if we're not done, then we're full and should grow
 		if (ok != Z_STREAM_END) {
@@ -69,7 +70,7 @@ ByteVector decompressGzip(ByteSpan data) {
 }
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-void unarchiveTar(ByteSpan data, const fs::path& root) {
+void unarchiveTar(ConstByteSpan data, const fs::path& root) {
 	size_t offset{};
 	while (offset + tar::blockSize <= data.size()) {
 		// check if this header block is zeroed out (end-of-archive marker)
@@ -109,7 +110,7 @@ void unarchiveTar(ByteSpan data, const fs::path& root) {
 					break;
 				}
 				// the file data immediately follows the 512-byte header
-				const ByteSpan content{
+				const ConstByteSpan content{
 					data.subspan(offset + tar::blockSize, fileSize)};
 				// write only the actual file content (data is padded up to next block)
 				ofs.write(reinterpret_cast<const char*>(content.data()),
