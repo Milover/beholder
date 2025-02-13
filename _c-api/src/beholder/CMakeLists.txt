@@ -32,29 +32,34 @@ find_package(pylon REQUIRED)
 
 # TODO: clean this up
 # disgusting hack to get the generic install path
-get_target_property(pylon_imported_loc pylon::PylonBase LOCATION)
-cmake_path(GET pylon_imported_loc PARENT_PATH pylon_imported_loc)
-file(GLOB pylon_lib_files
-	"${pylon_imported_loc}/libpylonbase.so*"
-	"${pylon_imported_loc}/libpylonc.so*"
-	"${pylon_imported_loc}/libpylonutility.so*"
-	"${pylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
-	"${pylon_imported_loc}/libgxapi.so*"
-	"${pylon_imported_loc}/libuxapi.so*"
-	"${pylon_imported_loc}/libpylon_TL_gige.so"
-	"${pylon_imported_loc}/libpylon_TL_camemu.so"
+get_target_property(libpylon_imported_loc pylon::PylonBase LOCATION)
+cmake_path(GET libpylon_imported_loc PARENT_PATH libpylon_imported_loc)
+file(GLOB libpylon_files_abs
+	"${libpylon_imported_loc}/libpylonbase.so*"
+	"${libpylon_imported_loc}/libpylonc.so*"
+	"${libpylon_imported_loc}/libpylonutility.so*"
+	"${libpylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
+	"${libpylon_imported_loc}/libgxapi.so*"
+	"${libpylon_imported_loc}/libuxapi.so*"
+	"${libpylon_imported_loc}/libpylon_TL_gige.so"
+	"${libpylon_imported_loc}/libpylon_TL_camemu.so"
 )
+set(libpylon_files "${libpylon_files_abs}")
+list(TRANSFORM libpylon_files REPLACE "${libpylon_imported_loc}/" "")
+set(libpylon_archive "pylon.tar.gz")
 add_custom_command(
-	OUTPUT pylon.tar.gz
+	OUTPUT ${libpylon_archive}
 	COMMAND
-		${CMAKE_COMMAND} -E tar cvz pylon.tar.gz ${pylon_lib_files}
+		${CMAKE_COMMAND} -E copy ${libpylon_files_abs} ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND
+		${CMAKE_COMMAND} -E tar cvz ${libpylon_archive} ${libpylon_files}
 )
 
 # convenience variable, so that we can propagate it to sub-directories easily
@@ -62,7 +67,7 @@ cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH bh_base_dir)
 
 target_sources(beholder
 	PRIVATE
-		pylon.tar.gz
+		${libpylon_archive}
 	PUBLIC
 		FILE_SET HEADERS
 		BASE_DIRS
