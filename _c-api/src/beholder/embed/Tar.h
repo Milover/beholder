@@ -8,16 +8,20 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <numeric>
 #include <ostream>
 #include <span>
+#include <system_error>
 #include <type_traits>
-
-using ConstByteSpan = std::span<const unsigned char>;
+#include <vector>
 
 namespace beholder {
 namespace embed {
 namespace tar {
+
+using CByteSpan = std::span<const unsigned char>;
+using PathVector = std::vector<std::filesystem::path>;
 
 namespace detail {
 
@@ -40,17 +44,17 @@ consteval T placeholderChksum() noexcept {
 
 }  // namespace detail
 
-constexpr size_t blockSize{512};
+constexpr size_t BlockSize{512};
 
 template<typename T>
 constexpr T placeholderChecksum_v = detail::placeholderChksum<T>();
-
-// NOLINTBEGIN(*-c-arrays, *-magic-numbers)
 
 // The UStar header.
 //
 // https://www.gnu.org/software/tar/manual/html_node/Standard.html
 struct Header {
+	// NOLINTBEGIN(*-c-arrays, *-magic-numbers)
+
 	char name[100];		 // file name
 	char mode[8];		 // file mode (octal)
 	char uid[8];		 // UID
@@ -68,9 +72,11 @@ struct Header {
 	char devminor[8];	 // device minor number
 	char prefix[155];	 // filename prefix
 	char padding[12];
+
+	// NOLINTEND(*-c-arrays, *-magic-numbers)
 };
 
-static_assert(sizeof(Header) == blockSize);	 // sanity check
+static_assert(sizeof(Header) == BlockSize);	 // sanity check
 
 enum class FileType : char {
 	Reg = '0',		// regular file
@@ -89,13 +95,33 @@ enum class FileType : char {
 	GNULongLink = 'K',	  // long link name meta file in the GNU format
 };
 
-// NOLINTEND(*-c-arrays, *-magic-numbers)
-
-// checksum checks the tar header (signed and unsigned) checksum.
-bool checksum(ConstByteSpan hdr);
-
 // global stream output operator
 std::ostream& operator<<(std::ostream& os, FileType t);
+
+// checksum checks the tar header (signed and unsigned) checksum.
+[[nodiscard]] bool checksum(CByteSpan hdr);
+
+// unarchiveTar extracts a tar archive using 'root' as the output directory, or
+// into PWD if 'root' is not supplied.
+//
+// Returns a list of files (paths) which have been created, or an empty list
+// if there was an error.
+//
+// NOTE: only directories, regular files and symlinks are supported currently,
+// other file types are skipped.
+[[nodiscard]] PathVector
+unarchive(CByteSpan data, const std::filesystem::path& root = {});
+
+[[nodiscard]] std::error_code
+handleDirectory(std::filesystem::path&& p, PathVector& store) noexcept;
+
+[[nodiscard]] std::error_code handleFile(std::filesystem::path&& p,
+										 const Header* hdr, CByteSpan content,
+										 PathVector& store) noexcept;
+
+[[nodiscard]] std::error_code handleSymlink(std::filesystem::path&& p,
+											const Header* hdr,
+											PathVector& store) noexcept;
 
 }  // namespace tar
 }  // namespace embed

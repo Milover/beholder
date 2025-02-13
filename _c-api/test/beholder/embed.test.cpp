@@ -8,6 +8,8 @@
 
 #include <beholder/embed/Embed.h>
 #include <beholder/embed/Manager.h>
+#include <beholder/embed/Tar.h>
+#include <beholder/util/Errors.h>
 #include <beholder/util/ScopeGuard.h>
 #include <dlfcn.h>
 #include <gtest/gtest.h>
@@ -88,12 +90,15 @@ TEST(Embed, UncompressGzip) {
 }
 
 TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
+	using embed::tar::PathVector;
+
 	const auto archive{assetsDir / "directory.tar"};
 
 	std::cerr << "reading test files" << '\n';
 	embed::ByteVector archiveBuf;
 	ASSERT_TRUE(readFile(archive, archiveBuf));
 
+	// FIXME: switch tmpnam for something more appropriate
 	const fs::path outDir{fs::temp_directory_path() / std::tmpnam(nullptr)};
 
 	std::cerr << "creating output directory: " << outDir << '\n';
@@ -101,20 +106,20 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 	fs::create_directories(outDir, err);
 	ASSERT_FALSE(err) << errString(err);
 	const ScopeGuard g{[&]() noexcept {
-		std::error_code e{};
 		if (err) {
 			std::cerr << "error during test execution; "
 					  << "not cleaning up temporary directory: " << outDir
 					  << '\n';
+			return;
 		}
-		fs::remove_all(outDir, e);
-		if (e) {
-			std::cerr << errString(e);
+		fs::remove_all(outDir, err);
+		if (err) {
+			err::printErr(err);
 		}
 	}};
-
 	std::cerr << "unarchiving: " << archive << '\n';
-	embed::unarchiveTar(archiveBuf, outDir);
+	[[maybe_unused]] const PathVector files{
+		embed::tar::unarchive(archiveBuf, outDir)};
 
 	// TODO: would be nice to embed the structure into the test fixture
 	const fs::path expDir{outDir / "directory"};
@@ -158,27 +163,26 @@ TEST(Embed, Manager) {
 	ASSERT_NE(gFakeArchiveData, nullptr);
 	ASSERT_GT(gFakeArchiveSize, 0);
 
-	std::cerr << "unpacking archive" << std::endl;
-	const embed::Manager mgr{{&(gFakeArchiveData[0]), gFakeArchiveSize},
-							 fs::path{}};
+	std::cerr << "unpacking archive" << '\n';
+	const embed::Manager mgr{gFakeArchiveData, gFakeArchiveSize};
 
 	// TODO: either Manager, or another helper should handle loading/unloading
 	// libraries and/or symbols
-	std::cerr << "loading library" << std::endl;
+	std::cerr << "loading library" << '\n';
 	void* libfake{
 		dlopen(fs::path{mgr.getOutDir() / "libfake.so"}.c_str(), RTLD_LAZY)};
 	ASSERT_NE(libfake, nullptr);
 
 	dlerror();	// clear errors
 
-	std::cerr << "loading symbols" << std::endl;
+	std::cerr << "loading symbols" << '\n';
 	FakeFn fCall{reinterpret_cast<FakeFn>(dlsym(libfake, "call"))};	 // NOLINT
 	ASSERT_EQ(dlerror(), nullptr);
 
-	std::cerr << "calling" << std::endl;
+	std::cerr << "calling" << '\n';
 	EXPECT_EQ(fCall(), fake::Return);
 
-	std::cerr << "unloading library" << std::endl;
+	std::cerr << "unloading library" << '\n';
 	dlclose(libfake);
 	ASSERT_EQ(dlerror(), nullptr);
 }
