@@ -7,6 +7,7 @@
 #include "embed.test.h"
 
 #include <beholder/embed/Embed.h>
+#include <beholder/embed/Loader.h>
 #include <beholder/embed/Manager.h>
 #include <beholder/embed/Tar.h>
 #include <beholder/util/Errors.h>
@@ -157,7 +158,14 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 }
 
 TEST(Embed, Manager) {
-	using FakeFn = int (*)();
+	using Call = int (*)();
+
+	const fs::path libname{"libfake"};	// the library we're trying to load
+#if defined(__APPLE__)
+	const fs::path libfilename{"libfake.dylib"};
+#else
+	const fs::path libfilename{"libfake.so"};
+#endif
 
 	// sanity checks
 	ASSERT_NE(gFakeArchiveData, nullptr);
@@ -165,26 +173,34 @@ TEST(Embed, Manager) {
 
 	std::cerr << "unpacking archive" << '\n';
 	const embed::Manager mgr{gFakeArchiveData, gFakeArchiveSize};
+	const fs::path libpath{mgr.getOutDir() / libfilename};
 
-	// TODO: either Manager, or another helper should handle loading/unloading
-	// libraries and/or symbols
-	std::cerr << "loading library" << '\n';
-	void* libfake{
-		dlopen(fs::path{mgr.getOutDir() / "libfake.so"}.c_str(), RTLD_LAZY)};
-	ASSERT_NE(libfake, nullptr);
+	const embed::PathVector libs{libpath};
+	{  // scoped so we can check that the library was properly closed
+		std::cerr << "loading library" << '\n';
+		const embed::Loader ldr{libs};
+		// check if the library has been loaded
+		{  // scoped so ref-count stays the same afterwards
+			const embed::LibHandle libfake{
+				embed::detail::dlOpen(libpath, RTLD_LAZY | RTLD_NOLOAD)};
+			ASSERT_NE(libfake, nullptr) << "object not loaded: " << libpath;
+		}
+		// either libname, libfilename or libpath should work
+		std::cerr << "loading symbols" << '\n';
+		Call fCall{ldr.getSymbol<Call>(libfilename, "call")};
+		ASSERT_NE(fCall, nullptr) << "failed to load \"call\"";
+		auto fFaker{
+			ldr.getClass<fake::Faker>(libname, "Faker_Create", "Faker_Delete")};
+		ASSERT_NE(fFaker, nullptr) << "failed to load class \"fake::Faker\"";
 
-	dlerror();	// clear errors
-
-	std::cerr << "loading symbols" << '\n';
-	FakeFn fCall{reinterpret_cast<FakeFn>(dlsym(libfake, "call"))};	 // NOLINT
-	ASSERT_EQ(dlerror(), nullptr);
-
-	std::cerr << "calling" << '\n';
-	EXPECT_EQ(fCall(), fake::Return);
-
-	std::cerr << "unloading library" << '\n';
-	dlclose(libfake);
-	ASSERT_EQ(dlerror(), nullptr);
+		std::cerr << "calling" << '\n';
+		EXPECT_EQ(fCall(), fake::Return);
+		EXPECT_EQ(fFaker->call(), fake::Return);
+	}
+	// check if the library has been unloaded
+	const embed::LibHandle libfake{
+		embed::detail::dlOpen(libpath, RTLD_LAZY | RTLD_NOLOAD)};
+	EXPECT_EQ(libfake, nullptr);
 }
 
 }  // namespace test
