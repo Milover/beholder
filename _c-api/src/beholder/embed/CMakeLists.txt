@@ -3,13 +3,13 @@ target_sources(beholder
 		Binaries.cpp
 		Embed.cpp
 		Loader.cpp
-		Manager.cpp
 		Tar.cpp
+		Unpacker.cpp
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
 			Embed.h
 			Loader.h
-			Manager.h
 			Tar.h
+			Unpacker.h
 )

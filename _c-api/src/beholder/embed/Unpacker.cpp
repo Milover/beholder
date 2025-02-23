@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "beholder/embed/Manager.h"
+#include "beholder/embed/Unpacker.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 namespace beholder {
 namespace embed {
 
-void Manager::unpack(CByteSpan bin) noexcept {
+void Unpacker::unpack(CByteSpan bin) noexcept {
 	if (outdir_.empty()) {
 		// FIXME: replace std::tmpnam with something more appropriate, we're
 		// using it just because it's portable (generate a UUID or something)
@@ -38,12 +38,15 @@ void Manager::unpack(CByteSpan bin) noexcept {
 	files_ = tar::unarchive(decomp, outdir_);
 }
 
-Manager::Manager(CByteSpan bin, fs::path outdir) noexcept
+Unpacker::Unpacker(CByteSpan bin, fs::path outdir) noexcept
 	: outdir_{std::move(outdir)} {
 	unpack(bin);
 }
 
-Manager::~Manager() noexcept {
+Unpacker::~Unpacker() noexcept {
+	if (!cleanup_) {
+		return;
+	}
 	std::error_code err{};
 	fs::remove_all(outdir_, err);
 	if (err) {

@@ -1,17 +1,21 @@
 # the fake library should get built and archived first so that it can get
 # embedded into the test binary
 add_subdirectory(fake)
-set(libfake "${CMAKE_SHARED_LIBRARY_PREFIX}fake${CMAKE_SHARED_LIBRARY_SUFFIX}")
 set(libfake_archive "fake.tar.gz")
+set(libfake "${CMAKE_SHARED_LIBRARY_PREFIX}fake${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(libfake_files_abs
+	"${CMAKE_CURRENT_BINARY_DIR}/fake/${libfake}"
+	"${CMAKE_CURRENT_BINARY_DIR}/fake/${libfake}.0.0.1"
+)
+set(libfake_files "${libfake_files_abs}")
+list(TRANSFORM libfake_files REPLACE "${CMAKE_CURRENT_BINARY_DIR}/fake/" "")
 add_custom_command(
 	OUTPUT ${libfake_archive}
 	DEPENDS beholder::fake
 	COMMAND
-		${CMAKE_COMMAND} -E copy
-			${CMAKE_CURRENT_BINARY_DIR}/fake/${libfake}
-			${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND
-		${CMAKE_COMMAND} -E tar cvz ${libfake_archive} ${libfake}
+		${CMAKE_COMMAND} -E
+			chdir ${CMAKE_CURRENT_BINARY_DIR}/fake
+			tar cvzf ${CMAKE_CURRENT_BINARY_DIR}/${libfake_archive} ${libfake_files}
 )
 
 add_executable(beholder.test)

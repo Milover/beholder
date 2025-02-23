@@ -6,6 +6,7 @@
 
 #include <dlfcn.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -45,6 +46,15 @@ void dlClose(void* handle) noexcept {
 	}
 }
 
+bool isDLOpen(const std::filesystem::path& lib) noexcept {
+	if (lib.empty()) {
+		return false;
+	}
+	const embed::LibHandle handle{
+		embed::detail::dlOpen(lib, RTLD_LAZY | RTLD_NOLOAD)};
+	return static_cast<bool>(handle);
+}
+
 }  // namespace detail
 
 Loader::Loader(CPathSpan libs, Options opts) noexcept {
@@ -57,6 +67,35 @@ Loader::Loader(CPathSpan libs, Options opts) noexcept {
 		}
 		libs_.emplace_back(std::move(handle), lib);
 	}
+}
+
+// NOLINTBEGIN(bugprone-easily-swappable-parameters)
+PathVector
+Loader::matchPaths(CPathSpan paths, CPathSpan libs, bool force) noexcept {
+	PathVector res;
+	res.reserve(libs.size());
+	for (const auto& l : libs) {
+		auto found{std::ranges::find_if(paths, [&l](const auto& v) {
+			return Loader::findLibPredicate(v, l);
+		})};
+		if (found == paths.end()) {
+			std::cerr << "failed to match library to path: " << l << '\n';
+			if (force) {
+				std::exit(EXIT_FAILURE);
+			}
+		}
+		res.emplace_back(*found);
+	}
+	return res;
+}
+// NOLINTEND(bugprone-easily-swappable-parameters)
+
+fs::path Loader::pathTo(const fs::path& lib) const noexcept {
+	auto found{findLib(lib)};
+	if (found == libs_.end()) {
+		return fs::path{};
+	}
+	return found->second;
 }
 
 }  // namespace embed

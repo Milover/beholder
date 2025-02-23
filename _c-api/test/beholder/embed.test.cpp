@@ -8,11 +8,10 @@
 
 #include <beholder/embed/Embed.h>
 #include <beholder/embed/Loader.h>
-#include <beholder/embed/Manager.h>
 #include <beholder/embed/Tar.h>
+#include <beholder/embed/Unpacker.h>
 #include <beholder/util/Errors.h>
 #include <beholder/util/ScopeGuard.h>
-#include <dlfcn.h>
 #include <gtest/gtest.h>
 #include <incbin/incbin.h>
 
@@ -157,50 +156,47 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 	EXPECT_EQ(exeStatus.permissions(), expExePerms);
 }
 
-TEST(Embed, Manager) {
+TEST(Embed, UnpackAndLoad) {  // NOLINT(*-function-cognitive-complexity)
 	using Call = int (*)();
 
-	const fs::path libname{"libfake"};	// the library we're trying to load
-#if defined(__APPLE__)
-	const fs::path libfilename{"libfake.dylib"};
-#else
-	const fs::path libfilename{"libfake.so"};
-#endif
+	fs::path outdir{};
+	const embed::PathVector libs{"libfake"}; // gets loaded through symlink
 
 	// sanity checks
 	ASSERT_NE(gFakeArchiveData, nullptr);
 	ASSERT_GT(gFakeArchiveSize, 0);
 
-	std::cerr << "unpacking archive" << '\n';
-	const embed::Manager mgr{gFakeArchiveData, gFakeArchiveSize};
-	const fs::path libpath{mgr.getOutDir() / libfilename};
+	{  // scoped so that we can check if everything has been cleaned up later
+		std::cerr << "unpacking and loading libs" << '\n';
+		embed::Unpacker unpk{gFakeArchiveData, gFakeArchiveSize};
+		outdir = unpk.getOutDir();
+		const ScopeGuard g{[&]() noexcept {
+			if (::testing::Test::HasFailure()) {
+				std::cerr << "error during test execution; "
+						  << "not cleaning up temporary directory: " << outdir
+						  << '\n';
+				unpk.setCleanup(false);
+			}
+		}};
+		const embed::Loader ldr{
+			embed::Loader::matchPaths(unpk.getFiles(), libs)};
+		ASSERT_TRUE(embed::detail::isDLOpen(ldr.pathTo(libs.front())))
+			<< "object not loaded: " << libs.front();
 
-	const embed::PathVector libs{libpath};
-	{  // scoped so we can check that the library was properly closed
-		std::cerr << "loading library" << '\n';
-		const embed::Loader ldr{libs};
-		// check if the library has been loaded
-		{  // scoped so ref-count stays the same afterwards
-			const embed::LibHandle libfake{
-				embed::detail::dlOpen(libpath, RTLD_LAZY | RTLD_NOLOAD)};
-			ASSERT_NE(libfake, nullptr) << "object not loaded: " << libpath;
-		}
-		// either libname, libfilename or libpath should work
 		std::cerr << "loading symbols" << '\n';
-		Call fCall{ldr.getSymbol<Call>(libfilename, "call")};
+		Call fCall{ldr.getSymbol<Call>(libs.front(), "call")};
+		auto fFaker{ldr.getClass<fake::Faker>(libs.front(), "Faker_Create",
+											  "Faker_Delete")};
 		ASSERT_NE(fCall, nullptr) << "failed to load \"call\"";
-		auto fFaker{
-			ldr.getClass<fake::Faker>(libname, "Faker_Create", "Faker_Delete")};
 		ASSERT_NE(fFaker, nullptr) << "failed to load class \"fake::Faker\"";
 
 		std::cerr << "calling" << '\n';
 		EXPECT_EQ(fCall(), fake::Return);
 		EXPECT_EQ(fFaker->call(), fake::Return);
 	}
-	// check if the library has been unloaded
-	const embed::LibHandle libfake{
-		embed::detail::dlOpen(libpath, RTLD_LAZY | RTLD_NOLOAD)};
-	EXPECT_EQ(libfake, nullptr);
+	// check if we've cleaned everything up
+	EXPECT_FALSE(embed::detail::isDLOpen(libs.front()));
+	EXPECT_FALSE(fs::exists(outdir));
 }
 
 }  // namespace test

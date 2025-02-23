@@ -57,9 +57,9 @@ set(libpylon_archive "pylon.tar.gz")
 add_custom_command(
 	OUTPUT ${libpylon_archive}
 	COMMAND
-		${CMAKE_COMMAND} -E copy ${libpylon_files_abs} ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND
-		${CMAKE_COMMAND} -E tar cvz ${libpylon_archive} ${libpylon_files}
+		${CMAKE_COMMAND} -E
+			chdir ${libpylon_imported_loc}
+			tar cvzf ${CMAKE_CURRENT_BINARY_DIR}/${libpylon_archive} ${libpylon_files}
 )
 
 # convenience variable, so that we can propagate it to sub-directories easily

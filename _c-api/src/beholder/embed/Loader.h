@@ -27,6 +27,7 @@ struct DLCloser;
 }
 
 using CPathSpan = std::span<const std::filesystem::path>;
+using PathVector = std::vector<std::filesystem::path>;
 using LibHandle = std::unique_ptr<void, detail::DLCloser>;
 using LibVector = std::vector<std::pair<LibHandle, std::filesystem::path>>;
 
@@ -67,6 +68,10 @@ T dlSym(void* handle, const std::string& sym) noexcept {
 	return reinterpret_cast<T>(s);	// NOLINT
 }
 
+// isDLOpen checks if lib has been dynamically loaded.
+// Returns false if lib is empty.
+bool isDLOpen(const std::filesystem::path& lib) noexcept;
+
 }  // namespace detail
 
 // NOTE: providing open() and close() complicates things since we allow
@@ -93,25 +98,26 @@ private:
 	// 'libmylib' will match '/some/path/libmylib.so', but not
 	// '/some/path/libmylib.so.1.0'.
 	[[nodiscard]] static bool
-	findLibPredicate(LibVector::const_reference p,
+	findLibPredicate(const std::filesystem::path& p,
 					 const std::filesystem::path& lib) noexcept {
 		// NOTE: we should think whether we want to require the fully
 		// qualified name of the library, that is, exactly the name which
 		// was used to load the library, in order for this to return true
-		return p.second == lib || p.second.filename() == lib ||
-			   p.second.stem() == lib;
+		return p == lib || p.filename() == lib || p.stem() == lib;
 	}
 
 	[[nodiscard]] LibVector::const_iterator
 	findLib(const std::filesystem::path& lib) const noexcept {
-		return std::ranges::find_if(
-			libs_, [&lib](const auto& t) { return findLibPredicate(t, lib); });
+		return std::ranges::find_if(libs_, [&lib](const auto& t) {
+			return findLibPredicate(t.second, lib);
+		});
 	}
 
 	[[nodiscard]] LibVector::iterator
 	findLib(const std::filesystem::path& lib) noexcept {
-		return std::ranges::find_if(
-			libs_, [&lib](const auto& t) { return findLibPredicate(t, lib); });
+		return std::ranges::find_if(libs_, [&lib](const auto& t) {
+			return findLibPredicate(t.second, lib);
+		});
 	}
 
 public:
@@ -135,7 +141,9 @@ public:
 					Options opts = Options::Lazy | Options::Local) noexcept;
 
 	Loader(const Loader&) = delete;
-	Loader(Loader&&) = delete;
+	Loader(Loader&&) = default;
+	Loader& operator=(const Loader&) = delete;
+	Loader& operator=(Loader&&) = default;
 
 	// Closes all shared objects currently managed by this instance.
 	//
@@ -144,10 +152,22 @@ public:
 	// the destructor returns.
 	~Loader() = default;
 
-	Loader& operator=(const Loader&) = delete;
-	Loader& operator=(Loader&&) = delete;
-
 	// TODO: add getter for loaded library paths
+
+	// matchPaths constructs a list of library paths by selecting paths
+	// corresponding to libs. Matching is done using Loader::findLibPredicate.
+	//
+	// If force is set to true, matching errors will cause the program to
+	// terminate, otherwise, matching errors are reported, but ignored.
+	//
+	// NOTE: pulling out load-order into a separate class might be beneficial
+	[[nodiscard]] static PathVector
+	matchPaths(CPathSpan paths, CPathSpan libs, bool force = true) noexcept;
+
+	// pathTo returns the full path to lib, if lib has been loaded.
+	// Matching is done using Loader::findLibPredicate.
+	[[nodiscard]] std::filesystem::path
+	pathTo(const std::filesystem::path& lib) const noexcept;
 
 	// getSymbol tries to load the symbol sym from the shared object lib.
 	// If lib is loaded and sym is found, returns a handle to sym of type T.
