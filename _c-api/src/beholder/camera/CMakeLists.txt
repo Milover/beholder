@@ -31,7 +31,6 @@ target_sources(beholder_camera
 		FILES
 			BeholderCamera.h
 			Camera.h
-			Exception.h
 			ParamEntry.h
 			PylonAPI.h
 			TransportLayer.h

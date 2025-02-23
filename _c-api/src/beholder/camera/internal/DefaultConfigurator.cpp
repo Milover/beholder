@@ -4,6 +4,7 @@
 
 #include "beholder/camera/internal/DefaultConfigurator.h"
 
+#include <Base/GCException.h>
 #include <GenApi/INodeMap.h>
 #include <pylon/CommandParameter.h>
 #include <pylon/ConfigurationHelper.h>
@@ -13,10 +14,7 @@
 #include <pylon/TypeMappings.h>
 
 #include <array>
-#include <exception>
 #include <iostream>
-
-#include "beholder/camera/Exception.h"
 
 namespace beholder {
 namespace internal {
@@ -62,11 +60,8 @@ void DefaultConfigurator::OnOpened(Pylon::CInstantCamera& cam) {
 		Pylon::CConfigurationHelper::ProbePacketSize(
 			cam.GetStreamGrabberNodeMap());
 	} catch (const Pylon::GenericException& e) {
-		throw Exception{"could not apply 'Default' configuration: ", e};
-	} catch (const std::exception& e) {
-		throw Exception{"could not apply 'Default' configuration: ", e};
-	} catch (...) {
-		throw Exception{"could not apply 'Default' configuration"};
+		throw RUNTIME_EXCEPTION("could not apply 'Default' configuration: %hs",
+								e.what());
 	}
 }
 

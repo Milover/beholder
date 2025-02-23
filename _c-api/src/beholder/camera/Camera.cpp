@@ -4,6 +4,7 @@
 
 #include "beholder/camera/Camera.h"
 
+#include <Base/GCException.h>
 #include <GenApi/INode.h>
 #include <pylon/Device.h>
 #include <pylon/ECleanup.h>
@@ -19,12 +20,12 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <utility>
 
-#include "beholder/camera/Exception.h"
 #include "beholder/camera/ParamEntry.h"
 #include "beholder/camera/internal/DefaultConfigurator.h"
 #include "beholder/camera/internal/GenAPIUtils.h"
@@ -68,10 +69,10 @@ Camera::~Camera() {};
 
 bool Camera::acquire(std::chrono::milliseconds timeout) {
 	if (!isAttached()) {
-		throw Exception{"no camera device attached"};
+		throw RUNTIME_EXCEPTION("no camera device attached");
 	}
 	if (!isAcquiring()) {
-		throw Exception{"acquisition not started"};
+		throw RUNTIME_EXCEPTION("acquisition not started");
 	}
 	auto& res{*res_};
 
@@ -207,7 +208,7 @@ bool Camera::init(Pylon::IPylonDevice* d) noexcept {
 		return true;
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not initialize camera: " << e.what() << std::endl;
-	} catch (const Exception& e) {
+	} catch (const std::exception& e) {
 		std::cerr << "could not initialize camera: " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << "could not initialize camera" << std::endl;
@@ -273,7 +274,7 @@ bool Camera::trigger(TriggerType typ) noexcept {
 		return triggerImpl(typ);
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
-	} catch (const Exception& e) {
+	} catch (const std::exception& e) {
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << "could not execute trigger: " << std::endl;
@@ -294,7 +295,7 @@ bool Camera::waitAndTrigger(std::chrono::milliseconds timeout,
 		}
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
-	} catch (const Exception& e) {
+	} catch (const std::exception& e) {
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << "could not execute trigger: " << std::endl;

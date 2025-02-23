@@ -10,7 +10,6 @@
 // NOLINTBEGIN(misc-include-cleaner)
 
 #include "beholder/camera/Camera.h"
-#include "beholder/camera/Exception.h"
 #include "beholder/camera/ParamEntry.h"
 #include "beholder/camera/PylonAPI.h"
 #include "beholder/camera/TransportLayer.h"
