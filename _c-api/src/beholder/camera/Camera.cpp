@@ -208,7 +208,7 @@ bool Camera::init(Pylon::IPylonDevice* d) noexcept {
 		return true;
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not initialize camera: " << e.what() << std::endl;
-	} catch (const std::exception& e) {
+	} catch (const std::exception& e) {	 // TODO: check if necessary
 		std::cerr << "could not initialize camera: " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << "could not initialize camera" << std::endl;
@@ -274,7 +274,7 @@ bool Camera::trigger(TriggerType typ) noexcept {
 		return triggerImpl(typ);
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
-	} catch (const std::exception& e) {
+	} catch (const std::exception& e) {	 // TODO: check if necessary
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << "could not execute trigger: " << std::endl;
@@ -295,7 +295,7 @@ bool Camera::waitAndTrigger(std::chrono::milliseconds timeout,
 		}
 	} catch (const Pylon::GenericException& e) {
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
-	} catch (const std::exception& e) {
+	} catch (const std::exception& e) {	 // TODO: check if necessary
 		std::cerr << "could not execute trigger: " << e.what() << std::endl;
 	} catch (...) {
 		std::cerr << "could not execute trigger: " << std::endl;
