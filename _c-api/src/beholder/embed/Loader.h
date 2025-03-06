@@ -85,6 +85,23 @@ class Loader {
 private:
 	LibVector libs_;  // currently loaded libraries
 
+	// Helper for class symbol typedefs.
+	template<typename T>
+	struct ClassSymHelper {
+		using TPtr = std::add_pointer_t<T>;
+		using Ctor = TPtr (*)();
+		using Dtor = void (*)(TPtr);
+	};
+
+	// Helper class symbol handle deleter.
+	template<typename T>
+	struct Del {
+		ClassSymHelper<T>::Dtor del;
+		Del() : del{nullptr} {}
+		explicit Del(ClassSymHelper<T>::Dtor d) : del{d} {}
+		void operator()(ClassSymHelper<T>::TPtr ptr) { del(ptr); };
+	};
+
 	// findLibPredicate is a helper function which used when searching for
 	// a library managed by Loader.
 	//
@@ -121,6 +138,9 @@ private:
 	}
 
 public:
+	template<typename T>
+	using ClassHandle = std::unique_ptr<T, Del<T>>;
+
 	// See man dlopen(3) for more info.
 	enum class Options : int {
 		Lazy = RTLD_LAZY,
@@ -190,30 +210,24 @@ public:
 	// NOTE: ctorSym must be a symbol of a function of type T*(), and
 	// and dtorSym must be a symbol of a function of type void(T*).
 	template<typename T>
-	[[nodiscard]] auto
+	[[nodiscard]] ClassHandle<T>
 	getClass(const std::filesystem::path& lib, const std::string& ctorSym,
 			 const std::string& dtorSym) const noexcept {
-		using TPtr = std::add_pointer_t<T>;
-		using Ctor = TPtr (*)();
-		using Dtor = void (*)(TPtr);
-		struct Del {
-			Dtor del;
-			explicit Del(Dtor d) : del{d} {}
-			void operator()(TPtr ptr) { del(ptr); };
-		};
-		using Ret = std::unique_ptr<T, Del>;
+		using Helper = ClassSymHelper<T>;
 
 		const LibVector::const_iterator it{findLib(lib)};
 		if (it == libs_.end()) {
-			return Ret{nullptr, Del{nullptr}};
+			return ClassHandle<T>{};
 		}
 		void* handle{it->first.get()};
-		Ctor ctor{detail::dlSym<Ctor>(handle, ctorSym.c_str())};
-		Dtor dtor{detail::dlSym<Dtor>(handle, dtorSym.c_str())};
+		typename Helper::Ctor ctor{
+			detail::dlSym<Helper::Ctor>(handle, ctorSym.c_str())};
+		typename Helper::Dtor dtor{
+			detail::dlSym<Helper::Dtor>(handle, dtorSym.c_str())};
 		if (!ctor || !dtor) {
-			return Ret{nullptr, Del{nullptr}};
+			return ClassHandle<T>{};
 		}
-		return Ret{ctor(), Del{dtor}};
+		return ClassHandle<T>{ctor(), Del<T>{dtor}};
 	}
 };
 
