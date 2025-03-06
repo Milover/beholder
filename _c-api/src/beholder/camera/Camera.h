@@ -13,86 +13,104 @@
 #include <optional>
 #include <string>
 
-#include "beholder/BeholderExport.h"
-#include "beholder/camera/ParamEntry.h"
+#include "beholder/camera/Backends.h"
+#include "beholder/camera/Parameter.h"
 #include "beholder/capi/Image.h"
 
-namespace Pylon {
-class CGrabResultPtr;
-class CInstantCamera;
-class IPylonDevice;
-}  // namespace Pylon
-
 namespace beholder {
+namespace camera {
 
-// Supported camera acquisition trigger types.
-enum class BH_API TriggerType { Unknown = -1, Software };
+class CameraInterface;
+using CamPtr = std::unique_ptr<CameraInterface>;
+using Milliseconds = std::chrono::milliseconds;
 
 // The default timeout for acquiring an image.
-inline static constexpr std::chrono::milliseconds DfltAcqTimeout{1000};
+static constexpr Milliseconds DfltAcqTimeout{1000};
 
 // The default trigger timeout.
-inline static constexpr std::chrono::milliseconds DfltTriggerTimeout{100};
+static constexpr Milliseconds DfltTriggerTimeout{100};
+
+// Supported camera acquisition trigger types.
+enum class TriggerType { Unknown = -1, Software };
+
+// CameraInterface is a base class for the underlying camera implementations.
+class CameraInterface {
+private:
+	CameraInterface() = default;
+
+public:
+	CameraInterface(const CameraInterface&) = delete;
+	CameraInterface(CameraInterface&&) = delete;
+	CameraInterface& operator=(const CameraInterface&) = delete;
+	CameraInterface& operator=(CameraInterface&&) = delete;
+	virtual ~CameraInterface() = default;
+
+	[[nodiscard]] virtual bool init(void* device) noexcept = 0;
+
+	virtual ParamVector getParams(Parameter::AccessMode mode) noexcept = 0;
+	virtual bool setParams(CParamSpan params) noexcept = 0;
+
+	virtual bool trigger(TriggerType typ) noexcept = 0;
+	virtual bool
+	waitAndTrigger(Milliseconds timeout, TriggerType typ) noexcept = 0;
+
+	virtual bool acquire(Milliseconds timeout) = 0;
+	[[nodiscard]] virtual bool startAcquisition(size_t nImages) noexcept = 0;
+	virtual void stopAcquisition() noexcept = 0;
+	[[nodiscard]] virtual bool isAcquiring() const noexcept = 0;
+	[[nodiscard]] virtual bool isAttached() const noexcept = 0;
+	[[nodiscard]] virtual bool isInitialized() const noexcept = 0;
+
+	virtual std::optional<Image> getImage() noexcept = 0;
+
+	virtual bool cmdExecute(const char* cmd) noexcept = 0;
+	[[nodiscard]] virtual bool cmdIsDone(const char* cmd) noexcept = 0;
+};
 
 // Camera represents a physical camera device.
-class BH_API Camera {
+class Camera {
 private:
-	// Deleter is a helper class for releasing the underlying camera device
-	// resources.
-	struct Deleter {
-		void operator()(Pylon::CInstantCamera* cam) noexcept;
-	};
-
-	// The underlying camera device.
-	std::unique_ptr<Pylon::CInstantCamera, Deleter> cam_;
-	// Underlying camera acquisition result.
-	std::unique_ptr<Pylon::CGrabResultPtr> res_;
-
-protected:
-	// Execute a trigger.
-	bool triggerImpl(TriggerType typ);
+	// The underlying implementation.
+	CamPtr impl_;
 
 public:
 	// Default constructor.
 	// The camera must be initialized with Camera::init before use.
-	Camera();
+	explicit Camera(Backend b = Backend::Pylon) : impl_{createCamera(b)} {}
 
-	Camera(const Camera&) = delete;
-	Camera(Camera&&) = delete;
-
-	// Default destructor.
-	// Defined in the source because unique_ptr complains about
-	// incomplete types.
-	~Camera();
-
-	Camera& operator=(const Camera&) = delete;
-	Camera& operator=(Camera&&) = delete;
-
-	//- Acquire an image.
-	//	WARNING: acquisition must be started manually, however,
-	//	acquisition can be stopped automatically, eg. when a certain
-	//	number of images has been acquired.
-	bool acquire(std::chrono::milliseconds timeout = DfltAcqTimeout);
+	// Acquire an image.
+	// WARNING: acquisition must be started manually, however,
+	// acquisition can be stopped automatically, eg. when a certain
+	// number of images has been acquired.
+	bool acquire(Milliseconds timeout = DfltAcqTimeout) {
+		return impl_->acquire(timeout);
+	}
 
 	// Execute a GenICam command on the camera device.
 	// Returns false if there was an error.
 	//
 	// WARNING: does not check whether the command was executed or
 	// whether execution was successful.
-	bool cmdExecute(const std::string& cmd) noexcept;
+	bool cmdExecute(const std::string& cmd) noexcept {
+		return impl_->cmdExecute(cmd.c_str());
+	}
 
 	// Execute a GenICam command on the camera device.
 	// Returns false if there was an error.
 	//
 	// WARNING: does not check whether the command was executed or
 	// whether execution was successful.
-	bool cmdExecute(const char* cmd) noexcept;
+	bool cmdExecute(const char* cmd) noexcept { return impl_->cmdExecute(cmd); }
 
 	// Report if command execution finished.
-	bool cmdIsDone(const std::string& cmd) noexcept;
+	[[nodiscard]] bool cmdIsDone(const std::string& cmd) noexcept {
+		return impl_->cmdIsDone(cmd.c_str());
+	}
 
 	// Report if command execution finished.
-	bool cmdIsDone(const char* cmd) noexcept;
+	[[nodiscard]] bool cmdIsDone(const char* cmd) noexcept {
+		return impl_->cmdIsDone(cmd);
+	}
 
 	// Get the acquired result as a raw image.
 	//
@@ -100,10 +118,13 @@ public:
 	// acquisition result.
 	// The receiver should copy the returned buffer if data persistence
 	// is required.
-	std::optional<Image> getImage() noexcept;
+	std::optional<Image> getImage() noexcept { return impl_->getImage(); }
 
 	// Get camera parameters
-	ParamList getParams(ParamAccessMode mode = ParamAccessMode::ReadWrite);
+	ParamVector getParams(Parameter::AccessMode mode =
+							  Parameter::AccessMode::ReadWrite) noexcept {
+		return impl_->getParams(mode);
+	}
 
 	// Initialize camera device.
 	// The device is attached and open after initialization.
@@ -112,7 +133,10 @@ public:
 	//
 	// TODO: we could initialize it with/from a TransportLayer, so that
 	// we don't have to expose pylon stuff at all.
-	bool init(Pylon::IPylonDevice* d) noexcept;
+	// TODO: change from void*
+	[[nodiscard]] bool init(void* device) noexcept {
+		return impl_->init(device);
+	}
 
 	// Return acquisition state.
 	//
@@ -123,33 +147,48 @@ public:
 	// 'AcquisitionMode': the camera will have executed 'AcquisitionStop'
 	// internally, but pylon will report: IsGrabbing() == true.
 	// Hence we should avoid using the 'SingleFrame' acquisition mode.
-	[[nodiscard]] bool isAcquiring() const noexcept;
+	[[nodiscard]] bool isAcquiring() const noexcept {
+		return impl_->isAcquiring();
+	}
 
 	// Check if the camera is initialized (device attached and open).
-	[[nodiscard]] bool isInitialized() const noexcept;
+	[[nodiscard]] bool isInitialized() const noexcept {
+		return impl_->isInitialized();
+	}
 
 	// Check if the camera device is attached.
-	[[nodiscard]] bool isAttached() const noexcept;
+	[[nodiscard]] bool isAttached() const noexcept {
+		return impl_->isAttached();
+	}
 
 	// Set camera parameters in the order provided.
 	// Returns true if no errors ocurred.
-	bool setParams(const ParamList& params) noexcept;
+	bool setParams(CParamSpan params) noexcept {
+		return impl_->setParams(params);
+	}
 
 	// Start image acquisition and stop after nImages have been acquired.
 	// If nImages is 0, the camera will keep acquiring indefinitely.
-	bool startAcquisition(size_t nImages = 0UL) noexcept;
+	[[nodiscard]] bool startAcquisition(size_t nImages = 0UL) noexcept {
+		return impl_->startAcquisition(nImages);
+	}
 
 	// Stop image acquisition.
-	void stopAcquisition() noexcept;
+	void stopAcquisition() noexcept { impl_->stopAcquisition(); }
 
 	// Execute a trigger.
-	bool trigger(TriggerType typ = TriggerType::Software) noexcept;
+	bool trigger(TriggerType typ = TriggerType::Software) noexcept {
+		return impl_->trigger(typ);
+	}
 
 	// Waits for the trigger to become ready and then executes the trigger.
-	bool waitAndTrigger(std::chrono::milliseconds timeout = DfltTriggerTimeout,
-						TriggerType typ = TriggerType::Software) noexcept;
+	bool waitAndTrigger(Milliseconds timeout = DfltTriggerTimeout,
+						TriggerType typ = TriggerType::Software) noexcept {
+		return impl_->waitAndTrigger(timeout, typ);
+	}
 };
 
+}  // namespace camera
 }  // namespace beholder
 
 #endif	// BEHOLDER_CAMERA_CAMERA_H

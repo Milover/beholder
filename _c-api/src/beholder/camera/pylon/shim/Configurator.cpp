@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "beholder/camera/internal/DefaultConfigurator.h"
+#include "beholder/camera/pylon/shim/Configurator.h"
 
 #include <Base/GCException.h>
 #include <GenApi/INodeMap.h>
@@ -19,7 +19,7 @@
 namespace beholder {
 namespace internal {
 
-void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const {
+void Configurator::applyConfiguration(GenApi::INodeMap& nodemap) const {
 	using Cmd = Pylon::CCommandParameter;
 	using Enum = Pylon::CEnumParameter;
 	using Int = Pylon::CIntegerParameter;
@@ -53,7 +53,7 @@ void DefaultConfigurator::applyConfiguration(GenApi::INodeMap& nodemap) const {
 	}
 }
 
-void DefaultConfigurator::OnOpened(Pylon::CInstantCamera& cam) {
+void Configurator::OnOpened(Pylon::CInstantCamera& cam) {
 	try {
 		applyConfiguration(cam.GetNodeMap());
 		// Probe max packet size

@@ -4,8 +4,8 @@
 
 // Utility functions for working with the GenICam API.
 
-#ifndef BEHOLDER_CAMERA_INTERNAL_GEN_API_UTILS_H
-#define BEHOLDER_CAMERA_INTERNAL_GEN_API_UTILS_H
+#ifndef BEHOLDER_PYLON_SHIM_CONVERT_H
+#define BEHOLDER_PYLON_SHIM_CONVERT_H
 
 #include <type_traits>
 #include <utility>
@@ -14,7 +14,8 @@
 #include "beholder/util/Packs.h"
 
 namespace beholder {
-namespace internal {
+namespace pylon {
+namespace shim {
 
 template<
 	typename NodeList, typename Node, typename... NodeMaps,
@@ -75,7 +76,8 @@ std::vector<Node> convert(Condition c, NodeMaps&... nodemaps) {
 	return nodes;
 }
 
-}  // namespace internal
+}  // namespace shim
+}  // namespace pylon
 }  // namespace beholder
 
-#endif	// BEHOLDER_CAMERA_INTERNAL_GEN_API_UTILS_H
+#endif // BEHOLDER_PYLON_SHIM_CONVERT_H
