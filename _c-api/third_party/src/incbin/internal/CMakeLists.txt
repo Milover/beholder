@@ -7,7 +7,7 @@ include(FetchContent)
 FetchContent_Declare(
 	bh-incbin-internal
 	GIT_REPOSITORY https://github.com/graphitemaster/incbin.git
-	GIT_TAG 6e576cae5ab5810f25e2631f2e0b80cbe7dc8cbf # HEAD @ 2025-02-02
+	GIT_TAG 22061f51fe9f2f35f061f85c2b217b55dd75310d # HEAD @ 2025-10-15
 	GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(bh-incbin-internal)
