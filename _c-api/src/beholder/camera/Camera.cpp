@@ -12,6 +12,7 @@
 
 #include "beholder/camera/Backends.h"
 #include "beholder/camera/CameraInterface.h"
+#include "beholder/camera/Config.h"
 #include "beholder/camera/Parameter.h"
 #include "beholder/camera/TriggerType.h"
 #include "beholder/capi/Image.h"
