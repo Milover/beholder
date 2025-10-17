@@ -28,46 +28,46 @@ find_package(incbin REQUIRED)
 find_package(zlib REQUIRED)
 find_package(OpenCV REQUIRED ${bh_ocv_modules})
 find_package(Tesseract REQUIRED)
-find_package(pylon REQUIRED)
+#find_package(pylon REQUIRED)
 
-# TODO: clean this up
-# disgusting hack to get the generic install path
-get_target_property(libpylon_imported_loc pylon::PylonBase LOCATION)
-cmake_path(GET libpylon_imported_loc PARENT_PATH libpylon_imported_loc)
-file(GLOB libpylon_files_abs
-	"${libpylon_imported_loc}/libpylonbase.so*"
-	"${libpylon_imported_loc}/libpylonc.so*"
-	"${libpylon_imported_loc}/libpylonutility.so*"
-	"${libpylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
-	"${libpylon_imported_loc}/libgxapi.so*"
-	"${libpylon_imported_loc}/libuxapi.so*"
-	"${libpylon_imported_loc}/libpylon_TL_gige.so"
-	"${libpylon_imported_loc}/libpylon_TL_camemu.so"
-)
-set(libpylon_files "${libpylon_files_abs}")
-list(TRANSFORM libpylon_files REPLACE "${libpylon_imported_loc}/" "")
-set(libpylon_archive "pylon.tar.gz")
-add_custom_command(
-	OUTPUT ${libpylon_archive}
-	COMMAND
-		${CMAKE_COMMAND} -E
-			chdir ${libpylon_imported_loc}
-			tar cvzf ${CMAKE_CURRENT_BINARY_DIR}/${libpylon_archive} ${libpylon_files}
-)
+## TODO: clean this up
+## disgusting hack to get the generic install path
+#get_target_property(libpylon_imported_loc pylon::PylonBase LOCATION)
+#cmake_path(GET libpylon_imported_loc PARENT_PATH libpylon_imported_loc)
+#file(GLOB libpylon_files_abs
+#	"${libpylon_imported_loc}/libpylonbase.so*"
+#	"${libpylon_imported_loc}/libpylonc.so*"
+#	"${libpylon_imported_loc}/libpylonutility.so*"
+#	"${libpylon_imported_loc}/libFirmwareUpdate_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libGCBase_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libGenApi_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libLog_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/liblog4cpp_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libMathParser_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libNodeMapData_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libXmlParser_gcc_v3_1_Basler_pylon.so"
+#	"${libpylon_imported_loc}/libgxapi.so*"
+#	"${libpylon_imported_loc}/libuxapi.so*"
+#	"${libpylon_imported_loc}/libpylon_TL_gige.so"
+#	"${libpylon_imported_loc}/libpylon_TL_camemu.so"
+#)
+#set(libpylon_files "${libpylon_files_abs}")
+#list(TRANSFORM libpylon_files REPLACE "${libpylon_imported_loc}/" "")
+#set(libpylon_archive "pylon.tar.gz")
+#add_custom_command(
+#	OUTPUT ${libpylon_archive}
+#	COMMAND
+#		${CMAKE_COMMAND} -E
+#			chdir ${libpylon_imported_loc}
+#			tar cvzf ${CMAKE_CURRENT_BINARY_DIR}/${libpylon_archive} ${libpylon_files}
+#)
 
 # convenience variable, so that we can propagate it to sub-directories easily
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH bh_base_dir)
 
 target_sources(beholder
-	PRIVATE
-		${libpylon_archive}
+	#	PRIVATE
+	#		${libpylon_archive}
 	PUBLIC
 		FILE_SET HEADERS
 		BASE_DIRS
@@ -78,8 +78,8 @@ target_sources(beholder
 )
 target_compile_definitions(beholder
 	PRIVATE
-		BH_EMBED_DIR="${CMAKE_CURRENT_BINARY_DIR}"
 		ZLIB_CONST
+		#BH_EMBED_DIR="${CMAKE_CURRENT_BINARY_DIR}"
 )
 # Tesseract's include dirs are necessary when Tesseract is installed to a
 # non-default location

@@ -3,14 +3,16 @@ target_sources(beholder
 		Backends.cpp
 		Camera.cpp
 		Parameter.cpp
-		TransportLayer.cpp
 	PUBLIC
 		FILE_SET HEADERS
 		FILES
 			Backends.h
 			Camera.h
+			CameraInterface.h
+			Config.h
+			DeviceClass.h
 			Parameter.h
-			TransportLayer.h
+			TriggerType.h
 )
 
 add_subdirectory(pylon)
