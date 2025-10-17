@@ -1,6 +1,6 @@
 target_sources(beholder
 	PRIVATE
-		Binaries.cpp
+	#Binaries.cpp
 		Embed.cpp
 		Loader.cpp
 		Tar.cpp

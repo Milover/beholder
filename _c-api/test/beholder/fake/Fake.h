@@ -9,7 +9,7 @@
 
 namespace fake {
 
-FAKE_API constexpr static int Return{1337};
+constexpr static int Return{1337};
 
 struct FAKE_API Faker {
 	Faker() = default;

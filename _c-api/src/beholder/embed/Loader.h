@@ -214,16 +214,16 @@ public:
 	getClass(const std::filesystem::path& lib, const std::string& ctorSym,
 			 const std::string& dtorSym) const noexcept {
 		using Helper = ClassSymHelper<T>;
+		using Ctor = typename Helper::Ctor;
+		using Dtor = typename Helper::Dtor;
 
 		const LibVector::const_iterator it{findLib(lib)};
 		if (it == libs_.end()) {
 			return ClassHandle<T>{};
 		}
 		void* handle{it->first.get()};
-		typename Helper::Ctor ctor{
-			detail::dlSym<Helper::Ctor>(handle, ctorSym.c_str())};
-		typename Helper::Dtor dtor{
-			detail::dlSym<Helper::Dtor>(handle, dtorSym.c_str())};
+		Ctor ctor{detail::dlSym<Ctor>(handle, ctorSym.c_str())};
+		Dtor dtor{detail::dlSym<Dtor>(handle, dtorSym.c_str())};
 		if (!ctor || !dtor) {
 			return ClassHandle<T>{};
 		}

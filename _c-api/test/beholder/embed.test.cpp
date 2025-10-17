@@ -160,7 +160,7 @@ TEST(Embed, UnpackAndLoad) {  // NOLINT(*-function-cognitive-complexity)
 	using Call = int (*)();
 
 	fs::path outdir{};
-	const embed::PathVector libs{"libfake"}; // gets loaded through symlink
+	const embed::PathVector libs{"libfake"};  // gets loaded through symlink
 
 	// sanity checks
 	ASSERT_NE(gFakeArchiveData, nullptr);
@@ -191,12 +191,13 @@ TEST(Embed, UnpackAndLoad) {  // NOLINT(*-function-cognitive-complexity)
 		ASSERT_NE(fFaker, nullptr) << "failed to load class \"fake::Faker\"";
 
 		std::cerr << "calling" << '\n';
-		EXPECT_EQ(fCall(), fake::Return);
-		EXPECT_EQ(fFaker->call(), fake::Return);
+		EXPECT_EQ(fCall(), fake::Return) << "fCall() issue";
+		EXPECT_EQ(fFaker->call(), fake::Return) << "fFaker->call() issue";
 	}
+	std::cerr << "checking cleanup" << '\n';
 	// check if we've cleaned everything up
-	EXPECT_FALSE(embed::detail::isDLOpen(libs.front()));
-	EXPECT_FALSE(fs::exists(outdir));
+	EXPECT_FALSE(embed::detail::isDLOpen(libs.front())) << "library still open";
+	EXPECT_FALSE(fs::exists(outdir)) << "embed output directory still present";
 }
 
 }  // namespace test

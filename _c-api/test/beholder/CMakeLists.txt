@@ -72,9 +72,9 @@ target_compile_features(beholder.test PRIVATE cxx_std_20)
 #	"${CMAKE_CURRENT_BINARY_DIR}/bh_cam_tst_lsan.supp"
 #	"leak:GenApi_3_1_Basler_pylon::CNodeMapFactory"
 #)
-#
-#include(GoogleTest)
-#gtest_discover_tests(beholder.test)
+
+include(GoogleTest)
+gtest_discover_tests(beholder.test)
 #gtest_discover_tests(beholder_camera.test
 #	PROPERTIES
 #	ENVIRONMENT "ASAN_OPTIONS=fast_unwind_on_malloc=0"

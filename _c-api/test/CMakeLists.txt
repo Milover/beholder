@@ -11,7 +11,6 @@ set(INSTALL_GTEST FALSE)
 FetchContent_MakeAvailable(googletest)
 
 # set properties for GTest
-list(APPEND _bh_gtest_tgts gtest gtest_main gmock gmock_main)
 set_target_properties(gtest gtest_main gmock gmock_main
 	PROPERTIES
 		CXX_CLANG_TIDY ""
