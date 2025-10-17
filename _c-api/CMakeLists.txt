@@ -33,13 +33,11 @@ else()
 	message(STATUS "Using system libraries for dependencies.")
 endif()
 
-
-message(CHECK_START "Finding linters")
+message(CHECK_START "Detecting linters")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")
 unset(bh_missing_linters)
-
 if (NOT BH_NO_LINT)
-	message(CHECK_START "Finding clang-tidy")
+	message(CHECK_START "Detecting clang-tidy")
 	find_program(found_clang_tidy clang-tidy)
 	if (found_clang_tidy)
 		message(CHECK_PASS "found")
@@ -55,8 +53,10 @@ if (NOT BH_NO_LINT)
 	else()
 		message(CHECK_PASS "all linters found")
 	endif()
+else()
+	list(POP_BACK CMAKE_MESSAGE_INDENT)
+	message(CHECK_PASS "linting disabled")
 endif()
-
 
 add_subdirectory(src)
 add_subdirectory(test)
