@@ -17,7 +17,7 @@
 #include <iostream>
 
 namespace beholder {
-namespace internal {
+namespace pylonshim {
 
 void Configurator::applyConfiguration(GenApi::INodeMap& nodemap) const {
 	using Cmd = Pylon::CCommandParameter;
@@ -65,5 +65,5 @@ void Configurator::OnOpened(Pylon::CInstantCamera& cam) {
 	}
 }
 
-}  // namespace internal
+}  // namespace pylonshim
 }  // namespace beholder

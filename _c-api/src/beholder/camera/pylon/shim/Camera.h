@@ -4,8 +4,8 @@
 
 // Camera device class definitions.
 
-#ifndef BEHOLDER_PYLON_SHIM_CAMERA_H
-#define BEHOLDER_PYLON_SHIM_CAMERA_H
+#ifndef BEHOLDER_PYLONSHIM_CAMERA_H
+#define BEHOLDER_PYLONSHIM_CAMERA_H
 
 #include <chrono>
 #include <cstddef>
@@ -22,15 +22,15 @@ class IPylonDevice;
 }  // namespace Pylon
 
 namespace beholder {
-namespace pylon {
-namespace shim {
-
-using Parameter = beholder::camera::Parameter;
-using CParamSpan = std::span<const Parameter>;
-using ParamVector = std::vector<Parameter>;
+namespace pylonshim {
 
 // Camera represents a physical camera device.
-class BH_PYLON_SHIM_API Camera {
+class BH_PYLONSHIM_API Camera {
+public:
+	using Parameter = beholder::camera::Parameter;
+	using CParamSpan = std::span<const Parameter>;
+	using ParamVector = std::vector<Parameter>;
+
 protected:
 	// Default constructor.
 	// The camera must be initialized with Camera::init before use.
@@ -51,13 +51,10 @@ public:
 	// The device is attached and open after initialization.
 	//
 	// NOTE: takes ownership of the supplied device.
-	//
-	// TODO: we could initialize it with/from a TransportLayer, so that
-	// we don't have to expose pylon stuff at all.
-	virtual bool init(Pylon::IPylonDevice* d) noexcept = 0;
+	[[nodiscard]] virtual bool init(Pylon::IPylonDevice* d) noexcept = 0;
 
 	// Get camera parameters
-	virtual ParamVector getParams(Parameter::AccessMode mode) = 0;
+	[[nodiscard]] virtual ParamVector getParams(Parameter::AccessMode mode) = 0;
 
 	// Set camera parameters in the order provided.
 	// Returns true if no errors ocurred.
@@ -91,38 +88,34 @@ public:
 	// 'AcquisitionMode': the camera will have executed 'AcquisitionStop'
 	// internally, but pylon will report: IsGrabbing() == true.
 	// Hence we should avoid using the 'SingleFrame' acquisition mode.
-	[[nodiscard]]
-	virtual bool isAcquiring() const noexcept = 0;
+	[[nodiscard]] virtual bool isAcquiring() const noexcept = 0;
 
 	// Check if the camera is initialized (device attached and open).
-	[[nodiscard]]
-	virtual bool isInitialized() const noexcept = 0;
+	[[nodiscard]] virtual bool isInitialized() const noexcept = 0;
 
 	// Check if the camera device is attached.
-	[[nodiscard]]
-	virtual bool isAttached() const noexcept = 0;
+	[[nodiscard]] virtual bool isAttached() const noexcept = 0;
 
 	// Get the acquired result as a raw image.
 	//
 	// NOTE: this does not transfer ownership of the underlying
 	// acquisition result.
-	// The receiver should copy the returned buffer if data persistence
+	// The caller should copy the returned buffer if data persistence
 	// is required.
-	virtual std::optional<Image> getImage() noexcept = 0;
+	[[nodiscard]] virtual std::optional<Image> getImage() noexcept = 0;
 
 	// Execute a GenICam command on the camera device.
 	// Returns false if there was an error.
 	//
-	// WARNING: does not check whether the command was executed or
+	// NOTE: does not check whether the command was executed or
 	// whether execution was successful.
 	virtual bool cmdExecute(const char* cmd) noexcept = 0;
 
 	// Report if command execution finished.
-	virtual bool cmdIsDone(const char* cmd) noexcept = 0;
+	[[nodiscard]] virtual bool cmdIsDone(const char* cmd) noexcept = 0;
 };
 
-}  // namespace shim
-}  // namespace pylon
+}  // namespace pylonshim
 }  // namespace beholder
 
-#endif	// BEHOLDER_PYLON_SHIM_CAMERA_H
+#endif	// BEHOLDER_PYLONSHIM_CAMERA_H

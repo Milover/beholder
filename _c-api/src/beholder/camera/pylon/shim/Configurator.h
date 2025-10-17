@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef BEHOLDER_PYLON_SHIM_CONFIGURATOR_H
-#define BEHOLDER_PYLON_SHIM_CONFIGURATOR_H
+#ifndef BEHOLDER_PYLONSHIM_CONFIGURATOR_H
+#define BEHOLDER_PYLONSHIM_CONFIGURATOR_H
 
 #include <GenApi/INodeMap.h>
 #include <pylon/ConfigurationEventHandler.h>
@@ -13,8 +13,7 @@ class CInstantCamera;
 }  // namespace Pylon
 
 namespace beholder {
-namespace pylon {
-namespace shim {
+namespace pylonshim {
 
 // Configurator is the default configuration used for all camera devices
 // when they are initialized.
@@ -38,8 +37,7 @@ public:
 	void OnOpened(Pylon::CInstantCamera& cam) override;
 };
 
-}  // namespace shim
-}  // namespace pylon
+}  // namespace pylonshim
 }  // namespace beholder
 
-#endif	// BEHOLDER_PYLON_SHIM_CONFIGURATOR_H
+#endif	// BEHOLDER_PYLONSHIM_CONFIGURATOR_H

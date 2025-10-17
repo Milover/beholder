@@ -5,55 +5,87 @@
 #ifndef BEHOLDER_CAMERA_PYLON_CAMERA_H
 #define BEHOLDER_CAMERA_PYLON_CAMERA_H
 
+#include <array>
 #include <cstddef>
+#include <memory>
 #include <optional>
 
-#include "beholder/camera/Camera.h"
+#include "beholder/camera/Backends.h"
+#include "beholder/camera/CameraInterface.h"
+#include "beholder/camera/DeviceClass.h"
 #include "beholder/camera/Parameter.h"
+#include "beholder/camera/TriggerType.h"
 #include "beholder/capi/Image.h"
 #include "beholder/embed/Loader.h"
+#include "beholder/embed/Unpacker.h"
+#include "beholder/util/Enums.h"
 
-class PylonShimCameraInterface;
+namespace beholder {
+namespace pylonshim {
+class API;
+class Camera;
+class TransportLayer;
+}  // namespace pylonshim
+}  // namespace beholder
 
 namespace beholder {
 namespace camera {
 namespace pylon {
 
-// PylonCamera represents a physical camera device.
-class PylonCamera : public ::beholder::camera::CameraInterface {
-private:
-	using CameraHandle = embed::Loader::ClassHandle<PylonShimCameraInterface>;
+using CameraInterface = ::beholder::camera::detail::CameraImpl::Type;
+using CamPtr = ::beholder::camera::detail::CameraImpl::Ptr;
+using Milliseconds = CameraInterface::Milliseconds;
 
-	CameraHandle handle_;  // the underlying implementation symbol handle
+// Camera factory.
+[[nodiscard]] CamPtr createCamera(DeviceClass dc);
+
+// Camera represents a physical camera device.
+class Camera : public CameraInterface {
+private:
+	struct Runtime;
+
+	using APIHandle = embed::Loader::ClassHandle<pylonshim::API>;
+	using CamHandle = embed::Loader::ClassHandle<pylonshim::Camera>;
+	using TLHandle = embed::Loader::ClassHandle<pylonshim::TransportLayer>;
+	using TLArray = std::array<TLHandle, enums::to(DeviceClass::_max)>;
+	using RTHandle = std::unique_ptr<Runtime>;
+
+	struct Runtime {
+		embed::Unpacker upk;  // shared object archive unpacker
+		embed::Loader ldr;	  // shared object loader
+		APIHandle api;		  // pylon runtime
+		TLArray tls;		  // transport layers indexed by device class
+
+		Runtime() noexcept;
+	};
+
+	static RTHandle runtime_;  // global runtime
+	CamHandle cam_;			   // underlying camera implementation symbol handle
+	DeviceClass dc_;		   // camera transport layer type
 
 public:
 	// Default constructor.
-	// The camera must be initialized with PylonCamera::init before use.
-	//
-	// TODO: implement
-	PylonCamera();
+	// The camera must be initialized with Camera::init before use.
+	explicit Camera(DeviceClass dc);
 
-	PylonCamera(const PylonCamera&) = delete;
-	PylonCamera(PylonCamera&&) = delete;
-	PylonCamera& operator=(const PylonCamera&) = delete;
-	PylonCamera& operator=(PylonCamera&&) = delete;
+	Camera(const Camera&) = delete;
+	Camera(Camera&&) = delete;
+	Camera& operator=(const Camera&) = delete;
+	Camera& operator=(Camera&&) = delete;
 
 	// Default destructor.
+	//
 	// Defined in the source because unique_ptr complains about
 	// incomplete types.
-	~PylonCamera() override;
+	~Camera() override;
 
-	// Initialize camera device.
 	// The device is attached and open after initialization.
-	//
-	// NOTE: takes ownership of the supplied device.
-	//
-	// TODO: we could initialize it with/from a TransportLayer, so that
-	// we don't have to expose pylon stuff at all.
-	bool init(void* device) noexcept override;
+	[[nodiscard]] bool init(const char* designator, Milliseconds timeout,
+							bool reboot) noexcept override;
 
 	// Get camera parameters
-	ParamVector getParams(Parameter::AccessMode mode) noexcept override;
+	[[nodiscard]] ParamVector
+	getParams(Parameter::AccessMode mode) noexcept override;
 
 	// Set camera parameters in the order provided.
 	// Returns true if no errors ocurred.
@@ -70,7 +102,7 @@ public:
 	// WARNING: acquisition must be started manually, however,
 	// acquisition can be stopped automatically, eg. when a certain
 	// number of images has been acquired.
-	bool acquire(Milliseconds timeout) override;
+	bool acquire(Milliseconds timeout) noexcept override;
 
 	// Start image acquisition and stop after nImages have been acquired.
 	// If nImages is 0, the camera will keep acquiring indefinitely.
@@ -102,7 +134,7 @@ public:
 	// acquisition result.
 	// The receiver should copy the returned buffer if data persistence
 	// is required.
-	std::optional<Image> getImage() noexcept override;
+	[[nodiscard]] std::optional<Image> getImage() noexcept override;
 
 	// Execute a GenICam command on the camera device.
 	// Returns false if there was an error.
@@ -112,7 +144,7 @@ public:
 	bool cmdExecute(const char* cmd) noexcept override;
 
 	// Report if command execution finished.
-	bool cmdIsDone(const char* cmd) noexcept override;
+	[[nodiscard]] bool cmdIsDone(const char* cmd) noexcept override;
 };
 
 }  // namespace pylon

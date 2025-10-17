@@ -4,14 +4,13 @@
 
 // A wrapper class for the pylon runtime manager.
 
-#ifndef BEHOLDER_PYLON_SHIM_API_H
-#define BEHOLDER_PYLON_SHIM_API_H
+#ifndef BEHOLDER_PYLONSHIM_API_H
+#define BEHOLDER_PYLONSHIM_API_H
 
 #include "beholder/camera/pylon/shim/Export.h"
 
 namespace beholder {
-namespace pylon {
-namespace shim {
+namespace pylonshim {
 
 // API is a helper class to initialize and free resources managed by
 // the pylon runtime manager.
@@ -23,11 +22,12 @@ namespace shim {
 // from the library is used, however, this will probably complicate things
 // from the Go side --- so we let Go code ensure this gets initialized/freed
 // when necessary.
-class BH_PYLON_SHIM_API API {
-public:
+class BH_PYLONSHIM_API API {
+protected:
 	// Initializes the pylon runtime manager and resources.
 	API() = default;
 
+public:
 	API(const API&) = delete;
 	API(API&&) = delete;
 	API& operator=(const API&) = delete;
@@ -37,8 +37,7 @@ public:
 	virtual ~API() noexcept = 0;
 };
 
-}  // namespace shim
-}  // namespace pylon
+}  // namespace pylonshim
 }  // namespace beholder
 
-#endif	// BEHOLDER_PYLON_SHIM_API_H
+#endif	// BEHOLDER_PYLONSHIM_API_H

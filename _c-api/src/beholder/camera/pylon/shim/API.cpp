@@ -12,10 +12,9 @@
 #include "beholder/camera/pylon/shim/Export.h"
 
 namespace beholder {
-namespace pylon {
-namespace shim {
+namespace pylonshim {
 
-class BH_PYLON_SHIM_API APIImpl : public API {
+class BH_PYLONSHIM_API APIImpl : public API {
 public:
 	APIImpl() noexcept;
 
@@ -49,18 +48,15 @@ APIImpl::~APIImpl() noexcept {
 	}
 }
 
-}  // namespace shim
-}  // namespace pylon
+}  // namespace pylonshim
 }  // namespace beholder
 
 extern "C" {
 
-BH_PYLON_SHIM_API beholder::pylon::shim::API* pylonAPI_create() {
-	return new beholder::pylon::shim::APIImpl{};
+BH_PYLONSHIM_API beholder::pylonshim::API* pylonAPI_create() {
+	return new beholder::pylonshim::APIImpl{};
 }
 
-BH_PYLON_SHIM_API void pylonAPI_delete(beholder::pylon::shim::API* p) {
-	delete p;
-}
+BH_PYLONSHIM_API void pylonAPI_delete(beholder::pylonshim::API* p) { delete p; }
 
 }  // extern "C"

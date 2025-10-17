@@ -4,8 +4,8 @@
 
 // Utility functions for working with the GenICam API.
 
-#ifndef BEHOLDER_PYLON_SHIM_CONVERT_H
-#define BEHOLDER_PYLON_SHIM_CONVERT_H
+#ifndef BEHOLDER_PYLONSHIM_CONVERT_H
+#define BEHOLDER_PYLONSHIM_CONVERT_H
 
 #include <type_traits>
 #include <utility>
@@ -14,8 +14,7 @@
 #include "beholder/util/Packs.h"
 
 namespace beholder {
-namespace pylon {
-namespace shim {
+namespace pylonshim {
 
 template<
 	typename NodeList, typename Node, typename... NodeMaps,
@@ -76,8 +75,7 @@ std::vector<Node> convert(Condition c, NodeMaps&... nodemaps) {
 	return nodes;
 }
 
-}  // namespace shim
-}  // namespace pylon
+}  // namespace pylonshim
 }  // namespace beholder
 
-#endif // BEHOLDER_PYLON_SHIM_CONVERT_H
+#endif	// BEHOLDER_PYLONSHIM_CONVERT_H

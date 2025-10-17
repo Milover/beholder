@@ -33,10 +33,14 @@
 #include "beholder/util/Enums.h"
 
 namespace beholder {
-namespace pylon {
-namespace shim {
+namespace pylonshim {
 
-class BH_PYLON_SHIM_API CameraImpl : public Camera {
+class BH_PYLONSHIM_API CameraImpl : public Camera {
+public:
+	using Parameter = Camera::Parameter;
+	using CParamSpan = Camera::CParamSpan;
+	using ParamVector = Camera::ParamVector;
+
 private:
 	struct Deleter {
 		void operator()(Pylon::CInstantCamera* cam) noexcept {
@@ -62,9 +66,9 @@ public:
 
 	~CameraImpl() override = default;
 
-	bool init(Pylon::IPylonDevice* d) noexcept override;
+	[[nodiscard]] bool init(Pylon::IPylonDevice* d) noexcept override;
 
-	ParamVector getParams(Parameter::AccessMode mode) override;
+	[[nodiscard]] ParamVector getParams(Parameter::AccessMode mode) override;
 	bool setParams(CParamSpan params) noexcept override;
 
 	bool trigger() noexcept override;
@@ -78,10 +82,10 @@ public:
 	[[nodiscard]] bool isInitialized() const noexcept override;
 	[[nodiscard]] bool isAttached() const noexcept override;
 
-	std::optional<Image> getImage() noexcept override;
+	[[nodiscard]] std::optional<Image> getImage() noexcept override;
 
 	bool cmdExecute(const char* cmd) noexcept override;
-	bool cmdIsDone(const char* cmd) noexcept override;
+	[[nodiscard]] bool cmdIsDone(const char* cmd) noexcept override;
 };
 
 CameraImpl::CameraImpl() noexcept {
@@ -104,87 +108,24 @@ CameraImpl::CameraImpl() noexcept {
 	}
 }
 
-bool CameraImpl::acquire(std::chrono::milliseconds timeout) noexcept {
-	if (!isAttached()) {
-		std::cerr << "no camera device attached" << std::endl;
-		return false;
-	}
-	if (!isAcquiring()) {
-		std::cerr << "acquisition not started" << std::endl;
+bool CameraImpl::init(Pylon::IPylonDevice* d) noexcept {
+	if (!static_cast<bool>(d)) {
+		std::cerr << "could not initialize camera: bad device" << std::endl;
 		return false;
 	}
 	try {
-		auto& res{*res_};
-		const bool success{cam_->RetrieveResult(timeout.count(), res,
-												Pylon::TimeoutHandling_Return)};
-		if (success && res->GrabSucceeded()) {
-			if (res->HasCRC() && !res->CheckCRC()) {
-				std::cerr << "CRC check failed" << std::endl;
-			} else {
-				return true;
-			}
-		} else if (success) {
-			std::cerr << "error code: " << res->GetErrorCode() << '\t'
-					  << res->GetErrorDescription() << std::endl;
-		} else {
-			std::cerr << "acquisition timed out" << std::endl;
-		}
-	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not acquire image: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "could not acquire image" << std::endl;
-	}
-	return false;
-}
-
-bool CameraImpl::cmdExecute(const char* cmd) noexcept {
-	try {
-		Pylon::CCommandParameter(cam_->GetNodeMap(), cmd).Execute();
+		cam_->Attach(d, Pylon::Cleanup_Delete);
+		cam_->Open();
 		return true;
 	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not execute command: " << e.what() << std::endl;
+		std::cerr << "could not initialize camera: " << e.what() << std::endl;
 	} catch (...) {
-		std::cerr << "could not execute command" << std::endl;
+		std::cerr << "could not initialize camera" << std::endl;
 	}
 	return false;
 }
 
-bool CameraImpl::cmdIsDone(const char* cmd) noexcept {
-	try {
-		return Pylon::CCommandParameter(cam_->GetNodeMap(), cmd).IsDone();
-	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not check command execution status: " << e.what()
-				  << std::endl;
-	} catch (...) {
-		std::cerr << "could not check command execution status: " << std::endl;
-	}
-	return false;
-}
-
-std::optional<Image> CameraImpl::getImage() noexcept {
-	// not sure if this can throw, so we're being careful
-	try {
-		auto& res{*res_};
-		if (!res.IsValid()) {
-			return std::nullopt;
-		}
-		size_t step{0UL};
-		return std::optional{Image{
-			static_cast<size_t>(res->GetID()),
-			static_cast<int>(res->GetHeight()),
-			static_cast<int>(res->GetWidth()),
-			static_cast<int64_t>(res->GetPixelType()), res->GetBuffer(),
-			res->GetStride(step) ? step : 0UL,
-			static_cast<size_t>(Pylon::BitPerPixel(res->GetPixelType()))}};
-	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not get raw image data: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "could not get raw image data" << std::endl;
-	}
-	return std::nullopt;
-}
-
-ParamVector CameraImpl::getParams(Parameter::AccessMode mode) {
+CameraImpl::ParamVector CameraImpl::getParams(Parameter::AccessMode mode) {
 	ParamVector params;
 	bool (*condition)(GenApi::INode*){nullptr};
 	switch (mode) {
@@ -230,33 +171,6 @@ ParamVector CameraImpl::getParams(Parameter::AccessMode mode) {
 	return params;
 }
 
-bool CameraImpl::isAcquiring() const noexcept { return cam_->IsGrabbing(); }
-
-bool CameraImpl::init(Pylon::IPylonDevice* d) noexcept {
-	if (!static_cast<bool>(d)) {
-		std::cerr << "could not initialize camera: bad device" << std::endl;
-		return false;
-	}
-	try {
-		cam_->Attach(d, Pylon::Cleanup_Delete);
-		cam_->Open();
-		return true;
-	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not initialize camera: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "could not initialize camera" << std::endl;
-	}
-	return false;
-}
-
-bool CameraImpl::isInitialized() const noexcept {
-	return isAttached() && cam_->IsOpen();
-}
-
-bool CameraImpl::isAttached() const noexcept {
-	return cam_->IsPylonDeviceAttached() && !cam_->IsCameraDeviceRemoved();
-}
-
 bool CameraImpl::setParams(CParamSpan params) noexcept {
 	if (!isInitialized()) {
 		std::cerr << "could not set parameters, camera uninitialized"
@@ -279,28 +193,6 @@ bool CameraImpl::setParams(CParamSpan params) noexcept {
 	}
 	return ok;
 }
-
-bool CameraImpl::startAcquisition(size_t nImages) noexcept {
-	// XXX: not sure what happens here if the camera gets disconnected
-	if (isAcquiring()) {
-		return true;
-	}
-	try {
-		if (nImages == 0) {
-			cam_->StartGrabbing();
-		} else {
-			cam_->StartGrabbing(nImages);
-		}
-		return true;
-	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not start acquisition: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "could not start acquisition" << std::endl;
-	}
-	return false;
-}
-
-void CameraImpl::stopAcquisition() noexcept { cam_->StopGrabbing(); }
 
 bool CameraImpl::trigger() noexcept {
 	try {
@@ -333,17 +225,128 @@ bool CameraImpl::waitAndTrigger(std::chrono::milliseconds timeout) noexcept {
 	return false;
 }
 
-}  // namespace shim
-}  // namespace pylon
+bool CameraImpl::acquire(std::chrono::milliseconds timeout) noexcept {
+	if (!isAttached()) {
+		std::cerr << "no camera device attached" << std::endl;
+		return false;
+	}
+	if (!isAcquiring()) {
+		std::cerr << "acquisition not started" << std::endl;
+		return false;
+	}
+	try {
+		auto& res{*res_};
+		const bool success{cam_->RetrieveResult(timeout.count(), res,
+												Pylon::TimeoutHandling_Return)};
+		if (success && res->GrabSucceeded()) {
+			if (res->HasCRC() && !res->CheckCRC()) {
+				std::cerr << "CRC check failed" << std::endl;
+			} else {
+				return true;
+			}
+		} else if (success) {
+			std::cerr << "error code: " << res->GetErrorCode() << '\t'
+					  << res->GetErrorDescription() << std::endl;
+		} else {
+			std::cerr << "acquisition timed out" << std::endl;
+		}
+	} catch (const Pylon::GenericException& e) {
+		std::cerr << "could not acquire image: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "could not acquire image" << std::endl;
+	}
+	return false;
+}
+
+bool CameraImpl::startAcquisition(size_t nImages) noexcept {
+	// XXX: not sure what happens here if the camera gets disconnected
+	if (isAcquiring()) {
+		return true;
+	}
+	try {
+		if (nImages == 0) {
+			cam_->StartGrabbing();
+		} else {
+			cam_->StartGrabbing(nImages);
+		}
+		return true;
+	} catch (const Pylon::GenericException& e) {
+		std::cerr << "could not start acquisition: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "could not start acquisition" << std::endl;
+	}
+	return false;
+}
+
+void CameraImpl::stopAcquisition() noexcept { cam_->StopGrabbing(); }
+
+bool CameraImpl::isAcquiring() const noexcept { return cam_->IsGrabbing(); }
+
+bool CameraImpl::isInitialized() const noexcept {
+	return isAttached() && cam_->IsOpen();
+}
+
+bool CameraImpl::isAttached() const noexcept {
+	return cam_->IsPylonDeviceAttached() && !cam_->IsCameraDeviceRemoved();
+}
+
+std::optional<Image> CameraImpl::getImage() noexcept {
+	// not sure if this can throw, so we're being careful
+	try {
+		auto& res{*res_};
+		if (!res.IsValid()) {
+			return std::nullopt;
+		}
+		size_t step{0UL};
+		return std::optional{Image{
+			static_cast<size_t>(res->GetID()),
+			static_cast<int>(res->GetHeight()),
+			static_cast<int>(res->GetWidth()),
+			static_cast<int64_t>(res->GetPixelType()), res->GetBuffer(),
+			res->GetStride(step) ? step : 0UL,
+			static_cast<size_t>(Pylon::BitPerPixel(res->GetPixelType()))}};
+	} catch (const Pylon::GenericException& e) {
+		std::cerr << "could not get raw image data: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "could not get raw image data" << std::endl;
+	}
+	return std::nullopt;
+}
+
+bool CameraImpl::cmdExecute(const char* cmd) noexcept {
+	try {
+		Pylon::CCommandParameter(cam_->GetNodeMap(), cmd).Execute();
+		return true;
+	} catch (const Pylon::GenericException& e) {
+		std::cerr << "could not execute command: " << e.what() << std::endl;
+	} catch (...) {
+		std::cerr << "could not execute command" << std::endl;
+	}
+	return false;
+}
+
+bool CameraImpl::cmdIsDone(const char* cmd) noexcept {
+	try {
+		return Pylon::CCommandParameter(cam_->GetNodeMap(), cmd).IsDone();
+	} catch (const Pylon::GenericException& e) {
+		std::cerr << "could not check command execution status: " << e.what()
+				  << std::endl;
+	} catch (...) {
+		std::cerr << "could not check command execution status: " << std::endl;
+	}
+	return false;
+}
+
+}  // namespace pylonshim
 }  // namespace beholder
 
 extern "C" {
 
-BH_PYLON_SHIM_API beholder::pylon::shim::Camera* pylonCamera_create() {
-	return new beholder::pylon::shim::CameraImpl{};
+BH_PYLONSHIM_API beholder::pylonshim::Camera* pylonCamera_create() {
+	return new beholder::pylonshim::CameraImpl{};
 }
 
-BH_PYLON_SHIM_API void pylonCamera_delete(beholder::pylon::shim::Camera* p) {
+BH_PYLONSHIM_API void pylonCamera_delete(beholder::pylonshim::Camera* p) {
 	delete p;
 }
 

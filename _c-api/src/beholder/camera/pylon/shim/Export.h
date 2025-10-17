@@ -4,12 +4,12 @@
 
 // Symbol visibility macros.
 
-#ifndef BEHOLDER_PYLON_SHIM_EXPORT_H
-#define BEHOLDER_PYLON_SHIM_EXPORT_H
+#ifndef BEHOLDER_PYLONSHIM_EXPORT_H
+#define BEHOLDER_PYLONSHIM_EXPORT_H
 
-// BH_PYLON_SHIM_API qualifies all symbols that must be exported.
-#ifndef BH_PYLON_SHIM_API
-#define BH_PYLON_SHIM_API __attribute__((visibility("default")))
+// BH_PYLONSHIM_API qualifies all symbols that must be exported.
+#ifndef BH_PYLONSHIM_API
+#define BH_PYLONSHIM_API __attribute__((visibility("default")))
 #endif
 
-#endif	// BEHOLDER_PYLON_SHIM_EXPORT_H
+#endif	// BEHOLDER_PYLONSHIM_EXPORT_H
