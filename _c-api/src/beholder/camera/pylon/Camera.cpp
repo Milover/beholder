@@ -103,20 +103,27 @@ Camera::Runtime::Runtime() noexcept
 	  }(ldr)} {}
 
 Camera::Camera(DeviceClass dc) : dc_{dc} {
-	if (dc_ != DeviceClass::GigE || dc_ != DeviceClass::Emulated) {
+	if (dc_ != DeviceClass::GigE && dc_ != DeviceClass::Emulated) {
 		std::cerr << "bad device class: " << enums::to(dc_) << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
 	if (!runtime_) {
 		runtime_ = std::make_unique<Runtime>();
 	}
+	++runtime_->count;
+
 	cam_ = runtime_->ldr.getClass<CamHandle::element_type>(
-		ShimLib, "pylonCamera_create", "pylonCreate_delete");
+		ShimLib, "pylonCamera_create", "pylonCamera_delete");
 
 	assert(cam_ != nullptr && "Failed to load pylonshim::Camera symbol");
 }
 
-Camera::~Camera() = default;
+Camera::~Camera() {
+	cam_.reset();
+	if (runtime_ && --runtime_->count == 0) {
+		runtime_.reset();
+	}
+}
 
 bool Camera::init(const char* designator, Milliseconds timeout,
 				  bool reboot) noexcept {

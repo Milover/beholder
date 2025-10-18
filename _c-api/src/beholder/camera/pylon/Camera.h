@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -56,12 +57,14 @@ private:
 		APIHandle api;		  // pylon runtime
 		TLArray tls;		  // transport layers indexed by device class
 
+		std::uint32_t count{};	// FIXME: needs to be atomic
+
 		Runtime() noexcept;
 	};
 
-	static RTHandle runtime_;  // global runtime
-	CamHandle cam_;			   // underlying camera implementation symbol handle
-	DeviceClass dc_;		   // camera transport layer type
+	inline static RTHandle runtime_{};	// global runtime
+	CamHandle cam_;	  // underlying camera implementation symbol handle
+	DeviceClass dc_;  // camera transport layer type
 
 public:
 	// Default constructor.
