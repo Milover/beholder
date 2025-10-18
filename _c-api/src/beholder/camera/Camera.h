@@ -33,6 +33,8 @@ public:
 	// The camera must be initialized with Camera::init before use.
 	explicit Camera(Config cfg = Config{});
 
+	~Camera() noexcept;
+
 	// Initialize the camera, optionally (re)setting the device designator.
 	// Returns true if there are no errors and the device is attached and
 	// open after initialization, otherwise returns false.

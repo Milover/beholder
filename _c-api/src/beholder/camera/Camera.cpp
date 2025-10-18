@@ -24,9 +24,12 @@ Camera::Camera(Config cfg)
 	: cfg_{std::move(cfg)},
 	  impl_{createCamera(cfg_.deviceClass, cfg_.backend)} {}
 
+Camera::~Camera() noexcept = default;
+
 ParamVector Camera::getParams(Parameter::AccessMode mode) noexcept {
 	return impl_->getParams(mode);
 }
+
 bool Camera::setParams(CParamSpan params) noexcept {
 	return impl_->setParams(params);
 }

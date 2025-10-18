@@ -28,7 +28,7 @@ public:
 	CameraInterface(CameraInterface&&) = delete;
 	CameraInterface& operator=(const CameraInterface&) = delete;
 	CameraInterface& operator=(CameraInterface&&) = delete;
-	virtual ~CameraInterface() = default;
+	virtual ~CameraInterface() noexcept;
 
 	[[nodiscard]] virtual bool init(const char* designator,
 									Milliseconds timeout,

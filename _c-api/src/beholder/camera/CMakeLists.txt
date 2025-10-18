@@ -2,6 +2,7 @@ target_sources(beholder
 	PRIVATE
 		Backends.cpp
 		Camera.cpp
+		CameraInterface.cpp
 		Parameter.cpp
 	PUBLIC
 		FILE_SET HEADERS
