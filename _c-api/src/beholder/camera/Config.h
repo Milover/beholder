@@ -7,7 +7,6 @@
 
 #include <chrono>
 #include <string>
-#include <utility>
 
 #include "beholder/camera/Backends.h"
 #include "beholder/camera/DeviceClass.h"
@@ -42,10 +41,6 @@ struct Config {
 	Seconds connectionTimeout{DfltConnectionTimeout};
 	// Reboot the camera device when connection is established.
 	bool rebootOnConnection{true};
-
-	Config() = default;
-	explicit Config(std::string designator)
-		: designator{std::move(designator)} {}
 };
 
 }  // namespace camera
