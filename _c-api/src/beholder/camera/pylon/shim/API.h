@@ -34,7 +34,8 @@ public:
 	API& operator=(API&&) = delete;
 
 	// Frees resources managed by the pylon runtime manager.
-	virtual ~API() noexcept = 0;
+	//virtual ~API() noexcept = 0;
+	virtual ~API() = default;
 };
 
 }  // namespace pylonshim
