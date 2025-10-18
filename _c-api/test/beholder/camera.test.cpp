@@ -5,9 +5,9 @@
 // Camera API tests.
 
 #include <beholder/camera/Camera.h>
-#include <beholder/camera/ParamEntry.h>
-#include <beholder/camera/PylonAPI.h>
-#include <beholder/camera/TransportLayer.h>
+#include <beholder/camera/Config.h>
+#include <beholder/camera/DeviceClass.h>
+#include <beholder/camera/Parameter.h>
 #include <beholder/capi/Image.h>
 #include <gtest/gtest.h>
 
@@ -40,35 +40,28 @@ namespace test {
 // This only happens on the first run after a fresh build.
 TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 	const auto testimage{globalAssetsDir / "images/red_100x100.png"};
-	const ParamList camParams{
-		ParamEntry{"AcquisitionMode", "Continuous"},
+	const camera::ParamVector camParams{
+		camera::Parameter{"AcquisitionMode", "Continuous"},
 
-		ParamEntry{"TriggerSelector", "FrameStart"},
-		ParamEntry{"TriggerMode", "On"},
-		ParamEntry{"TriggerSource", "Software"},
+		camera::Parameter{"TriggerSelector", "FrameStart"},
+		camera::Parameter{"TriggerMode", "On"},
+		camera::Parameter{"TriggerSource", "Software"},
 
-		ParamEntry{"TestImageSelector", "Off"},
-		ParamEntry{"ImageFileMode", "On"},
-		ParamEntry{"ImageFilename", testimage},
+		camera::Parameter{"TestImageSelector", "Off"},
+		camera::Parameter{"ImageFileMode", "On"},
+		camera::Parameter{"ImageFilename", testimage},
 	};
-	const std::string sn{"0815-0000"};	// emulated camera SN
-	const std::size_t nImages{3};		// No. images to acquire
-
-	// before using any pylon methods, the pylon runtime must be initialized.
-	const PylonAPI api{};
+	const std::string sn{"0815-0000"};				 // emulated camera SN
+	const std::size_t nImages{3};					 // No. images to acquire
+	const std::chrono::milliseconds timeout{30000};	 // trigger timeout
 
 	try {
-		// create transport layer
-		TransportLayer tl{};
-		ASSERT_TRUE(tl.init(DeviceClass::Emulated));
-
-		// create device
-		auto* dev{tl.createDevice(sn.c_str(), DeviceDesignator::SN)};
-		ASSERT_NE(dev, nullptr);
-
 		// create camera and apply configuration
-		Camera cam{};
-		ASSERT_TRUE(cam.init(dev));
+		camera::Camera cam{
+			camera::Config{.deviceClass = camera::DeviceClass::Emulated,
+						   .designator = sn,
+						   .triggerTimeout = timeout}};
+		ASSERT_TRUE(cam.init());
 		ASSERT_TRUE(cam.isInitialized());
 		EXPECT_TRUE(cam.setParams(camParams));
 		//dumpParams(cam.getParams(ParamAccessMode::Read));
@@ -77,7 +70,7 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 		ASSERT_TRUE(cam.startAcquisition(nImages));
 
 		for (auto i{0UL}; i < nImages; ++i) {
-			EXPECT_TRUE(cam.waitAndTrigger(std::chrono::seconds{30}));
+			EXPECT_TRUE(cam.waitAndTrigger());
 			EXPECT_TRUE(cam.acquire());
 
 			auto img{cam.getImage()};
@@ -86,7 +79,7 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 			EXPECT_EQ(img->cRef().cols, 100);  // NOLINT(*-optional-access)
 		}
 	} catch (...) {
-		FAIL();
+		FAIL() << "caught something :o";
 	}
 }
 
