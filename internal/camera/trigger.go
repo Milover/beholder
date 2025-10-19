@@ -62,12 +62,12 @@ func (t *Trigger) Execute(c Camera) error {
 	time.Sleep(time.Until(triggerAt))
 
 	t.lastExecute = time.Now()
-	if t.Timeout.Milliseconds() == 0 {
+	if t.Timeout.Nanoseconds() == 0 {
 		if !bool(C.Cam_Trigger(c.p)) {
 			return errors.New("camera.Trigger.Execute: could not execute")
 		}
 	} else {
-		if !bool(C.Cam_WaitAndTrigger(c.p, C.size_t(t.Timeout.Milliseconds()))) {
+		if !bool(C.Cam_WaitAndTrigger(c.p)) {
 			return errors.New("camera.Trigger.Execute: could not wait and execute")
 		}
 	}
