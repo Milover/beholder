@@ -5,6 +5,7 @@
 package camera
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -12,71 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type arrayTest struct {
-	Name        string
-	Error       error
-	Config      string
-	NonEmulated bool // does the test use a physical camera device?
-}
-
-var arrayTests = []arrayTest{
-	{
-		Name:  "emulated-w/-software-trigger",
-		Error: nil,
-		Config: `
-{
-	"cameras": [
-		{
-			"type": "emulated",
-			"serial_number": "0815-0000",
-			"acquisition_timeout": "1s",
-			"trigger": {
-				"timeout": "1s",
-				"period": "0.5s"
-			},
-			"parameters": [
-				{"name": "AcquisitionMode",    "value": "Continuous"},
-				{"name": "TriggerSelector",    "value": "FrameStart"},
-				{"name": "TriggerMode",        "value": "On"},
-				{"name": "TriggerSource",      "value": "Software"}
-			]
-		},
-		{
-			"type": "emulated",
-			"serial_number": "0815-0001",
-			"acquisition_timeout": "1s",
-			"trigger": {
-				"timeout": "1s",
-				"period": "0.5s"
-			},
-			"parameters": [
-				{"name": "AcquisitionMode",    "value": "Continuous"},
-				{"name": "TriggerSelector",    "value": "FrameStart"},
-				{"name": "TriggerMode",        "value": "On"},
-				{"name": "TriggerSource",      "value": "Software"}
-			]
-		},
-		{
-			"type": "emulated",
-			"serial_number": "0815-0001",
-			"acquisition_timeout": "1s",
-			"trigger": {
-				"timeout": "1s",
-				"period": "0.5s"
-			},
-			"parameters": [
-				{"name": "AcquisitionMode",    "value": "Continuous"},
-				{"name": "TriggerSelector",    "value": "FrameStart"},
-				{"name": "TriggerMode",        "value": "On"},
-				{"name": "TriggerSource",      "value": "Software"}
-			]
-		}
-	]
-}
-`,
-	},
-}
 
 // TestArray tests image acquisition with an array of cameras.
 //
@@ -87,40 +23,35 @@ var arrayTests = []arrayTest{
 // TODO: should actually test whether we handle concurrency,
 // thread locking, allocation/deallocation etc. properly.
 func TestArray(t *testing.T) {
-	for _, tt := range arrayTests {
-		t.Run(tt.Name, func(t *testing.T) {
+	tests := map[string]struct {
+		Error       error
+		Config      string
+		NonEmulated bool // does the test use a physical camera device?
+	}{
+		"emulated-w/-software-trigger": {
+			Config: arrayEmulatedSWTrigger,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 			require := require.New(t)
-
 			// configure the test
 			if tt.NonEmulated && emuOnly {
 				t.Skip("physical camera testing is disabled")
 			}
-
 			// setup
 			p := struct {
 				Cs Array `json:"cameras"`
-				//IP *imgproc.Processor `json:"image_processor"`
-			}{
-				//IP: imgproc.NewProcessor(),
-			}
+			}{}
 			defer func() {
 				p.Cs.Delete()
-				//p.IP.Delete()
 			}()
 			// unmarshal
 			err := json.Unmarshal([]byte(tt.Config), &p)
 			require.NoError(err)
 			// initialize
-			err = func() error {
-				if err := p.Cs.Init(); err != nil {
-					return err
-				}
-				//if err := p.IP.Init(); err != nil {
-				//	return err
-				//}
-				return nil
-			}()
+			err = p.Cs.Init()
 			require.NoError(err)
 
 			// try to acquire images
@@ -146,3 +77,6 @@ func TestArray(t *testing.T) {
 		})
 	}
 }
+
+//go:embed testdata/array.emulated_sw_trigger.json
+var arrayEmulatedSWTrigger string
