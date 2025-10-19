@@ -10,12 +10,14 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <type_traits>
 
 #include "beholder/camera/Backends.h"
 #include "beholder/camera/Config.h"
 #include "beholder/camera/Parameter.h"
 #include "beholder/camera/TriggerType.h"
 #include "beholder/capi/Image.h"
+#include "beholder/util/Traits.h"
 
 namespace beholder {
 namespace camera {
@@ -24,6 +26,9 @@ namespace camera {
 class Camera {
 private:
 	using CamPtr = detail::CameraImpl::Ptr;
+	template<typename T, typename U>
+	using enable_if_same_t =
+		std::enable_if_t<std::is_same_v<remove_cvref_t<T>, U>, bool>;
 
 	Config cfg_;   // camera configuration
 	CamPtr impl_;  // underlying camera implementation
@@ -33,14 +38,20 @@ public:
 	// The camera must be initialized with Camera::init before use.
 	explicit Camera(Config cfg = Config{});
 
+	Camera(const Camera&) = delete;
+	Camera(Camera&&) = default;
+	Camera& operator=(const Camera&) = delete;
+	Camera& operator=(Camera&&) = default;
 	~Camera() noexcept;
 
-	// Initialize the camera, optionally (re)setting the device designator.
+	// Initialize the camera, optionally (re)setting the device designator,
+	// or the initial Config entirely.
 	// Returns true if there are no errors and the device is attached and
 	// open after initialization, otherwise returns false.
 	[[nodiscard]] bool init() noexcept;
 	[[nodiscard]] bool init(const std::string& designator) noexcept;
 	[[nodiscard]] bool init(const char* designator) noexcept;
+	[[nodiscard]] bool init(Config cfg) noexcept;
 
 	// Get camera parameters
 	[[nodiscard]] ParamVector getParams(
@@ -55,6 +66,8 @@ public:
 
 	// Waits for the trigger to become ready and then executes the trigger.
 	bool waitAndTrigger(TriggerType typ = TriggerType::Software) noexcept;
+	bool waitAndTrigger(Milliseconds timeout,
+						TriggerType typ = TriggerType::Software) noexcept;
 
 	// Acquire an image.
 	// WARNING: acquisition must be started manually, however,

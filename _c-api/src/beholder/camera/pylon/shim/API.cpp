@@ -27,6 +27,7 @@ public:
 };
 
 APIImpl::APIImpl() noexcept {
+	std::cerr << "initializing pylon runtime" << std::endl;
 	try {
 		Pylon::PylonInitialize();
 	} catch (const Pylon::GenericException& e) {
@@ -38,6 +39,7 @@ APIImpl::APIImpl() noexcept {
 }
 
 APIImpl::~APIImpl() noexcept {
+	std::cerr << "terminating pylon runtime" << std::endl;
 	try {
 		Pylon::PylonTerminate();
 	} catch (const Pylon::GenericException& e) {

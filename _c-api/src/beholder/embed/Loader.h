@@ -24,17 +24,23 @@ namespace embed {
 
 namespace detail {
 struct DLCloser;
-}
+struct Lib;
+}  // namespace detail
 
 using CPathSpan = std::span<const std::filesystem::path>;
 using PathVector = std::vector<std::filesystem::path>;
 using LibHandle = std::unique_ptr<void, detail::DLCloser>;
-using LibVector = std::vector<std::pair<LibHandle, std::filesystem::path>>;
+using LibVector = std::vector<detail::Lib>;
 
 namespace detail {
 
 struct DLCloser {
 	void operator()(void* handle) noexcept;
+};
+
+struct Lib {
+	LibHandle handle;
+	std::filesystem::path path;
 };
 
 // Unload a dynamically loaded shared object.
@@ -126,14 +132,14 @@ private:
 	[[nodiscard]] LibVector::const_iterator
 	findLib(const std::filesystem::path& lib) const noexcept {
 		return std::ranges::find_if(libs_, [&lib](const auto& t) {
-			return findLibPredicate(t.second, lib);
+			return findLibPredicate(t.path, lib);
 		});
 	}
 
 	[[nodiscard]] LibVector::iterator
 	findLib(const std::filesystem::path& lib) noexcept {
 		return std::ranges::find_if(libs_, [&lib](const auto& t) {
-			return findLibPredicate(t.second, lib);
+			return findLibPredicate(t.path, lib);
 		});
 	}
 
@@ -165,12 +171,13 @@ public:
 	Loader& operator=(const Loader&) = delete;
 	Loader& operator=(Loader&&) = default;
 
-	// Closes all shared objects currently managed by this instance.
+	// Closes all shared objects currently managed by this instance, in reverse
+	// loading order.
 	//
 	// NOTE: objects are closed only once, so if there are multiple Loaders
 	// handling the same object, the object might still be loaded after
 	// the destructor returns.
-	~Loader() = default;
+	~Loader() noexcept;
 
 	// TODO: add getter for loaded library paths
 
@@ -198,7 +205,7 @@ public:
 		if (it == libs_.end()) {
 			return nullptr;
 		}
-		return detail::dlSym<T>(it->first.get(), sym.c_str());
+		return detail::dlSym<T>(it->handle.get(), sym.c_str());
 	}
 
 	// getClass returns a managed pointer to an object of type T.
@@ -221,7 +228,7 @@ public:
 		if (it == libs_.end()) {
 			return ClassHandle<T>{};
 		}
-		void* handle{it->first.get()};
+		void* handle{it->handle.get()};
 		Ctor ctor{detail::dlSym<Ctor>(handle, ctorSym.c_str())};
 		Dtor dtor{detail::dlSym<Dtor>(handle, dtorSym.c_str())};
 		if (!ctor || !dtor) {

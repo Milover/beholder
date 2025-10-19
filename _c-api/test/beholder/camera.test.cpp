@@ -14,6 +14,7 @@
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
+#include <iostream>
 #include <string>
 
 #include "Testing.h"  // NOLINT
@@ -54,32 +55,36 @@ TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
 	const std::string sn{"0815-0000"};				 // emulated camera SN
 	const std::size_t nImages{3};					 // No. images to acquire
 	const std::chrono::milliseconds timeout{30000};	 // trigger timeout
+	const std::size_t nLoops{3};					 // number of test loops
 
-	try {
-		// create camera and apply configuration
-		camera::Camera cam{
-			camera::Config{.deviceClass = camera::DeviceClass::Emulated,
-						   .designator = sn,
-						   .triggerTimeout = timeout}};
-		ASSERT_TRUE(cam.init());
-		ASSERT_TRUE(cam.isInitialized());
-		EXPECT_TRUE(cam.setParams(camParams));
-		//dumpParams(cam.getParams(ParamAccessMode::Read));
+	for (auto i{0UL}; i < nLoops; ++i) {
+		std::cerr << "starting test loop: " << i << std::endl;
+		try {
+			// create camera and apply configuration
+			camera::Camera cam{
+				camera::Config{.deviceClass = camera::DeviceClass::Emulated,
+							   .designator = sn,
+							   .triggerTimeout = timeout}};
+			ASSERT_TRUE(cam.init());
+			ASSERT_TRUE(cam.isInitialized());
+			EXPECT_TRUE(cam.setParams(camParams));
+			//dumpParams(cam.getParams(ParamAccessMode::Read));
 
-		// acquire image(s)
-		ASSERT_TRUE(cam.startAcquisition(nImages));
+			// acquire image(s)
+			ASSERT_TRUE(cam.startAcquisition(nImages));
 
-		for (auto i{0UL}; i < nImages; ++i) {
-			EXPECT_TRUE(cam.waitAndTrigger());
-			EXPECT_TRUE(cam.acquire());
+			for (auto i{0UL}; i < nImages; ++i) {
+				EXPECT_TRUE(cam.waitAndTrigger());
+				EXPECT_TRUE(cam.acquire());
 
-			auto img{cam.getImage()};
-			ASSERT_TRUE(img.has_value());
-			EXPECT_EQ(img->cRef().rows, 100);  // NOLINT(*-optional-access)
-			EXPECT_EQ(img->cRef().cols, 100);  // NOLINT(*-optional-access)
+				auto img{cam.getImage()};
+				ASSERT_TRUE(img.has_value());
+				EXPECT_EQ(img->cRef().rows, 100);  // NOLINT(*-optional-access)
+				EXPECT_EQ(img->cRef().cols, 100);  // NOLINT(*-optional-access)
+			}
+		} catch (...) {
+			FAIL() << "caught something :o";
 		}
-	} catch (...) {
-		FAIL() << "caught something :o";
 	}
 }
 

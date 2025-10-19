@@ -60,12 +60,24 @@ bool isDLOpen(const std::filesystem::path& lib) noexcept {
 Loader::Loader(CPathSpan libs, Options opts) noexcept {
 	libs_.reserve(libs.size());
 	for (const auto& lib : libs) {
+		std::cerr << "loading: " << lib << std::endl;
 		LibHandle handle{detail::dlOpen(lib, enums::to(opts))};
 		if (!handle) {
 			std::cerr << "failed to load shared object: " << lib << '\n';
 			std::exit(EXIT_FAILURE);  // loading cannot fail
 		}
 		libs_.emplace_back(std::move(handle), lib);
+	}
+}
+
+Loader::~Loader() noexcept {
+	for (auto it{libs_.rbegin()}; it != libs_.rend(); ++it) {
+		it->handle.reset();
+		if (detail::isDLOpen(it->path)) {
+			std::cerr << "FAILED: unloading: "  << it->path << '\n';
+		} else {
+			std::cerr << "OK: unloaded: "  << it->path << '\n';
+		}
 	}
 }
 
@@ -95,7 +107,7 @@ fs::path Loader::pathTo(const fs::path& lib) const noexcept {
 	if (found == libs_.end()) {
 		return fs::path{};
 	}
-	return found->second;
+	return found->path;
 }
 
 }  // namespace embed

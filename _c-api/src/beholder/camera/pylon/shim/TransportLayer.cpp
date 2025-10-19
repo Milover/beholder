@@ -22,9 +22,11 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <thread>
 
 #include "beholder/camera/pylon/shim/Export.h"
+#include "beholder/util/Enums.h"
 
 namespace chr = std::chrono;
 
@@ -52,7 +54,7 @@ private:
 protected:
 	// Find and create a device with the provided designator.
 	[[nodiscard]] Pylon::IPylonDevice*
-	createDeviceImpl(const char* serialNumber, bool log = true) const noexcept;
+	createDeviceImpl(const char* serialNumber) const noexcept;
 
 public:
 	TransportLayerImpl() = default;
@@ -73,15 +75,12 @@ public:
 };
 
 Pylon::IPylonDevice*
-TransportLayerImpl::createDeviceImpl(const char* serialNumber,
-									 bool log) const noexcept {
+TransportLayerImpl::createDeviceImpl(const char* serialNumber) const noexcept {
 	assert(isInitialized() == true);
-	auto logger = [log](auto&&... msgs) {
-		if (log) {
-			// NOLINTNEXTLINE(*-pro-bounds-array-to-pointer-decay)
-			(std::cerr << ... << std::forward<decltype(msgs)>(msgs))
-				<< std::endl;
-		}
+	auto printErr = [](DeviceClass dc, std::string_view msg) {
+		std::cerr << "could not find a device: "
+				  << "(device-class: " << enums::to(dc) << "): " << msg
+				  << std::endl;
 	};
 	try {
 		Pylon::DeviceInfoList_t devices{};
@@ -93,7 +92,7 @@ TransportLayerImpl::createDeviceImpl(const char* serialNumber,
 			tl_->EnumerateDevices(devices);
 		}
 		if (devices.empty()) {
-			logger("could not create device: no devices available");
+			printErr(dc_, "no devices available");
 			return nullptr;
 		}
 		auto selector = [serialNumber](const auto& info) -> bool {
@@ -102,14 +101,14 @@ TransportLayerImpl::createDeviceImpl(const char* serialNumber,
 		};
 		auto found{std::find_if(devices.begin(), devices.end(), selector)};
 		if (found == devices.end()) {
-			logger("could not create device: could not find specified device");
+			printErr(dc_, "could not find specified device");
 			return nullptr;
 		}
 		return tl_->CreateDevice(*found);
 	} catch (const Pylon::GenericException& e) {
-		logger("could not create device: ", e.what());
+		printErr(dc_, e.what());
 	} catch (...) {
-		logger("could not create device");
+		printErr(dc_, "");
 	}
 	return nullptr;
 }
@@ -148,6 +147,11 @@ bool TransportLayerImpl::isInitialized() const noexcept {
 }
 
 std::string TransportLayerImpl::getFirstSN() const noexcept {
+	auto printErr = [](DeviceClass dc, std::string_view msg) {
+		std::cerr << "could not find a device: "
+				  << "(device-class: " << enums::to(dc) << "): " << msg
+				  << std::endl;
+	};
 	try {
 		Pylon::DeviceInfoList_t devices{};
 		if (dc_ == DeviceClass::GigE) {
@@ -158,15 +162,14 @@ std::string TransportLayerImpl::getFirstSN() const noexcept {
 			tl_->EnumerateDevices(devices);
 		}
 		if (devices.empty()) {
-			std::cerr << "could not find a device: "
-					  << "no devices available" << std::endl;
+			printErr(dc_, "no devices available");
 			return {};
 		}
 		return devices.front().GetSerialNumber().c_str();
 	} catch (const Pylon::GenericException& e) {
-		std::cerr << "could not find a device: " << e.what() << std::endl;
+		printErr(dc_, e.what());
 	} catch (...) {
-		std::cerr << "could not find a device" << std::endl;
+		printErr(dc_, "");
 	}
 	return {};
 }
@@ -202,7 +205,7 @@ TransportLayerImpl::createDevice(const char* serialNumber,
 		if (reset) {
 			std::cout << "waiting for device on-line" << std::endl;
 			while (!timedOut()) {
-				d = createDeviceImpl(serialNumber, false);
+				d = createDeviceImpl(serialNumber);
 				if (static_cast<bool>(d)) {
 					return d;
 				}

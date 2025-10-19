@@ -159,45 +159,52 @@ TEST(Embed, UnarchiveTar) {	 // NOLINT(*-function-cognitive-complexity)
 TEST(Embed, UnpackAndLoad) {  // NOLINT(*-function-cognitive-complexity)
 	using Call = int (*)();
 
-	fs::path outdir{};
+	const size_t nLoops{3};
 	const embed::PathVector libs{"libfake"};  // gets loaded through symlink
 
 	// sanity checks
 	ASSERT_NE(gFakeArchiveData, nullptr);
 	ASSERT_GT(gFakeArchiveSize, 0);
 
-	{  // scoped so that we can check if everything has been cleaned up later
-		std::cerr << "unpacking and loading libs" << '\n';
-		embed::Unpacker unpk{gFakeArchiveData, gFakeArchiveSize};
-		outdir = unpk.getOutDir();
-		const ScopeGuard g{[&]() noexcept {
-			if (::testing::Test::HasFailure()) {
-				std::cerr << "error during test execution; "
-						  << "not cleaning up temporary directory: " << outdir
-						  << '\n';
-				unpk.setCleanup(false);
-			}
-		}};
-		const embed::Loader ldr{
-			embed::Loader::matchPaths(unpk.getFiles(), libs)};
-		ASSERT_TRUE(embed::detail::isDLOpen(ldr.pathTo(libs.front())))
-			<< "object not loaded: " << libs.front();
+	for (auto i{0UL}; i < nLoops; ++i) {
+		fs::path outdir{};
+		{  // scoped so that we can check if everything has been cleaned up later
+			std::cerr << "unpacking and loading libs" << '\n';
+			embed::Unpacker unpk{gFakeArchiveData, gFakeArchiveSize};
+			outdir = unpk.getOutDir();
+			const ScopeGuard g{[&]() noexcept {
+				if (::testing::Test::HasFailure()) {
+					std::cerr
+						<< "error during test execution; "
+						<< "not cleaning up temporary directory: " << outdir
+						<< '\n';
+					unpk.setCleanup(false);
+				}
+			}};
+			const embed::Loader ldr{
+				embed::Loader::matchPaths(unpk.getFiles(), libs)};
+			ASSERT_TRUE(embed::detail::isDLOpen(ldr.pathTo(libs.front())))
+				<< "object not loaded: " << libs.front();
 
-		std::cerr << "loading symbols" << '\n';
-		Call fCall{ldr.getSymbol<Call>(libs.front(), "call")};
-		auto fFaker{ldr.getClass<fake::Faker>(libs.front(), "Faker_Create",
-											  "Faker_Delete")};
-		ASSERT_NE(fCall, nullptr) << "failed to load \"call\"";
-		ASSERT_NE(fFaker, nullptr) << "failed to load class \"fake::Faker\"";
+			std::cerr << "loading symbols" << '\n';
+			Call fCall{ldr.getSymbol<Call>(libs.front(), "call")};
+			auto fFaker{ldr.getClass<fake::Faker>(libs.front(), "Faker_Create",
+												  "Faker_Delete")};
+			ASSERT_NE(fCall, nullptr) << "failed to load \"call\"";
+			ASSERT_NE(fFaker, nullptr)
+				<< "failed to load class \"fake::Faker\"";
 
-		std::cerr << "calling" << '\n';
-		EXPECT_EQ(fCall(), fake::Return) << "fCall() issue";
-		EXPECT_EQ(fFaker->call(), fake::Return) << "fFaker->call() issue";
+			std::cerr << "calling" << '\n';
+			EXPECT_EQ(fCall(), fake::Return) << "fCall() issue";
+			EXPECT_EQ(fFaker->call(), fake::Return) << "fFaker->call() issue";
+		}
+		std::cerr << "checking cleanup" << '\n';
+		// check if we've cleaned everything up
+		EXPECT_FALSE(embed::detail::isDLOpen(libs.front()))
+			<< "library still open";
+		EXPECT_FALSE(fs::exists(outdir))
+			<< "embed output directory still present: " << outdir;
 	}
-	std::cerr << "checking cleanup" << '\n';
-	// check if we've cleaned everything up
-	EXPECT_FALSE(embed::detail::isDLOpen(libs.front())) << "library still open";
-	EXPECT_FALSE(fs::exists(outdir)) << "embed output directory still present";
 }
 
 }  // namespace test

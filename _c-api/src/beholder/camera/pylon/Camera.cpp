@@ -10,11 +10,13 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <memory>
 #include <optional>
 
+#include "beholder/camera/Config.h"
 #include "beholder/camera/DeviceClass.h"
 #include "beholder/camera/Parameter.h"
 #include "beholder/camera/TriggerType.h"
@@ -76,39 +78,46 @@ const std::array<fs::path, 16> Libs{"libGCBase_gcc_v3_1_Basler_pylon",
 									"libpylonc",
 									ShimLib};
 
-CamPtr createCamera(DeviceClass dc) { return std::make_unique<Camera>(dc); }
+CamPtr createCamera([[maybe_unused]] const Config& cfg) {
+	return std::make_unique<Camera>();
+}
 
 Camera::Runtime::Runtime() noexcept
 	: upk{gPylonData, gPylonSize},
 	  ldr{embed::Loader::matchPaths(upk.getFiles(), Libs)},
-	  api{[](const embed::Loader& l) -> APIHandle {
-		  APIHandle a{l.getClass<APIHandle::element_type>(
-			  ShimLib, "pylonAPI_create", "pylonAPI_delete")};
+	  api{Camera::makeAPI(ldr)},
+	  tls{Camera::makeTLs(ldr)} {
+	std::cerr << "unpacked at: " << upk.getOutDir() << std::endl;
+}
 
-		  assert(a != nullptr && "Failed to load pylonshim::API symbol");
-		  return a;
-	  }(ldr)},
-	  tls{[](const embed::Loader& l) -> TLArray {
-		  TLArray arr{};
-		  for (auto& a : arr) {
-			  // NOLINTNEXTLINE(cppcoreguidelines-*)
-			  a = l.getClass<TLHandle::element_type>(
-				  ShimLib, "pylonTransportLayer_create",
-				  "pylonTransportLayer_delete");
+Camera::APIHandle Camera::makeAPI(const embed::Loader& l) {
+	APIHandle a{l.getClass<APIHandle::element_type>(ShimLib, "pylonAPI_create",
+													"pylonAPI_delete")};
+	assert(a != nullptr && "Failed to load pylonshim::API symbol");
+	return a;
+}
 
-			  assert(a != nullptr &&
-					 "Failed to load pylonshim::TransportLayer symbol");
-		  }
-		  return arr;
-	  }(ldr)} {}
-
-Camera::Camera(DeviceClass dc) : dc_{dc} {
-	if (dc_ != DeviceClass::GigE && dc_ != DeviceClass::Emulated) {
-		std::cerr << "bad device class: " << enums::to(dc_) << std::endl;
-		std::exit(EXIT_FAILURE);
+Camera::TLArray Camera::makeTLs(const embed::Loader& l) {
+	TLArray arr{};
+	for (auto& a : arr) {
+		// NOLINTNEXTLINE(cppcoreguidelines-*)
+		a = l.getClass<TLHandle::element_type>(ShimLib,
+											   "pylonTransportLayer_create",
+											   "pylonTransportLayer_delete");
+		assert(a != nullptr &&
+			   "Failed to load pylonshim::TransportLayer symbol");
 	}
+	return arr;
+}
+
+Camera::Camera() {
+	std::cerr << "constructing pylon camera" << std::endl;
 	if (!runtime_) {
 		runtime_ = std::make_unique<Runtime>();
+	}
+	if (!runtime_->api) {
+		runtime_->api = makeAPI(runtime_->ldr);
+		runtime_->tls = makeTLs(runtime_->ldr);
 	}
 	++runtime_->count;
 
@@ -121,20 +130,34 @@ Camera::Camera(DeviceClass dc) : dc_{dc} {
 Camera::~Camera() {
 	cam_.reset();
 	if (runtime_ && --runtime_->count == 0) {
-		runtime_.reset();
+		std::cerr << "resetting pylon runtime" << std::endl;
+		runtime_->tls = TLArray{};
+		runtime_->api.reset();
 	}
 }
 
-bool Camera::init(const char* designator, Milliseconds timeout,
-				  bool reboot) noexcept {
-	bool ok{true};
+bool Camera::init(const Config& cfg) noexcept {
+	std::cerr << "initializing pylon camera" << std::endl;
+	bool ok{cfg.deviceClass == DeviceClass::GigE ||
+			cfg.deviceClass == DeviceClass::Emulated};
+	if (!ok) {
+		std::cerr << "bad device class: " << enums::to(cfg.deviceClass)
+				  << std::endl;
+		return false;
+	}
 	// NOLINTNEXTLINE(*-pro-bounds-constant-array-index)
-	TLHandle& tl{runtime_->tls[enums::to(dc_)]};
+	TLHandle& tl{runtime_->tls[enums::to(cfg.deviceClass)]};
 	if (!tl->isInitialized()) {
-		ok = ok && tl->init(dc_);
+		ok = ok && tl->init(cfg.deviceClass);
+	}
+	std::string d{cfg.designator};
+	if (d.empty()) {
+		d = tl->getFirstSN();
+		ok = ok && !d.empty();
 	}
 	if (ok && !cam_->isInitialized()) {
-		ok = ok && cam_->init(tl->createDevice(designator, timeout, reboot));
+		ok = ok && cam_->init(tl->createDevice(d.c_str(), cfg.connectionTimeout,
+											   cfg.rebootOnConnection));
 	}
 	return ok;
 }

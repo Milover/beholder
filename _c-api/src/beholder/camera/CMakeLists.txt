@@ -8,6 +8,7 @@ target_sources(beholder
 		FILE_SET HEADERS
 		FILES
 			Backends.h
+			BeholderCamera.h
 			Camera.h
 			CameraInterface.h
 			Config.h

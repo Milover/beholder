@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "beholder/camera/DeviceClass.h"
+#include "beholder/camera/Config.h"
 #include "beholder/camera/pylon/Camera.h"
 #include "beholder/util/Enums.h"
 
@@ -22,14 +22,15 @@ const ImplEntry::Array BackendFactories{{
 
 }  // namespace detail
 
-detail::CameraImpl::Ptr createCamera(DeviceClass dc, Backend b) noexcept {
+detail::CameraImpl::Ptr createCamera(const Config& cfg) noexcept {
 	for (const auto& e : detail::BackendFactories) {
-		if (e.backend == b) {
-			return e.camFactory(dc);
+		if (e.backend == cfg.backend) {
+			return e.camFactory(cfg);
 		}
 	}
-	std::cout << "could not create camera: class = '" << enums::to(dc)
-			  << "', backend = '" << enums::to(b) << "'" << std::endl;
+	std::cout << "could not create camera: class = '"
+			  << enums::to(cfg.deviceClass) << "', backend = '"
+			  << enums::to(cfg.backend) << "'" << std::endl;
 	std::exit(EXIT_FAILURE);
 }
 

@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <optional>
 
+#include "beholder/camera/Config.h"
 #include "beholder/camera/Parameter.h"
 #include "beholder/camera/TriggerType.h"
 #include "beholder/capi/Image.h"
@@ -30,9 +31,7 @@ public:
 	CameraInterface& operator=(CameraInterface&&) = delete;
 	virtual ~CameraInterface() noexcept;
 
-	[[nodiscard]] virtual bool init(const char* designator,
-									Milliseconds timeout,
-									bool reboot) noexcept = 0;
+	[[nodiscard]] virtual bool init(const Config& cfg) noexcept = 0;
 
 	[[nodiscard]] virtual ParamVector
 	getParams(Parameter::AccessMode mode) noexcept = 0;

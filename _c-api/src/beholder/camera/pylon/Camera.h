@@ -13,6 +13,7 @@
 
 #include "beholder/camera/Backends.h"
 #include "beholder/camera/CameraInterface.h"
+#include "beholder/camera/Config.h"
 #include "beholder/camera/DeviceClass.h"
 #include "beholder/camera/Parameter.h"
 #include "beholder/camera/TriggerType.h"
@@ -38,7 +39,7 @@ using CamPtr = ::beholder::camera::detail::CameraImpl::Ptr;
 using Milliseconds = CameraInterface::Milliseconds;
 
 // Camera factory.
-[[nodiscard]] CamPtr createCamera(DeviceClass dc);
+[[nodiscard]] CamPtr createCamera(const Config&);
 
 // Camera represents a physical camera device.
 class Camera : public CameraInterface {
@@ -63,13 +64,15 @@ private:
 	};
 
 	inline static RTHandle runtime_{};	// global runtime
-	CamHandle cam_;	  // underlying camera implementation symbol handle
-	DeviceClass dc_;  // camera transport layer type
+	CamHandle cam_;	 // underlying camera implementation symbol handle
+
+	static APIHandle makeAPI(const embed::Loader& l);
+	static TLArray makeTLs(const embed::Loader& l);
 
 public:
 	// Default constructor.
 	// The camera must be initialized with Camera::init before use.
-	explicit Camera(DeviceClass dc);
+	explicit Camera();
 
 	Camera(const Camera&) = delete;
 	Camera(Camera&&) = delete;
@@ -83,8 +86,7 @@ public:
 	~Camera() override;
 
 	// The device is attached and open after initialization.
-	[[nodiscard]] bool init(const char* designator, Milliseconds timeout,
-							bool reboot) noexcept override;
+	[[nodiscard]] bool init(const Config& cfg) noexcept override;
 
 	// Get camera parameters
 	[[nodiscard]] ParamVector

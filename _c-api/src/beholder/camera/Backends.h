@@ -8,13 +8,13 @@
 #include <array>
 #include <memory>
 
-#include "beholder/camera/DeviceClass.h"
 #include "beholder/util/Enums.h"
 
 namespace beholder {
 namespace camera {
 
 class CameraInterface;
+struct Config;
 
 // Supported camera control backends.
 enum class Backend { Pylon, _max };
@@ -25,7 +25,7 @@ template<typename T>
 struct Impl {
 	using Type = T;
 	using Ptr = std::unique_ptr<T>;
-	using Factory = Ptr (*)(DeviceClass);
+	using Factory = Ptr (*)(const Config&);
 };
 using CameraImpl = detail::Impl<CameraInterface>;
 
@@ -40,8 +40,7 @@ extern const ImplEntry::Array BackendFactories;
 
 }  // namespace detail
 
-[[nodiscard]] detail::CameraImpl::Ptr
-createCamera(DeviceClass dc, Backend b) noexcept;
+[[nodiscard]] detail::CameraImpl::Ptr createCamera(const Config& cfg) noexcept;
 
 }  // namespace camera
 }  // namespace beholder
