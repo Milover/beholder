@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 project(beholder
-	VERSION 0.5.1
+	VERSION 0.6.0
 	DESCRIPTION "beholder C++ library"
 	LANGUAGES CXX
 )
