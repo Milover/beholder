@@ -3,6 +3,8 @@ name: ci
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       skip-third-party:
