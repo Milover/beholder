@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "beholder/capi/Image.h"
+#include "beholder/capi/Result.h"
 #include "beholder/image/Processor.h"
 #include "beholder/neural/internal/ObjDetectorImpl.h"
 #include "beholder/util/Enums.h"
@@ -54,7 +55,7 @@ static_assert(Mod::ResizeLetterbox == cv::dnn::DNN_PMODE_LETTERBOX);
 }  // namespace
 
 // NOLINTNEXTLINE(*-use-equals-default): incomplete type; must be defined here
-ObjDetector::~ObjDetector(){};
+ObjDetector::~ObjDetector() {};
 
 void ObjDetector::clear() {
 	if (buf_) {

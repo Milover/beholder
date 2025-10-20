@@ -6,7 +6,6 @@
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
-#include <opencv2/imgproc.hpp>
 #include <vector>
 
 #include "beholder/capi/Result.h"

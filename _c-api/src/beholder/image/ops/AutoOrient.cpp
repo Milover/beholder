@@ -4,6 +4,7 @@
 
 #include "beholder/image/ops/AutoOrient.h"
 
+#include <opencv2/core/base.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>
@@ -65,8 +66,6 @@ bool AutoOrient::executeImpl(const cv::Mat& in, cv::Mat& out,
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void findTextBox(const cv::Mat& in, int kSize, float txtHeight, float txtWidth,
 				 float padding, int gKSize, cv::RotatedRect& returnValue) {
-	constexpr auto deg90{90.0F};
-
 	cv::Mat img{};
 	if (in.channels() > 1) {
 		cv::cvtColor(in, img, cv::COLOR_BGR2GRAY, 1);
@@ -98,7 +97,7 @@ void findTextBox(const cv::Mat& in, int kSize, float txtHeight, float txtWidth,
 		if (rect.size.width < rect.size.height) {
 			rect = cv::RotatedRect{
 				rect.center, cv::Size2f{rect.size.height, rect.size.width},
-				rect.angle - deg90	// FIXME: this is probably bad
+				rect.angle - cst::deg90_v<float>  // FIXME: this is probably bad
 			};
 		}
 		if (rect.size.width > txtWidth && rect.size.height > txtHeight) {
@@ -108,10 +107,10 @@ void findTextBox(const cv::Mat& in, int kSize, float txtHeight, float txtWidth,
 		}
 	}
 
-	returnValue = cv::RotatedRect{
-		box.center,
-		cv::Size2f{box.size.width + 2 * padding, box.size.height + 2 * padding},
-		box.angle};
+	returnValue = cv::RotatedRect{box.center,
+								  cv::Size2f{box.size.width + (2 * padding),
+											 box.size.height + (2 * padding)},
+								  box.angle};
 }
 
 }  // namespace beholder

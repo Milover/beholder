@@ -6,7 +6,6 @@
 
 #include <gtest/gtest.h>
 
-// Report sanitizer errors.
 extern "C" {
 void __ubsan_on_report() { FAIL() << "Got UBSan error"; }
 void __asan_on_report() { FAIL() << "Got ASan error"; }

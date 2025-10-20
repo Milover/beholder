@@ -17,14 +17,10 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-typedef beholder::Camera* Cam;
-typedef beholder::PylonAPI* Pyl;
-typedef beholder::TransportLayer* Trans;
+typedef beholder::camera::Camera* Cam;
 typedef beholder::capi::Image Img;
 #else
 typedef void* Cam;
-typedef void* Pyl;
-typedef void* Trans;
 typedef Image Img;
 #endif
 
@@ -34,13 +30,16 @@ typedef struct {
 } Par;
 
 typedef struct {
-	const char* sn;
-	Par* pars;
-	size_t nPars;
+	int32_t bnd;		 // backend
+	int32_t dc;			 // device class
+	const char* sn;		 // serial number
+	int64_t acqTimeout;	 // acquisition timeout in ns
+	int64_t trgTimeout;	 // trigger timeout in ns
+	int64_t conTimeout;	 // connection timeout in ns
 	bool reboot;
-} CamInit;
+} Cfg;
 
-bool Cam_Acquire(Cam c, size_t timeoutMs);
+bool Cam_Acquire(Cam c);
 bool Cam_CmdExecute(Cam c, const char* cmd);
 bool Cam_CmdIsDone(Cam c, const char* cmd);
 void Cam_Delete(Cam* c);
@@ -48,21 +47,13 @@ Img Cam_GetRawImage(Cam c);
 bool Cam_IsAcquiring(Cam c);
 bool Cam_IsAttached(Cam c);
 bool Cam_IsInitialized(Cam c);
-bool Cam_Init(Cam c, Trans t, const CamInit* in);
+bool Cam_Init(Cam c, const Cfg* cfg, Par* pars, size_t nPars);
 Cam Cam_New();
 bool Cam_SetParameters(Cam c, Par* pars, size_t nPars);
 bool Cam_StartAcquisition(Cam c);
 void Cam_StopAcquisition(Cam c);
 bool Cam_Trigger(Cam c);
-bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs);
-
-Pyl Pyl_New();
-void Pyl_Delete(Pyl* p);
-
-void Trans_Delete(Trans* t);
-char* Trans_GetFirstSN(Trans t);
-bool Trans_Init(Trans t, int dTyp);
-Trans Trans_New();
+bool Cam_WaitAndTrigger(Cam c);
 
 #ifdef __cplusplus
 }  // extern "C"

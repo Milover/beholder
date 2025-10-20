@@ -7,11 +7,15 @@
 #ifndef BEHOLDER_H
 #define BEHOLDER_H
 
+// NOLINTBEGIN(misc-include-cleaner)
+
 #include "beholder/BeholderExport.h"
 #include "beholder/camera/BeholderCamera.h"
 #include "beholder/capi/BeholderCAPI.h"
 #include "beholder/image/BeholderImage.h"
 #include "beholder/neural/BeholderNeural.h"
 #include "beholder/util/BeholderUtil.h"
+
+// NOLINTEND(misc-include-cleaner)
 
 #endif	// BEHOLDER_H

@@ -4,14 +4,13 @@
 
 #include "beholder/neural/PARSeqDetector.h"
 
+#include <opencv2/core/hal/interface.h>
+
 #include <cmath>
-#include <opencv2/core.hpp>
-#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
-#include <opencv2/dnn/dnn.hpp>
 #include <utility>
 
+#include "beholder/capi/Result.h"
 #include "beholder/neural/internal/ObjDetectorImpl.h"
 #include "beholder/util/Constants.h"
 

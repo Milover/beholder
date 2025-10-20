@@ -4,13 +4,16 @@
 
 #include "beholder/neural/YOLOv8Detector.h"
 
+#include <cstddef>
 #include <opencv2/core.hpp>
 #include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
+#include <string>
 #include <utility>
 
+#include "beholder/capi/Result.h"
 #include "beholder/neural/internal/ObjDetectorImpl.h"
 #include "beholder/util/Constants.h"
 
@@ -44,9 +47,9 @@ void YOLOv8Detector::extract() {
 
 		// get bbox coords; [xCenter, yCenter, width, height]
 		float* det{out.ptr<float>(i)};
-		buf_->tBoxes.emplace_back(cvFloor(det[0] - det[2] / 2),
-								  cvFloor(det[1] - det[3] / 2), cvFloor(det[2]),
-								  cvFloor(det[3]));
+		buf_->tBoxes.emplace_back(cvFloor(det[0] - (det[2] / 2)),
+								  cvFloor(det[1] - (det[3] / 2)),
+								  cvFloor(det[2]), cvFloor(det[3]));
 		buf_->tClassIDs.emplace_back(maxLoc.x);
 		buf_->tConfidences.emplace_back(static_cast<float>(conf));
 	}

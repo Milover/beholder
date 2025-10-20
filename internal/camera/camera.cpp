@@ -4,9 +4,6 @@
 
 #include "camera.h"
 
-#include <pylon/Device.h>
-#include <pylon/TypeMappings.h>
-
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
@@ -16,20 +13,11 @@
 #include <utility>
 #include <vector>
 
-bool Cam_Acquire(Cam c, size_t timeoutMs) {
+bool Cam_Acquire(Cam c) {
 	if (!c) {
 		return false;
 	}
-	try {
-		return c->acquire(std::chrono::milliseconds{timeoutMs});
-	} catch (const Pylon::GenericException &e) {
-		std::cerr << "could not acquire image: " << e.what() << std::endl;
-	} catch (const beholder::Exception &e) {
-		std::cerr << "could not acquire image: " << e.what() << std::endl;
-	} catch (...) {
-		std::cerr << "could not acquire image" << std::endl;
-	}
-	return false;
+	return c->acquire();
 }
 
 bool Cam_CmdExecute(Cam c, const char *cmd) {
@@ -85,34 +73,38 @@ bool Cam_IsInitialized(Cam c) {
 	return false;
 }
 
-bool Cam_Init(Cam c, Trans t, const CamInit *in) {
-	if (!c || !t || !in) {
+bool Cam_Init(Cam c, const Cfg *cfg, Par *pars, size_t nPars) {
+	if (!c || !cfg) {
 		return false;
 	}
-	// create device
-	auto d{t->createDevice(in->sn, beholder::DeviceDesignator::SN, in->reboot)};
+	auto ms = [](int64_t ns) -> std::chrono::milliseconds {
+		return std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::nanoseconds{ns});
+	};
 	// initialize
-	if (!d || !c->init(d)) {
+	if (!c->init(beholder::camera::Config{
+			//.backend{},
+			.deviceClass{
+				beholder::enums::from<beholder::camera::DeviceClass>(cfg->dc)},
+			.designator{cfg->sn},
+			.acquisitionTimeout{ms(cfg->acqTimeout)},
+			.triggerTimeout{ms(cfg->trgTimeout)},
+			//.connectionTimeout{},
+			.rebootOnConnection{cfg->reboot},
+		})) {
 		return false;
 	}
-	// set params
-	beholder::ParamList list;  // OPTIMIZE: could avoid copying here
-	list.reserve(in->nPars);
-	for (auto i{0ul}; i < in->nPars; ++i) {
-		list.emplace_back(in->pars[i].name, in->pars[i].value);
-	}
-	// NOTE: we don't technically have to fail
-	return c->setParams(list);
+	return Cam_SetParameters(c, pars, nPars);
 }
 
-Cam Cam_New() { return new beholder::Camera{}; }
+Cam Cam_New() { return new beholder::camera::Camera{}; }
 
 bool Cam_SetParameters(Cam c, Par *pars, size_t nPars) {
 	if (!c) {
 		return false;
 	}
 	// set params
-	beholder::ParamList list;  // OPTIMIZE: could avoid copying here
+	beholder::camera::ParamVector list;	 // OPTIMIZE: could avoid copying here
 	list.reserve(nPars);
 	for (auto i{0ul}; i < nPars; ++i) {
 		list.emplace_back(pars[i].name, pars[i].value);
@@ -141,48 +133,9 @@ bool Cam_Trigger(Cam c) {
 	return c->trigger();
 }
 
-bool Cam_WaitAndTrigger(Cam c, size_t timeoutMs) {
+bool Cam_WaitAndTrigger(Cam c) {
 	if (!c) {
 		return false;
 	}
-	return c->waitAndTrigger(std::chrono::milliseconds{timeoutMs});
+	return c->waitAndTrigger();
 }
-
-Pyl Pyl_New() { return new beholder::PylonAPI{}; }
-
-void Pyl_Delete(Pyl *p) {
-	if (*p) {
-		delete *p;
-		*p = nullptr;
-	}
-}
-
-void Trans_Delete(Trans *t) {
-	if (*t) {
-		try {
-			delete *t;
-			*t = nullptr;
-		} catch (...) {
-			// XXX: ignore exceptions?
-		}
-	}
-}
-
-char *Trans_GetFirstSN(Trans t) {
-	if (!t) {
-		return nullptr;
-	}
-	std::string d{t->getFirstSN()};
-	char *sn{new char[d.size() + 1]};
-	std::strcpy(sn, d.c_str());
-	return sn;
-}
-
-bool Trans_Init(Trans t, int dTyp) {
-	if (!t) {
-		return false;
-	}
-	return t->init(static_cast<beholder::DeviceClass>(dTyp));
-}
-
-Trans Trans_New() { return new beholder::TransportLayer{}; }

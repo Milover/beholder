@@ -7,7 +7,7 @@
 #include <beholder/image/Processor.h>
 #include <gtest/gtest.h>
 
-#include "Testing.h"
+#include "Testing.h"  // NOLINT
 
 namespace beholder {
 namespace test {

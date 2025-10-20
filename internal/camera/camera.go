@@ -147,7 +147,7 @@ func NewCamera() *Camera {
 // eg. the camera device was detached.
 func (c *Camera) Acquire() error {
 	c.Result = models.Image{}
-	ok := C.Cam_Acquire(c.p, (C.size_t)(c.AcquisitionTimeout.Milliseconds()))
+	ok := C.Cam_Acquire(c.p)
 	if !ok {
 		return fmt.Errorf("camera.Camera.Acquire: %w", ErrAcquisition)
 	}
@@ -259,11 +259,6 @@ func (c *Camera) Init() error {
 	if err := c.IsValid(); err != nil {
 		return err
 	}
-	// get the transport layer
-	tl, err := getTransportLayer(c.Type)
-	if err != nil {
-		return err
-	}
 	// allocate C-memory for the camera
 	c.p = C.Cam_New()
 	if c.p == (C.Cam)(nil) {
@@ -272,19 +267,21 @@ func (c *Camera) Init() error {
 	ar := &mem.Arena{}
 	defer ar.Free()
 
-	// handle SN
 	if c.SN == SNPickFirst {
-		sn := ar.StoreCStrConv(unsafe.Pointer(C.Trans_GetFirstSN(tl.p)))
-		if len(sn) == 0 {
-			return errors.New("camera.Camera.Init: could not find a camera device")
-		}
-		c.SN = sn
+		c.SN = "" // TODO: just remove the SNPickFirst thing, C-API needs to handle it
 	}
-	in := C.CamInit{
-		sn:     (*C.char)(ar.CopyStr(c.SN)),
-		reboot: C.bool(!c.NoReboot),
+	cfg := C.Cfg{
+		dc:         C.int32_t(c.Type),
+		sn:         (*C.char)(ar.CopyStr(c.SN)),
+		reboot:     C.bool(!c.NoReboot),
+		acqTimeout: (C.int64_t)(c.AcquisitionTimeout.Nanoseconds()),
+		trgTimeout: func() C.int64_t {
+			if c.Trigger != nil {
+				return (C.int64_t)(c.Trigger.Timeout.Nanoseconds())
+			}
+			return 0
+		}(),
 	}
-
 	// override 'AcquisitionMode', see the docs for [Camera.IsAcquiring]
 	for i := range c.Parameters {
 		if c.Parameters[i].Name == "AcquisitionMode" &&
@@ -295,9 +292,8 @@ func (c *Camera) Init() error {
 		}
 	}
 	// handle parameters
-	in.pars, in.nPars = c.Parameters.makeCPars(ar)
-
-	if ok := C.Cam_Init(c.p, tl.p, &in); !ok {
+	pars, nPars := c.Parameters.makeCPars(ar)
+	if ok := C.Cam_Init(c.p, &cfg, pars, nPars); !ok {
 		return errors.New("camera.Camera.Init: could not initialize camera")
 	}
 	return nil

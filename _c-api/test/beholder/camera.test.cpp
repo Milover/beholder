@@ -5,21 +5,19 @@
 // Camera API tests.
 
 #include <beholder/camera/Camera.h>
-#include <beholder/camera/ParamEntry.h>
-#include <beholder/camera/PylonAPI.h>
-#include <beholder/camera/TransportLayer.h>
+#include <beholder/camera/Config.h>
+#include <beholder/camera/DeviceClass.h>
+#include <beholder/camera/Parameter.h>
 #include <beholder/capi/Image.h>
-#include <beholder/image/Processor.h>
 #include <gtest/gtest.h>
 
-#include <array>
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
-#include <limits>
-#include <ostream>
+#include <iostream>
 #include <string>
 
-#include "Testing.h"
+#include "Testing.h"  // NOLINT
 
 namespace beholder {
 namespace test {
@@ -32,57 +30,61 @@ namespace test {
 //
 // NOTE: camera emulation is enabled for all tests by default through CMake
 // defined environment variables, and 3 emulated devices are available.
+// However, defining the environment within the test or fixture might be
+// more appropriate.
 
 // Connect to an emulated camera device and acquire an image.
+//
+// BUG: when compiling with clang and running with sanitizers, this test
+// can occasionally hang --- the camera times out while waiting for the trigger
+// to become available.
+// This only happens on the first run after a fresh build.
 TEST(CameraEmulated, AcquireImage) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{assetsDir / "images/red_100x100.png"};
-	const ParamList camParams{
-		ParamEntry{"AcquisitionMode", "Continuous"},
+	const auto testimage{globalAssetsDir / "images/red_100x100.png"};
+	const camera::ParamVector camParams{
+		camera::Parameter{"AcquisitionMode", "Continuous"},
 
-		ParamEntry{"TriggerSelector", "FrameStart"},
-		ParamEntry{"TriggerMode", "On"},
-		ParamEntry{"TriggerSource", "Software"},
+		camera::Parameter{"TriggerSelector", "FrameStart"},
+		camera::Parameter{"TriggerMode", "On"},
+		camera::Parameter{"TriggerSource", "Software"},
 
-		ParamEntry{"TestImageSelector", "Off"},
-		ParamEntry{"ImageFileMode", "On"},
-		ParamEntry{"ImageFilename", testimage},
+		camera::Parameter{"TestImageSelector", "Off"},
+		camera::Parameter{"ImageFileMode", "On"},
+		camera::Parameter{"ImageFilename", testimage},
 	};
-	constexpr std::string_view sn{"0815-0000"};	 // emulated camera SN
-	constexpr std::size_t nImages{3};			 // No. images to acquire
+	const std::string sn{"0815-0000"};				 // emulated camera SN
+	const std::size_t nImages{3};					 // No. images to acquire
+	const std::chrono::milliseconds timeout{30000};	 // trigger timeout
+	const std::size_t nLoops{3};					 // number of test loops
 
-	// before using any pylon methods, the pylon runtime must be initialized.
-	const PylonAPI api{};
+	for (auto i{0UL}; i < nLoops; ++i) {
+		std::cerr << "starting test loop: " << i << std::endl;
+		try {
+			// create camera and apply configuration
+			camera::Camera cam{
+				camera::Config{.deviceClass = camera::DeviceClass::Emulated,
+							   .designator = sn,
+							   .triggerTimeout = timeout}};
+			ASSERT_TRUE(cam.init());
+			ASSERT_TRUE(cam.isInitialized());
+			EXPECT_TRUE(cam.setParams(camParams));
+			//dumpParams(cam.getParams(ParamAccessMode::Read));
 
-	try {
-		// create transport layer
-		TransportLayer tl{};
-		ASSERT_TRUE(tl.init(DeviceClass::Emulated));
+			// acquire image(s)
+			ASSERT_TRUE(cam.startAcquisition(nImages));
 
-		// create device
-		auto* dev{tl.createDevice(sn.data(), DeviceDesignator::SN)};
-		ASSERT_NE(dev, nullptr);
+			for (auto i{0UL}; i < nImages; ++i) {
+				EXPECT_TRUE(cam.waitAndTrigger());
+				EXPECT_TRUE(cam.acquire());
 
-		// create camera and apply configuration
-		Camera cam{};
-		ASSERT_TRUE(cam.init(dev));
-		ASSERT_TRUE(cam.isInitialized());
-		EXPECT_TRUE(cam.setParams(camParams));
-		//dumpParams(cam.getParams(ParamAccessMode::Read));
-
-		// acquire image(s)
-		ASSERT_TRUE(cam.startAcquisition(nImages));
-
-		for (auto i{0UL}; i < nImages; ++i) {
-			EXPECT_TRUE(cam.waitAndTrigger(std::chrono::seconds{1}));
-			EXPECT_TRUE(cam.acquire());
-
-			auto img{cam.getImage()};
-			ASSERT_TRUE(img.has_value());
-			EXPECT_EQ(img->cRef().rows, 100);  // NOLINT(*-optional-access)
-			EXPECT_EQ(img->cRef().cols, 100);  // NOLINT(*-optional-access)
+				auto img{cam.getImage()};
+				ASSERT_TRUE(img.has_value());
+				EXPECT_EQ(img->cRef().rows, 100);  // NOLINT(*-optional-access)
+				EXPECT_EQ(img->cRef().cols, 100);  // NOLINT(*-optional-access)
+			}
+		} catch (...) {
+			FAIL() << "caught something :o";
 		}
-	} catch (...) {
-		FAIL();
 	}
 }
 

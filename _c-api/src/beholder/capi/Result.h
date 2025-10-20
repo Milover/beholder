@@ -8,12 +8,8 @@
 #define BEHOLDER_CAPI_RESULT_H
 
 #ifdef __cplusplus
-#include <cstddef>
 #include <cstring>
 #include <string>
-#include <type_traits>
-
-#include "beholder/util/Traits.h"
 #else
 #include <stddef.h>
 #endif

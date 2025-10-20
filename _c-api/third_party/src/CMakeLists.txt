@@ -1,3 +1,5 @@
+add_subdirectory(incbin)
+add_subdirectory(zlib)
 add_subdirectory(opencv)
 add_subdirectory(leptonica)
 add_subdirectory(tesseract)

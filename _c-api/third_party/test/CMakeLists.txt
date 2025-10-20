@@ -19,6 +19,8 @@ FetchContent_MakeAvailable(googletest)
 # are compiled, which we don't want.
 add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Wshadow")
 
+add_subdirectory(incbin)
+add_subdirectory(zlib)
 add_subdirectory(opencv)
 # NOTE: Leptonica is an internal Tesseract dependency, so we're not testing
 # it directly. If the Tesseract test passes, we're good to go.

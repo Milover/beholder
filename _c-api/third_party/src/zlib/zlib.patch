@@ -1,0 +1,25 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d963e7c..a11bc3e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -286,16 +286,16 @@ if(ZLIB_INSTALL)
+ 
+     configure_package_config_file(
+         ${zlib_SOURCE_DIR}/zlibConfig.cmake.in
+-        ${zlib_BINARY_DIR}/ZLIBConfig.cmake
++        ${zlib_BINARY_DIR}/zlibConfig.cmake
+         INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zlib)
+ 
+     write_basic_package_version_file(
+-        "${zlib_BINARY_DIR}/ZLIBConfigVersion.cmake"
++        "${zlib_BINARY_DIR}/zlibConfigVersion.cmake"
+         VERSION "${zlib_VERSION}"
+         COMPATIBILITY AnyNewerVersion)
+ 
+-    install(FILES ${zlib_BINARY_DIR}/ZLIBConfig.cmake
+-                  ${zlib_BINARY_DIR}/ZLIBConfigVersion.cmake
++    install(FILES ${zlib_BINARY_DIR}/zlibConfig.cmake
++                  ${zlib_BINARY_DIR}/zlibConfigVersion.cmake
+             DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/zlib)
+     install(
+         FILES ${ZLIB_PUBLIC_HDRS}

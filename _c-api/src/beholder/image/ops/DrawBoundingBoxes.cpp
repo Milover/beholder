@@ -5,7 +5,6 @@
 #include "beholder/image/ops/DrawBoundingBoxes.h"
 
 #include <array>
-#include <opencv2/core/fast_math.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc.hpp>

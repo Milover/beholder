@@ -1,0 +1,17 @@
+{
+	"camera": {
+		"type": "emulated",
+		"serial_number": "pick-first",
+		"acquisition_timeout": "1s",
+		"trigger": {
+			"timeout": "1s",
+			"period": "0.5s"
+		},
+		"parameters": [
+			{"name": "AcquisitionMode",    "value": "Continuous"},
+			{"name": "TriggerSelector",    "value": "FrameStart"},
+			{"name": "TriggerMode",        "value": "On"},
+			{"name": "TriggerSource",      "value": "Software"}
+		]
+	}
+}

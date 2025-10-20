@@ -12,7 +12,7 @@ import (
 
 // Type is the transport layer type used to communicate with
 // a camera device.
-type Type int64
+type Type int32
 
 const (
 	GigE Type = iota

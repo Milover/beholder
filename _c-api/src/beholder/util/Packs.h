@@ -59,7 +59,7 @@ using cons_t = typename cons<T, Seq>::type;
 // A type to check if all types in a sequence satisfy a given unary predicate.
 template<template<typename> typename Pred, typename... Ts>
 struct all_of {
-	inline static constexpr bool value = (Pred<Ts>::value && ...);
+	static constexpr bool value = (Pred<Ts>::value && ...);
 };
 
 template<template<typename> typename Pred, typename... Ts>
@@ -69,7 +69,7 @@ constexpr bool all_of_v = all_of<Pred, Ts...>::value;
 // where T is the first argument to the binary predicate.
 template<template<typename, typename> typename Pred, typename T, typename... Ts>
 struct binary_all_of {
-	inline static constexpr bool value = (Pred<T, Ts>::value && ...);
+	static constexpr bool value = (Pred<T, Ts>::value && ...);
 };
 
 template<template<typename, typename> typename Pred, typename T, typename... Ts>
@@ -82,8 +82,7 @@ struct all_same;
 
 template<typename T, typename... Ts>
 struct all_same<T, Ts...> {
-	inline static constexpr bool value =
-		binary_all_of_v<std::is_same, T, Ts...>;
+	static constexpr bool value = binary_all_of_v<std::is_same, T, Ts...>;
 };
 
 template<typename... Ts>

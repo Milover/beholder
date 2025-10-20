@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "beholder/util/Utility.h"
+
 #include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <memory>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 namespace beholder {

@@ -40,6 +40,6 @@ cmake_preset="$2"
 
 cd "$cmake_dir"
 
-cmake --preset="$cmake_preset" -DCMAKE_INSTALL_PREFIX="$CMAKE_PREFIX"
-cmake --build --preset="$cmake_preset"
+cmake --preset="$cmake_preset" --install-prefix="$CMAKE_PREFIX"
+cmake --workflow --preset="$cmake_preset"
 cmake --install "$cmake_dir/build/$cmake_preset"

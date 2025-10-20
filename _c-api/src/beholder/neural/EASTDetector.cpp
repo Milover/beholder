@@ -4,15 +4,18 @@
 
 #include "beholder/neural/EASTDetector.h"
 
-#include <array>
+#include <opencv2/core/hal/interface.h>
+
 #include <cmath>
-#include <opencv2/core.hpp>
-#include <opencv2/core/fast_math.hpp>
+#include <numbers>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/dnn/dnn.hpp>
+#include <utility>
 
+#include "beholder/capi/Result.h"
 #include "beholder/neural/internal/ObjDetectorImpl.h"
+#include "beholder/util/Constants.h"
 
 namespace beholder {
 
@@ -56,16 +59,17 @@ void EASTDetector::extract() {
 			const float h{x0s[x] + x2s[x]};
 			const float w{x1s[x] + x3s[x]};
 
-			const cv::Point2f offset{offsetX + cosA * x1s[x] + sinA * x2s[x],
-									 offsetY - sinA * x1s[x] + cosA * x2s[x]};
+			const cv::Point2f offset{
+				offsetX + (cosA * x1s[x]) + (sinA * x2s[x]),
+				offsetY - (sinA * x1s[x]) + (cosA * x2s[x])};
 			const cv::Point2f p1{cv::Point2f{-sinA * h, -cosA * h} + offset};
 			const cv::Point2f p3{cv::Point2f{-cosA * w, sinA * w} + offset};
 
 			buf_->tBoxes.emplace_back(
 				cv::RotatedRect{0.5F * (p1 + p3), cv::Size2f(w, h), 0.0}
 					.boundingRect());
-			buf_->tAngles.emplace_back(static_cast<double>(-angle) * 180.0 /
-									   CV_PI);
+			buf_->tAngles.emplace_back(static_cast<double>(-angle) *
+									   cst::deg180 / std::numbers::pi);
 			buf_->tConfidences.emplace_back(conf);
 		}
 	}

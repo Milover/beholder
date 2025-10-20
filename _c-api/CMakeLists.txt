@@ -8,6 +8,8 @@ include(GNUInstallDirs)
 include(FetchContent)
 include(CTest)
 
+option(BH_NO_LINT "disable linting" FALSE)
+
 # set up dependencies
 #
 # NOTE: the third-party dependencies can also manually be unpacked/installed
@@ -31,25 +33,30 @@ else()
 	message(STATUS "Using system libraries for dependencies.")
 endif()
 
-message(CHECK_START "Finding linters")
+message(CHECK_START "Detecting linters")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")
 unset(bh_missing_linters)
+if (NOT BH_NO_LINT)
+	message(CHECK_START "Detecting clang-tidy")
+	find_program(found_clang_tidy clang-tidy)
+	if (found_clang_tidy)
+		message(CHECK_PASS "found")
+		set(CMAKE_CXX_CLANG_TIDY clang-tidy)
+		# could export fixes here
+	else()
+		message(CHECK_FAIL "not found")
+		list(APPEND bh_missing_linters clang-tidy)
+	endif()
 
-message(CHECK_START "Finding clang-tidy")
-find_program(found_clang_tidy clang-tidy)
-if (found_clang_tidy)
-	message(CHECK_PASS "found")
-	set(CMAKE_CXX_CLANG_TIDY clang-tidy)
-	# could export fixes here
+	list(POP_BACK CMAKE_MESSAGE_INDENT)
+	if (bh_missing_linters)
+		message(CHECK_FAIL "linters missing: ${bh_missing_linters}")
+	else()
+		message(CHECK_PASS "all linters found")
+	endif()
 else()
-	message(CHECK_FAIL "not found")
-endif()
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
-if (bh_missing_linters)
-	message(CHECK_FAIL "linters missing: ${bh_missing_linters}")
-else()
-	message(CHECK_PASS "all linters found")
+	list(POP_BACK CMAKE_MESSAGE_INDENT)
+	message(CHECK_PASS "linting disabled")
 endif()
 
 add_subdirectory(src)

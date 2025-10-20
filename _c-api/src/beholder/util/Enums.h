@@ -22,8 +22,7 @@ using enable_if_enum = std::enable_if_t<std::is_enum_v<T>, U>;
 // Check if T is implicitly convertible to E's underlying type.
 template<typename T, typename E, bool = std::is_enum_v<E>>
 struct is_convertible {
-	inline static constexpr bool value =
-		std::is_convertible_v<T, underlying<E>>;
+	static constexpr bool value = std::is_convertible_v<T, underlying<E>>;
 };
 
 template<typename T, typename E>
@@ -37,7 +36,7 @@ constexpr bool is_convertible_v = is_convertible<T, E>::value;
 template<typename E1, typename E2,
 		 bool = (std::is_enum_v<E1> && std::is_enum_v<E2>)>
 struct is_compatible {
-	inline static constexpr bool value =
+	static constexpr bool value =
 		std::is_convertible_v<underlying<E1>, underlying<E2>> &&
 		std::is_convertible_v<underlying<E2>, underlying<E1>>;
 };

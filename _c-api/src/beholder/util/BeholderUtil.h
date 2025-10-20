@@ -7,8 +7,12 @@
 #ifndef BEHOLDER_UTIL_H
 #define BEHOLDER_UTIL_H
 
+// NOLINTBEGIN(misc-include-cleaner)
+
 #include "beholder/util/Constants.h"
 #include "beholder/util/Traits.h"
 #include "beholder/util/Utility.h"
+
+// NOLINTEND(misc-include-cleaner)
 
 #endif	// BEHOLDER_UTIL_H

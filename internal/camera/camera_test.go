@@ -5,6 +5,7 @@
 package camera
 
 import (
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -12,149 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type cameraTest struct {
-	Name           string
-	Error          error
-	Config         string
-	NeedsHwTrigger bool // does the test need a hardware trigger?
-	NonEmulated    bool // does the test use a physical camera device?
-	FailBuffers    uint64
-}
-
-var cameraTests = []cameraTest{
-	{
-		Name:  "pick-first-emulated-w/-software-trigger",
-		Error: nil,
-		Config: `
-{
-	"camera": {
-		"type": "emulated",
-		"serial_number": "pick-first",
-		"acquisition_timeout": "1s",
-		"trigger": {
-			"timeout": "1s",
-			"period": "0.5s"
-		},
-		"parameters": [
-			{"name": "AcquisitionMode",    "value": "Continuous"},
-			{"name": "TriggerSelector",    "value": "FrameStart"},
-			{"name": "TriggerMode",        "value": "On"},
-			{"name": "TriggerSource",      "value": "Software"}
-		]
-	}
-}
-`,
-	},
-	{
-		Name:        "pick-first-emulated-w/-software-trigger-failed-buffers",
-		Error:       ErrAcquisition,
-		FailBuffers: uint64(50),
-		Config: `
-{
-	"camera": {
-		"type": "emulated",
-		"serial_number": "pick-first",
-		"acquisition_timeout": "1s",
-		"trigger": {
-			"timeout": "1s",
-			"period": "0.5s"
-		},
-		"parameters": [
-			{"name": "AcquisitionMode",    "value": "Continuous"},
-			{"name": "TriggerSelector",    "value": "FrameStart"},
-			{"name": "TriggerMode",        "value": "On"},
-			{"name": "TriggerSource",      "value": "Software"}
-		]
-	}
-}
-`,
-	},
-	{
-		Name:  "single-emulated-w/-software-trigger",
-		Error: nil,
-		Config: `
-{
-	"camera": {
-		"type": "emulated",
-		"serial_number": "0815-0000",
-		"acquisition_timeout": "1s",
-		"trigger": {
-			"timeout": "1s",
-			"period": "0.5s"
-		},
-		"parameters": [
-			{"name": "AcquisitionMode",    "value": "Continuous"},
-			{"name": "TriggerSelector",    "value": "FrameStart"},
-			{"name": "TriggerMode",        "value": "On"},
-			{"name": "TriggerSource",      "value": "Software"},
-			{"name": "ExposureMode",       "value": "Timed"},
-			{"name": "ExposureTimeAbs",    "value": "10000"}
-		]
-	}
-}
-`,
-	},
-	{
-		Name:        "pick-first-gige-w/-software-trigger",
-		Error:       nil,
-		NonEmulated: true,
-		Config: `
-{
-	"camera": {
-		"type": "gige",
-		"serial_number": "pick-first",
-		"acquisition_timeout": "1s",
-		"trigger": {
-			"timeout": "1s",
-			"period": "0.5s"
-		},
-		"parameters": [
-			{"name": "AcquisitionMode",    "value": "Continuous"},
-			{"name": "TriggerSelector",    "value": "FrameStart"},
-			{"name": "TriggerMode",        "value": "On"},
-			{"name": "TriggerSource",      "value": "Software"},
-			{"name": "ExposureMode",       "value": "Timed"},
-			{"name": "ExposureTimeAbs",    "value": "10000"},
-			{"name": "ChunkModeActive",    "value": "true"},
-			{"name": "ChunkSelector",      "value": "PayloadCRC16"},
-			{"name": "ChunkEnable",        "value": "true"}
-		]
-	}
-}
-`,
-	},
-	{
-		Name:           "pick-first-gige-w/-hardware-trigger",
-		Error:          nil,
-		NonEmulated:    true,
-		NeedsHwTrigger: true,
-		Config: `
-{
-	"camera": {
-		"type": "gige",
-		"serial_number": "pick-first",
-		"parameters": [
-			{"name": "AcquisitionMode",    "value": "Continuous"},
-			{"name": "TriggerSelector",    "value": "FrameStart"},
-			{"name": "TriggerMode",        "value": "On"},
-			{"name": "TriggerSource",      "value": "Line1"},
-			{"name": "TriggerActivation",  "value": "RisingEdge"},
-			{"name": "LineSelector",       "value": "Line2"},
-			{"name": "LineMode",           "value": "Output"},
-			{"name": "LineSource",         "value": "FrameTriggerWait"},
-			{"name": "LineInverter",       "value": "true"},
-			{"name": "ExposureMode",       "value": "Timed"},
-			{"name": "ExposureTimeAbs",    "value": "10000"},
-			{"name": "ChunkModeActive",    "value": "true"},
-			{"name": "ChunkSelector",      "value": "PayloadCRC16"},
-			{"name": "ChunkEnable",        "value": "true"}
-		]
-	}
-}
-`,
-	},
-}
 
 // TestCamera tests image acquisition with a single camera.
 //
@@ -165,11 +23,38 @@ var cameraTests = []cameraTest{
 //   - n-img
 //   - cleanup
 func TestCamera(t *testing.T) {
-	for _, tt := range cameraTests {
-		t.Run(tt.Name, func(t *testing.T) {
+	tests := map[string]struct {
+		Error          error
+		Config         string
+		NeedsHwTrigger bool // does the test need a hardware trigger?
+		NonEmulated    bool // does the test use a physical camera device?
+		FailBuffers    uint64
+	}{
+		"pick-first-emulated-w/-software-trigger": {
+			Config: emulatedSWTriggerPickFirst,
+		},
+		"pick-first-emulated-w/-software-trigger-failed-buffers": {
+			Config:      emulatedSWTriggerPickFirstFailedBuffers,
+			FailBuffers: uint64(50),
+			Error:       ErrAcquisition,
+		},
+		"single-emulated-w/-software-trigger": {
+			Config: emulatedSWTriggerSingle,
+		},
+		"pick-first-gige-w/-software-trigger": {
+			Config:      gigeSWTriggerPickFirst,
+			NonEmulated: true,
+		},
+		"pick-first-gige-w/-hardware-trigger": {
+			Config:         gigeHWTriggerPickFirst,
+			NonEmulated:    true,
+			NeedsHwTrigger: true,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 			require := require.New(t)
-
 			// configure the test
 			if tt.NonEmulated && emuOnly {
 				t.Skip("physical camera testing is disabled")
@@ -177,42 +62,20 @@ func TestCamera(t *testing.T) {
 			if tt.NeedsHwTrigger && !hwTriggering {
 				t.Skip("hardware triggering is disabled")
 			}
-			/*
-				var outDir string
-				if cleanUp {
-					outDir = t.TempDir()
-				}
-			*/
-
 			// setup
 			p := struct {
 				C *Camera `json:"camera"`
-				//IP *imgproc.Processor `json:"image_processor"`
 			}{
 				C: NewCamera(),
-				//IP: imgproc.NewProcessor(),
 			}
 			defer func() {
 				p.C.Delete()
-				//p.IP.Delete()
 			}()
 			// unmarshal
 			err := json.Unmarshal([]byte(tt.Config), &p)
 			require.NoError(err)
-			// set serial number if defined
-			if len(serialNo) != 0 {
-				p.C.SN = serialNo
-			}
 			// initialize
-			err = func() error {
-				if err := p.C.Init(); err != nil {
-					return err
-				}
-				//if err := p.IP.Init(); err != nil {
-				//	return err
-				//}
-				return nil
-			}()
+			err = p.C.Init()
 			require.NoError(err)
 
 			// try to acquire images
@@ -225,10 +88,8 @@ func TestCamera(t *testing.T) {
 				err = p.C.TstFailBuffers(tt.FailBuffers)
 				require.NoError(err)
 			}
-
 			for i := uint64(0); i < nImgs && p.C.IsAcquiring(); i++ {
 				var err error
-
 				if !tt.NeedsHwTrigger {
 					t.Log("waiting for trigger...")
 					err = errors.Join(err, p.C.TryTrigger())
@@ -256,3 +117,18 @@ func TestCamera(t *testing.T) {
 		})
 	}
 }
+
+//go:embed testdata/emulated_sw_trigger_pick_first.json
+var emulatedSWTriggerPickFirst string
+
+//go:embed testdata/emulated_sw_trigger_pick_first_failed_buffers.json
+var emulatedSWTriggerPickFirstFailedBuffers string
+
+//go:embed testdata/emulated_sw_trigger_single.json
+var emulatedSWTriggerSingle string
+
+//go:embed testdata/gige_sw_trigger_pick_first.json
+var gigeSWTriggerPickFirst string
+
+//go:embed testdata/gige_hw_trigger_pick_first.json
+var gigeHWTriggerPickFirst string

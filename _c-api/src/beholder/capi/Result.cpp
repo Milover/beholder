@@ -4,8 +4,6 @@
 
 #include "beholder/capi/Result.h"
 
-#include <cstddef>
-
 namespace beholder {
 namespace capi {
 extern "C" {

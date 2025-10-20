@@ -7,11 +7,10 @@
 #ifndef BEHOLDER_NEURAL_INTERNAL_OBJ_DETECTOR_IMPL_H
 #define BEHOLDER_NEURAL_INTERNAL_OBJ_DETECTOR_IMPL_H
 
-#include <array>
+#include <opencv2/core/hal/interface.h>
+
 #include <cassert>
-#include <exception>
 #include <filesystem>
-#include <iostream>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>

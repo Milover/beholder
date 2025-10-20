@@ -5,7 +5,6 @@
 #include "beholder/image/ops/FastNlMeansDenoise.h"
 
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
 #include <opencv2/photo.hpp>
 #include <vector>
 

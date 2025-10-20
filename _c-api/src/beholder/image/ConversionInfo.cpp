@@ -4,6 +4,9 @@
 
 #include "beholder/image/ConversionInfo.h"
 
+#include <opencv2/core/hal/interface.h>
+
+#include <algorithm>
 #include <array>
 #include <opencv2/imgproc.hpp>
 #include <optional>

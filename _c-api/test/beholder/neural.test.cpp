@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Neural network tests.
-//
-// TODO: drive tests through a JSON config file
 
 #include <beholder/image/Processor.h>
 #include <beholder/neural/CRAFTDetector.h>
@@ -14,7 +12,7 @@
 #include <exception>
 #include <filesystem>
 
-#include "Testing.h"
+#include "Testing.h"  // NOLINT
 
 namespace beholder {
 namespace test {
@@ -24,13 +22,15 @@ namespace test {
 
 // Tests
 // -----
+//
+// TODO: drive tests through a JSON config file
 
 TEST(Neural, EAST) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{assetsDir / "images/test_30px_640x640.png"};
+	const auto testimage{globalAssetsDir / "images/test_30px_640x640.png"};
 	try {
 		// set up detector
 		beholder::EASTDetector det{};
-		det.modelPath = assetsDir / "models";
+		det.modelPath = globalAssetsDir / "models";
 		det.model = "east.pb";
 		det.size = beholder::EASTDetector::Vec2<>{320, 320};  // NOLINT
 		ASSERT_TRUE(det.init());
@@ -61,11 +61,11 @@ TEST(Neural, EAST) {  // NOLINT(*-function-cognitive-complexity)
 }
 
 TEST(Neural, CRAFT) {  // NOLINT(*-function-cognitive-complexity)
-	const auto testimage{assetsDir / "images/test_30px_640x640.png"};
+	const auto testimage{globalAssetsDir / "images/test_30px_640x640.png"};
 	try {
 		// set up detector
 		CRAFTDetector det{};
-		det.modelPath = assetsDir / "models";
+		det.modelPath = globalAssetsDir / "models";
 		det.model = "craft-320px.onnx";
 		det.size = beholder::CRAFTDetector::Vec2<>{320, 320};  // NOLINT
 		ASSERT_TRUE(det.init());
