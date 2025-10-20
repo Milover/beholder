@@ -8,6 +8,9 @@ target_sources(opencv.test PRIVATE
 target_include_directories(opencv.test PRIVATE
 	${OpenCV_INCLUDE_DIRS}
 )
+target_link_directories(opencv.test PRIVATE
+	${CMAKE_INSTALL_FULL_LIBDIR}
+)
 target_link_libraries(opencv.test PRIVATE
 	${OpenCV_LIBS}
 	GTest::gtest_main

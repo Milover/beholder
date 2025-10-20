@@ -23,6 +23,10 @@ list(APPEND CMAKE_ARGS
 	"-DWebP_MUX_INCLUDE_DIR=${ocv_SOURCE_DIR}/3rdparty/libwebp/src"
 	"-DOPENJPEG_LIBRARIES=liblibopenjp2.a"
 	"-DOPENJPEG_INCLUDE_DIRS=${ocv_SOURCE_DIR}/3rdparty/openjpeg/openjp2,${ocv_BINARY_DIR}/3rdparty/openjpeg/openjp2"
+	"-DZLIB_ROOT=${bh_staging_prefix}/${CMAKE_INSTALL_LIBDIR}"
+	"-DZLIB_USE_STATIC_LIBS=TRUE"
+	"-DZLIB_LIBRARY=libz.a"
+	"-DZLIB_LIBRARIES=libz.a"
 	#"-DCMAKE_LIBRARY_PATH=${CMAKE_INSTALL_LIBDIR}"
 )
 

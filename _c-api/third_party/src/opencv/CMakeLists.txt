@@ -15,6 +15,10 @@ list(APPEND CMAKE_ARGS
 	"-DBUILD_PERF_TESTS=FALSE"
 	"-DBUILD_TESTS=FALSE"
 	"-DBUILD_ZLIB=FALSE"												# we provide zlib
+	"-DZLIB_ROOT=${bh_staging_prefix}/${CMAKE_INSTALL_LIBDIR}"
+	"-DZLIB_USE_STATIC_LIBS=TRUE"
+	"-DZLIB_LIBRARY=libz.a"
+	"-DZLIB_LIBRARIES=libz.a"
 	"-DBUILD_opencv_apps=FALSE"
 	"-DBUILD_opencv_java=FALSE"
 	"-DBUILD_opencv_python3=FALSE"
