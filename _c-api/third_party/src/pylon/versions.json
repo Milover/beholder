@@ -1,5 +1,31 @@
 [
 	{
+		"version": "25.09",
+		"vertag": "0",
+		"linux": {
+			"amd64": {
+				"setup_archive": "pylon-25.09.0_linux-x86_64_setup.tar.gz",
+				"archive": "pylon-25.09.0_linux-x86_64.tar.gz",
+				"url_base": "https://downloadbsl.blob.core.windows.net/software",
+				"md5": "c914caa0b7bfa39352f10222e203fe0b"
+			},
+			"arm64": {
+				"setup_archive": "pylon-25.09.0_linux-aarch64_setup.tar.gz",
+				"archive": "pylon-25.09.0_linux-aarch64.tar.gz",
+				"url_base": "https://downloads-ctf.baslerweb.com/dg51pdwahxgw/5W2odbvOm6KERkQMbHTNQG/bf6abaca6fd31dd9ed97f8dd255820ec",
+				"md5": "d6f896595aa108e46473e6bd63bb806d"
+			}
+		},
+		"darwin": {
+			"arm64": {
+				"setup_arhive": "pylon-25.09.0.dmg",
+				"archive": "pylon-25.09.0.dmg",
+				"url_base": "https://downloadbsl.blob.core.windows.net/software",
+				"md5": "be49f7053c944bedfd18315e9249ee08"
+			}
+		}
+	},
+	{
 		"version": "8.0.2",
 		"vertag": "16314",
 		"linux": {
