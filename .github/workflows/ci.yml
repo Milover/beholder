@@ -63,7 +63,7 @@ jobs:
       skip-build: |-
         ${{
           needs.changes.outputs.third-party == 'false' ||
-          needs.changes.outputs.shared = 'false' ||
+          needs.changes.outputs.shared == 'false' ||
           (github.event_name == 'workflow_dispatch' && inputs.skip-third-party)
         }}
       gcc-version: 12
