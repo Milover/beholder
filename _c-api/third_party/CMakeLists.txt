@@ -22,10 +22,7 @@ add_subdirectory(src)
 # library setup
 add_library(third_party INTERFACE)
 add_library(beholder::third_party ALIAS third_party)
-set_property(TARGET third_party
-	PROPERTY SOVERSION "${CMAKE_PROJECT_VERSION}"
-)
-add_dependencies(third_party
+set(bh_third_party_deps
 	bh-incbin
 	bh-zlib
 	bh-opencv
@@ -41,11 +38,14 @@ ExternalProject_Add(
 	INSTALL_DIR "${bh_staging_prefix}"
 	TEST_AFTER_INSTALL TRUE
 	INSTALL_COMMAND ""
-	DEPENDS third_party
+	DEPENDS "${bh_third_party_deps}"
 	CMAKE_ARGS ${bh_cmake_args}
 		-Dbh_binary_dir=${CMAKE_CURRENT_BINARY_DIR}
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 		-DCMAKE_PREFIX_PATH=<INSTALL_DIR>
+)
+add_dependencies(third_party
+	bh-third-party-test
 )
 
 install(
