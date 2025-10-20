@@ -70,7 +70,8 @@ update-alternatives \
 	--slave   /usr/bin/g++ g++ /usr/bin/g++-${gcc_version}
 update-alternatives \
 	--install /usr/bin/clang   clang   /usr/bin/clang-${clang_version} 50 \
-	--slave   /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version}
+	--slave   /usr/bin/clang++ clang++ /usr/bin/clang++-${clang_version}  \
+	--slave   /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${clang_version}
 
 # If we're running from CI, then CI handles Go setup,
 # we do it ourselves only if we're building locally
@@ -107,7 +108,7 @@ set -exu
 
 cd ${bh_src}
 
-./scripts/dev -s ${staging_dir} make third-party
+./scripts/dev -s ${staging_dir} make third-party | tee build.log
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
@@ -134,7 +135,7 @@ set -exu
 
 cd ${bh_src}
 
-./scripts/dev -s $staging_dir -p $build_mode make c-api
+./scripts/dev -s ${staging_dir} -p ${build_mode} make c-api
 
 # purge source tree here to reduce image size
 # when running as part of CI, we can dump a package artifact here for
@@ -158,8 +159,8 @@ set -exu
 
 cd ${bh_src}
 
-./scripts/dev -s $staging_dir -p $build_mode make lint
-./scripts/dev -s $staging_dir -p $build_mode make build
+./scripts/dev -s ${staging_dir} -p ${build_mode} make lint
+./scripts/dev -s ${staging_dir} -p ${build_mode} make build
 # FIXME: this should be a make call
 mv bin/* ${staging_dir}/bin/
 

@@ -45,6 +45,7 @@ if (NOT BH_NO_LINT)
 		# could export fixes here
 	else()
 		message(CHECK_FAIL "not found")
+		list(APPEND bh_missing_linters clang-tidy)
 	endif()
 
 	list(POP_BACK CMAKE_MESSAGE_INDENT)
