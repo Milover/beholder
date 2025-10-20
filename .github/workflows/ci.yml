@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
     inputs:
       skip-third-party:
@@ -39,10 +39,15 @@ jobs:
         id: filter
         with:
           filters: |
-            third-party:
+            shared:
+              - '.github/workflows/ci.yml'
               - 'build/ci/beholder.Dockerfile'
+            third-party:
+              - '.github/workflows/base_image.yml'
               - '_c-api/third_party/**'
             beholder:
+              - '.github/workflows/base_image.yml'
+              - '.github/workflows/build.yml'
               - '_c-api/**'
               - 'cmd/**'
               - 'go.mod'
@@ -58,6 +63,7 @@ jobs:
       skip-build: |-
         ${{
           needs.changes.outputs.third-party == 'false' ||
+          needs.changes.outputs.shared = 'false' ||
           (github.event_name == 'workflow_dispatch' && inputs.skip-third-party)
         }}
       gcc-version: 12
@@ -72,6 +78,7 @@ jobs:
     needs: [changes, third-party]
     if: |-
       ${{
+        needs.changes.outputs.shared == 'true' ||
         needs.changes.outputs.beholder == 'true' ||
         github.event_name == 'workflow_dispatch'
       }}
